@@ -1,0 +1,11 @@
+@if (demandas.isLoading()) {
+<p>Carregando...</p>
+} @else if (demandas.error()) {
+<p>Erro ao carregar demandas.</p>
+} @else {
+<ul>
+    @for (d of demandas.value(); track d.id) {
+    <li>{{ d.titulo }} — {{ d.status }}</li>
+    }
+</ul>
+}
