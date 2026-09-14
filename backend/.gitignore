@@ -1,0 +1,10 @@
+# Cross-stack: segredos/env
+.env
+.env.*
+!.env.example
+
+# IDE / SO
+.idea/
+.vscode/
+.DS_Store
+*.log
