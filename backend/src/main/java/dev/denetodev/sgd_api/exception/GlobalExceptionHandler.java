@@ -35,4 +35,9 @@ public class GlobalExceptionHandler {
         corpo.put("mensagem", mensagem);
         return corpo;
     }
+
+    @ExceptionHandler(EstadoInvalidoException.class)
+    public ResponseEntity<Map<String, Object>> tratarEstadoInvalido(EstadoInvalidoException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(corpoErro(HttpStatus.CONFLICT, ex.getMessage()));
+    }
 }
