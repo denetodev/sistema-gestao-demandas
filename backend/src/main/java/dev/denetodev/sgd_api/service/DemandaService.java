@@ -2,11 +2,7 @@ package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
-import dev.denetodev.sgd_api.entity.Campanha;
-import dev.denetodev.sgd_api.entity.Cliente;
-import dev.denetodev.sgd_api.entity.Demanda;
-import dev.denetodev.sgd_api.entity.Diretoria;
-import dev.denetodev.sgd_api.entity.Projeto;
+import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.CampanhaRepository;
 import dev.denetodev.sgd_api.repository.ClienteRepository;
@@ -122,5 +118,55 @@ public class DemandaService {
                 demanda.getCreatedAt(),
                 demanda.getUpdatedAt()
         );
+    }
+
+    public DemandaResponse atualizar(UUID id, DemandaRequest request) {
+        Demanda demanda = demandaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + id));
+
+        Diretoria diretoria = diretoriaRepository.findById(request.diretoriaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Diretoria não encontrada: " + request.diretoriaId()));
+
+        demanda.setTitulo(request.titulo());
+        demanda.setDescricao(request.descricao());
+        demanda.setCodigo(request.codigo());
+        demanda.setDiretoria(diretoria);
+        demanda.setDataPrazo(request.dataPrazo());
+        demanda.setValor(request.valor());
+        demanda.setObservacoes(request.observacoes());
+        demanda.setPrioridade(request.prioridade() != null ? request.prioridade() : demanda.getPrioridade());
+
+        // PUT é substituição completa: cliente/projeto/campanha são
+        // resolvidos e ATRIBUÍDOS SEMPRE — inclusive limpando (null) se o
+        // request não trouxer o id, diferente do criar() (onde "ausente"
+        // simplesmente não seta nada, porque no create já nasce null).
+        demanda.setCliente(resolverOuNulo(request.clienteId(), clienteRepository, "Cliente"));
+        demanda.setProjeto(resolverOuNulo(request.projetoId(), projetoRepository, "Projeto"));
+        demanda.setCampanha(resolverOuNulo(request.campanhaId(), campanhaRepository, "Campanha"));
+
+        return paraResponse(demanda);
+    }
+
+    public DemandaResponse atualizarStatus(UUID id, StatusDemanda novoStatus) {
+        Demanda demanda = demandaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + id));
+
+        demanda.setStatus(novoStatus);
+        // TODO(M3): registrar em auditoria (usuário, data, status anterior, motivo)
+        // quando existir usuário autenticado pra atribuir a mudança.
+
+        return paraResponse(demanda);
+    }
+
+    public void cancelar(UUID id) {
+        atualizarStatus(id, StatusDemanda.CANCELADA);
+    }
+
+    private <T> T resolverOuNulo(UUID id, org.springframework.data.jpa.repository.JpaRepository<T, UUID> repository, String nomeEntidade) {
+        if (id == null) {
+            return null;
+        }
+        return repository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(nomeEntidade + " não encontrado: " + id));
     }
 }
