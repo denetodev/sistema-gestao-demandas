@@ -18,10 +18,11 @@ public class Pessoa {
     @Column(name = "email", length = 180)
     private String email;
 
-    // FKs obrigatórias no banco, mas ainda sem entity própria — ver decisão do passo 4
-    @Column(name = "diretoria_id", nullable = false)
-    private UUID diretoriaId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "diretoria_id", nullable = false)
+    private Diretoria diretoria;
 
+    // FK obrigatória no banco, ainda sem entity própria — ver decisão do passo 4
     @Column(name = "area_id", nullable = false)
     private UUID areaId;
 
@@ -44,9 +45,9 @@ public class Pessoa {
     protected Pessoa() {
     }
 
-    public Pessoa(String nome, UUID diretoriaId, UUID areaId) {
+    public Pessoa(String nome, Diretoria diretoria, UUID areaId) {
         this.nome = nome;
-        this.diretoriaId = diretoriaId;
+        this.diretoria = diretoria;
         this.areaId = areaId;
     }
 
@@ -70,12 +71,12 @@ public class Pessoa {
         this.email = email;
     }
 
-    public UUID getDiretoriaId() {
-        return diretoriaId;
+    public Diretoria getDiretoria() {
+        return diretoria;
     }
 
-    public void setDiretoriaId(UUID diretoriaId) {
-        this.diretoriaId = diretoriaId;
+    public void setDiretoria(Diretoria diretoria) {
+        this.diretoria = diretoria;
     }
 
     public UUID getAreaId() {
