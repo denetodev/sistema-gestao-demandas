@@ -7,19 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import java.util.UUID;
 
 public record PessoaRequest(
-        @NotBlank(message = "nome é obrigatório")
-        String nome,
-
+        @NotBlank(message = "nome é obrigatório") String nome,
         String email,
-
-        @NotNull(message = "diretoriaId é obrigatório")
-        UUID diretoriaId,
-
-        @NotNull(message = "areaId é obrigatório")
-        UUID areaId,
-
+        @NotNull(message = "diretoriaId é obrigatório") UUID diretoriaId,
+        @NotNull(message = "areaId é obrigatório") UUID areaId,
         UUID cargoId,
-
         StatusPessoa status
 ) {
 }

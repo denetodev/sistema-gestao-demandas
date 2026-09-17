@@ -22,12 +22,13 @@ public class Pessoa {
     @JoinColumn(name = "diretoria_id", nullable = false)
     private Diretoria diretoria;
 
-    // FK obrigatória no banco, ainda sem entity própria — ver decisão do passo 4
-    @Column(name = "area_id", nullable = false)
-    private UUID areaId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "area_id", nullable = false)
+    private Area area;
 
-    @Column(name = "cargo_id")
-    private UUID cargoId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cargo_id")
+    private Cargo cargo;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -45,79 +46,29 @@ public class Pessoa {
     protected Pessoa() {
     }
 
-    public Pessoa(String nome, Diretoria diretoria, UUID areaId) {
+    public Pessoa(String nome, Diretoria diretoria, Area area) {
         this.nome = nome;
         this.diretoria = diretoria;
-        this.areaId = areaId;
+        this.area = area;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public String getNome() {
-        return nome;
-    }
-
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Diretoria getDiretoria() {
-        return diretoria;
-    }
-
-    public void setDiretoria(Diretoria diretoria) {
-        this.diretoria = diretoria;
-    }
-
-    public UUID getAreaId() {
-        return areaId;
-    }
-
-    public void setAreaId(UUID areaId) {
-        this.areaId = areaId;
-    }
-
-    public UUID getCargoId() {
-        return cargoId;
-    }
-
-    public void setCargoId(UUID cargoId) {
-        this.cargoId = cargoId;
-    }
-
-    public StatusPessoa getStatus() {
-        return status;
-    }
-
-    public void setStatus(StatusPessoa status) {
-        this.status = status;
-    }
-
-    public UUID getAuthUserId() {
-        return authUserId;
-    }
-
-    public void setAuthUserId(UUID authUserId) {
-        this.authUserId = authUserId;
-    }
-
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+    public UUID getId() { return id; }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public Diretoria getDiretoria() { return diretoria; }
+    public void setDiretoria(Diretoria diretoria) { this.diretoria = diretoria; }
+    public Area getArea() { return area; }
+    public void setArea(Area area) { this.area = area; }
+    public Cargo getCargo() { return cargo; }
+    public void setCargo(Cargo cargo) { this.cargo = cargo; }
+    public StatusPessoa getStatus() { return status; }
+    public void setStatus(StatusPessoa status) { this.status = status; }
+    public UUID getAuthUserId() { return authUserId; }
+    public void setAuthUserId(UUID authUserId) { this.authUserId = authUserId; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 
     @Override
     public boolean equals(Object o) {
@@ -127,7 +78,5 @@ public class Pessoa {
     }
 
     @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+    public int hashCode() { return getClass().hashCode(); }
 }

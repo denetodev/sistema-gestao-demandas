@@ -6,15 +6,11 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record PessoaResponse(
-        UUID id,
-        String nome,
-        String email,
-        UUID diretoriaId,
-        String diretoriaNome,
-        UUID areaId,
-        UUID cargoId,
+        UUID id, String nome, String email,
+        UUID diretoriaId, String diretoriaNome,
+        UUID areaId, String areaNome,
+        UUID cargoId, String cargoNome,
         StatusPessoa status,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime createdAt, OffsetDateTime updatedAt
 ) {
 }
