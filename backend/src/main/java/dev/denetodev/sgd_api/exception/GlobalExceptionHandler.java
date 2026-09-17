@@ -1,5 +1,6 @@
 package dev.denetodev.sgd_api.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,5 +40,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EstadoInvalidoException.class)
     public ResponseEntity<Map<String, Object>> tratarEstadoInvalido(EstadoInvalidoException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(corpoErro(HttpStatus.CONFLICT, ex.getMessage()));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> tratarIntegridade(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(corpoErro(HttpStatus.CONFLICT, "Operação viola uma restrição de integridade (nome duplicado ou registro em uso)"));
     }
 }
