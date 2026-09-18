@@ -4,14 +4,27 @@ Plataforma para centralizar a gestão da produção criativa da Aristocrata
 (COE/CRM + UGR) no Banco do Brasil, substituindo a planilha
 `DEMANDAS HOUSE CRMdf 2026` por um sistema estruturado e auditável.
 
-Status: **M0 concluído — iniciando M1 (banco de dados)**.
+Status: Fase 2 em andamento.
 
-## Estrutura
-
-- `backend/` — Java + Spring Boot, deploy no Railway (root directory `backend/`)
-- `frontend/` — Angular, deploy no Vercel (root directory `frontend/`)
+- `backend/` — Java + Spring Boot (Railway)
+- `frontend/` — Angular (Vercel)
 - `database/` — migrations, seeds e decisões de modelagem (Supabase/PostgreSQL)
 - `docs/` — arquitetura, requisitos, API, relatórios
+
+## Progresso
+
+### Fase 1 — Fundação ✅
+- Schema PostgreSQL (Supabase) com entidades do núcleo
+- Esqueleto Spring Boot conectado via Session Pooler
+
+### Fase 2 — Gestão (em andamento)
+- [x] CRUD de dados mestres (Diretoria, Area, Cargo, Cliente, Projeto, Campanha)
+- [x] CRUD de Pessoa (relacionamento com Area/Cargo)
+- [x] Demanda — ciclo de vida completo (criar, editar, mudar status, cancelar)
+- [x] Participantes de Demanda (vínculo N:N com Pessoa, com histórico de entrada/saída)
+- [ ] Atividade
+- [ ] Peça
+- [ ] Evidência
 
 ## Stack
 
@@ -43,3 +56,4 @@ _(preenchido conforme backend/ e frontend/ forem criados nos próximos milestone
 M0 Fundação → M1 Banco de dados → M2 Backend/API → M3 Auth → M4 Vertical
 slice Demanda → M5 Atividades/Peças/Evidências → M6 Relatórios → M7 BI →
 M8 IA → M9 Integrações → M10 Deploy/CI-CD.
+
