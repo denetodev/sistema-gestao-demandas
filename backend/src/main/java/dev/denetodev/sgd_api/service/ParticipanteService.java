@@ -51,27 +51,21 @@ public class ParticipanteService {
         Pessoa pessoa = pessoaRepository.findById(request.pessoaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pessoa não encontrada: " + request.pessoaId()));
 
-        PessoaDemanda vinculo = pessoaDemandaRepository
-                .findByPessoaIdAndDemandaId(pessoa.getId(), demandaId)
-                .orElse(null);
+        boolean jaAtivo = pessoaDemandaRepository
+                .findByPessoaIdAndDemandaIdAndDataSaidaIsNull(pessoa.getId(), demandaId)
+                .isPresent();
 
-        if (vinculo != null) {
-            if (vinculo.getDataSaida() == null) {
-                throw new EstadoInvalidoException("Pessoa já é participante ativo dessa demanda");
-            }
-            // reabre o vínculo existente em vez de inserir de novo —
-            // a constraint única (pessoa_id, demanda_id) não permite duplicar a linha
-            vinculo.setDataSaida(null);
-            if (request.papel() != null) {
-                vinculo.setPapel(request.papel());
-            }
-        } else {
-            vinculo = new PessoaDemanda(pessoa, demanda);
-            if (request.papel() != null) {
-                vinculo.setPapel(request.papel());
-            }
-            vinculo = pessoaDemandaRepository.save(vinculo);
+        if (jaAtivo) {
+            throw new EstadoInvalidoException("Pessoa já é participante ativo dessa demanda");
         }
+
+        // sempre cria uma linha nova — preserva o histórico de entradas/saídas
+        // anteriores em vez de reabrir e sobrescrever um vínculo antigo
+        PessoaDemanda vinculo = new PessoaDemanda(pessoa, demanda);
+        if (request.papel() != null) {
+            vinculo.setPapel(request.papel());
+        }
+        vinculo = pessoaDemandaRepository.save(vinculo);
 
         return paraResponse(vinculo);
     }

@@ -11,5 +11,5 @@ public interface PessoaDemandaRepository extends JpaRepository<PessoaDemanda, UU
 
     List<PessoaDemanda> findByDemandaId(UUID demandaId);
 
-    Optional<PessoaDemanda> findByPessoaIdAndDemandaId(UUID pessoaId, UUID demandaId);
+    Optional<PessoaDemanda> findByPessoaIdAndDemandaIdAndDataSaidaIsNull(UUID pessoaId, UUID demandaId);
 }
