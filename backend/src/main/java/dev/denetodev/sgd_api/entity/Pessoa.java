@@ -79,4 +79,11 @@ public class Pessoa {
 
     @Override
     public int hashCode() { return getClass().hashCode(); }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "perfil", nullable = false, length = 20)
+    private PerfilPessoa perfil = PerfilPessoa.PROFISSIONAL;
+
+    public PerfilPessoa getPerfil() { return perfil; }
+    public void setPerfil(PerfilPessoa perfil) { this.perfil = perfil; }
 }

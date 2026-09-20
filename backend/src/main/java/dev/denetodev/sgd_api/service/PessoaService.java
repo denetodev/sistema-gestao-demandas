@@ -60,6 +60,8 @@ public class PessoaService {
         pessoa.setCargo(resolverCargo(request.cargoId()));
         if (request.status() != null) {
             pessoa.setStatus(request.status());
+        } if (request.perfil() != null) {
+            pessoa.setPerfil(request.perfil());
         }
 
         return paraResponse(pessoaRepository.save(pessoa));
@@ -80,6 +82,8 @@ public class PessoaService {
         pessoa.setCargo(resolverCargo(request.cargoId()));
         if (request.status() != null) {
             pessoa.setStatus(request.status());
+        } if (request.perfil() != null) {
+            pessoa.setPerfil(request.perfil());
         }
 
         return paraResponse(pessoa);
@@ -110,8 +114,15 @@ public class PessoaService {
                 pessoa.getArea().getId(), pessoa.getArea().getNome(),
                 cargo != null ? cargo.getId() : null,
                 cargo != null ? cargo.getNome() : null,
-                pessoa.getStatus(),
+                pessoa.getStatus(), pessoa.getPerfil(),
+                pessoa.getAuthUserId(),
                 pessoa.getCreatedAt(), pessoa.getUpdatedAt()
         );
+    }
+
+    public PessoaResponse vincularAuth(UUID id, UUID authUserId) {
+        Pessoa pessoa = buscarEntidade(id);
+        pessoa.setAuthUserId(authUserId);
+        return paraResponse(pessoa);
     }
 }

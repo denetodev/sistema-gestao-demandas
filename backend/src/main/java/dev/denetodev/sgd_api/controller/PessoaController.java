@@ -1,11 +1,13 @@
 package dev.denetodev.sgd_api.controller;
 
 import dev.denetodev.sgd_api.dto.request.PessoaRequest;
+import dev.denetodev.sgd_api.dto.request.VincularAuthRequest;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.service.PessoaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -49,5 +51,11 @@ public class PessoaController {
     public ResponseEntity<Void> desativar(@PathVariable UUID id) {
         pessoaService.desativar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/vincular-auth")
+    @PreAuthorize("hasRole('ADMIN')")
+    public PessoaResponse vincularAuth(@PathVariable UUID id, @Valid @RequestBody VincularAuthRequest request) {
+        return pessoaService.vincularAuth(id, request.authUserId());
     }
 }

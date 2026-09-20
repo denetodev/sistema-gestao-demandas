@@ -1,5 +1,6 @@
 package dev.denetodev.sgd_api.dto.response;
 
+import dev.denetodev.sgd_api.entity.PerfilPessoa;
 import dev.denetodev.sgd_api.entity.StatusPessoa;
 
 import java.time.OffsetDateTime;
@@ -10,7 +11,9 @@ public record PessoaResponse(
         UUID diretoriaId, String diretoriaNome,
         UUID areaId, String areaNome,
         UUID cargoId, String cargoNome,
-        StatusPessoa status,
-        OffsetDateTime createdAt, OffsetDateTime updatedAt
+        StatusPessoa status, PerfilPessoa perfil,
+        UUID authUserId, OffsetDateTime createdAt, OffsetDateTime updatedAt
 ) {
+
 }
+
