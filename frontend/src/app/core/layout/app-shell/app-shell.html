@@ -4,8 +4,23 @@
   <div class="aguardando">
     <h1>Conta aguardando aprovação</h1>
     <p>Sua conta foi criada, mas ainda precisa ser liberada por um administrador.</p>
-    <p-button [text]="true" (onClick)="auth.logout()">Sair</p-button>
+    <p-button [text]="true" (onClick)="sair()">Sair</p-button>
   </div>
 } @else {
-  <router-outlet />
+  <p-toolbar class="app-header">
+    <ng-template pTemplate="start">
+      <span class="app-title">Sistema de Gestão de Demandas</span>
+    </ng-template>
+    <ng-template pTemplate="end">
+      <div class="app-user">
+        <span>{{ auth.pessoa()?.nome }}</span>
+        <p-tag [value]="auth.pessoa()?.perfil" />
+        <p-button [text]="true" icon="pi pi-sign-out" (onClick)="sair()" />
+      </div>
+    </ng-template>
+  </p-toolbar>
+
+  <main class="app-content">
+    <router-outlet />
+  </main>
 }
