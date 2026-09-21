@@ -1,0 +1,22 @@
+<div class="login-page">
+  <form [formGroup]="form" (ngSubmit)="criarConta()" class="login-card">
+    <h1>Criar conta</h1>
+
+    <label for="email">E-mail</label>
+    <input pInputText id="email" formControlName="email" autocomplete="email" />
+
+    <label for="senha">Senha</label>
+    <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" autocomplete="new-password" />
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+    @if (sucesso()) {
+      <p-message severity="success">{{ sucesso() }}</p-message>
+    }
+
+    <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Criar conta</p-button>
+
+    <a routerLink="/login">Já tenho conta</a>
+  </form>
+</div>

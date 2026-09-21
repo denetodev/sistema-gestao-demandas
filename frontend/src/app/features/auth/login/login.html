@@ -1,0 +1,19 @@
+<div class="login-page">
+  <form [formGroup]="form" (ngSubmit)="entrar()" class="login-card">
+    <h1>Entrar</h1>
+
+    <label for="email">E-mail</label>
+    <input pInputText id="email" formControlName="email" autocomplete="email" />
+
+    <label for="senha">Senha</label>
+    <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" autocomplete="current-password" />
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+
+    <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Entrar</p-button>
+
+    <a routerLink="/cadastro">Criar conta</a>
+  </form>
+</div>

@@ -1,0 +1,11 @@
+@if (auth.me.isLoading()) {
+  <p>Carregando...</p>
+} @else if (!auth.vinculado()) {
+  <div class="aguardando">
+    <h1>Conta aguardando aprovação</h1>
+    <p>Sua conta foi criada, mas ainda precisa ser liberada por um administrador.</p>
+    <p-button [text]="true" (onClick)="auth.logout()">Sair</p-button>
+  </div>
+} @else {
+  <router-outlet />
+}

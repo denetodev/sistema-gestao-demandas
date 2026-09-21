@@ -35,9 +35,10 @@ export class AuthService {
     if (error) throw error;
   }
 
-  async cadastrar(email: string, password: string) {
-    const { error } = await supabase.auth.signUp({ email, password });
+  async cadastrar(email: string, password: string): Promise<{ confirmado: boolean }> {
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
+    return { confirmado: data.session !== null };
   }
 
   async logout() {
