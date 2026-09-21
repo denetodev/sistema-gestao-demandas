@@ -22,13 +22,16 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "^20.3.31",
     "@angular/common": "^20.1.0",
     "@angular/compiler": "^20.1.0",
     "@angular/core": "^20.1.0",
     "@angular/forms": "^20.1.0",
     "@angular/platform-browser": "^20.1.0",
     "@angular/router": "^20.1.0",
+    "@primeuix/themes": "^3.0.1",
     "@supabase/supabase-js": "^2.116.0",
+    "primeng": "^20.4.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
