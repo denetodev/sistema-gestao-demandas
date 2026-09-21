@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/pessoas/me").authenticated()
                         .anyRequest().hasAuthority("VINCULADO")
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

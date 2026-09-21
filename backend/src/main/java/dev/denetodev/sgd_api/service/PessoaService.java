@@ -1,6 +1,7 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.PessoaRequest;
+import dev.denetodev.sgd_api.dto.response.MeResponse;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.entity.Area;
 import dev.denetodev.sgd_api.entity.Cargo;
@@ -112,5 +113,12 @@ public class PessoaService {
                 pessoa.getAuthUserId(),
                 pessoa.getCreatedAt(), pessoa.getUpdatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public MeResponse buscarStatusPorAuthUserId(UUID authUserId) {
+        return pessoaRepository.findByAuthUserId(authUserId)
+                .map(pessoa -> new MeResponse(true, paraResponse(pessoa)))
+                .orElseGet(() -> new MeResponse(false, null));
     }
 }
