@@ -1,11 +1,39 @@
-@if (demandas.isLoading()) {
-<p>Carregando...</p>
-} @else if (demandas.error()) {
-<p>Erro ao carregar demandas.</p>
-} @else {
-<ul>
-    @for (d of demandas.value(); track d.id) {
-    <li>{{ d.titulo }} — {{ d.status }}</li>
-    }
-</ul>
-}
+<p-button routerLink="/demandas/nova">Nova demanda</p-button>
+<p-table
+  [value]="demandas.value() ?? []"
+  [loading]="demandas.isLoading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[10, 25, 50]"
+  sortMode="single"
+  dataKey="id"
+  [stripedRows]="true"
+>
+  <ng-template pTemplate="header">
+    <tr>
+      <th pSortableColumn="titulo">Título <p-sortIcon field="titulo" /></th>
+      <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+      <th pSortableColumn="prioridade">Prioridade <p-sortIcon field="prioridade" /></th>
+      <th>Diretoria</th>
+      <th pSortableColumn="dataPrazo">Prazo <p-sortIcon field="dataPrazo" /></th>
+      <th>Valor</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-demanda>
+    <tr>
+      <td>{{ demanda.titulo }}</td>
+      <td><p-tag [value]="demanda.status" [severity]="severityStatus(demanda.status)" /></td>
+      <td>
+        <p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" />
+      </td>
+      <td>{{ demanda.diretoriaNome }}</td>
+      <td>{{ demanda.dataPrazo | date: 'dd/MM/yyyy' }}</td>
+      <td>{{ demanda.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="6">Nenhuma demanda encontrada.</td>
+    </tr>
+  </ng-template>
+</p-table>

@@ -23,6 +23,13 @@ export const routes: Routes = [
           ),
       },
       { path: '', redirectTo: 'demandas', pathMatch: 'full' },
+      {
+        path: 'demandas/nova',
+        loadComponent: () =>
+          import('./features/demandas/feature-form/demanda-form/demanda-form').then(
+            (m) => m.DemandaForm,
+          ),
+      },
     ],
   },
 ];
