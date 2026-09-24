@@ -9,6 +9,7 @@ import { authInterceptor } from './core/auth/auth.interceptor';
 import { AristocrataPreset } from './core/theme/aristocrata-preset';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { erroHttpInterceptor } from './core/http/erro-http.interceptor';
+import { mockInterceptor } from './core/http/mock.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,7 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     MessageService,
     ConfirmationService,
-    provideHttpClient(withInterceptors([authInterceptor, erroHttpInterceptor])),
+    provideHttpClient(withInterceptors([mockInterceptor, authInterceptor, erroHttpInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {

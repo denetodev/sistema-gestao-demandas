@@ -14,11 +14,12 @@ import { DiretoriaService } from '../../diretoria/diretoria.service';
 import { StatusProjeto, Projeto } from '../projeto.model';
 import { ProjetoService } from '../projeto.service';
 import { AuthService } from '../../../auth/auth.service';
+import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
 
 @Component({
   selector: 'app-projeto-lista',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Textarea, Select, Button, Message, Tag],
+  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Textarea, Select, Button, Message, Tag, BarraPagina],
   templateUrl: './projeto-lista.html',
   styleUrl: './projeto-lista.scss',
 })

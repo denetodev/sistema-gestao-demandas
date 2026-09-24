@@ -1,0 +1,29 @@
+:host {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 48px;
+    padding: 0.5rem 1.5rem;
+    background: var(--p-content-background);
+    border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.barra__inicio,
+.barra__fim {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.barra__titulo {
+    font-size: 1rem;
+    font-weight: 600;
+}

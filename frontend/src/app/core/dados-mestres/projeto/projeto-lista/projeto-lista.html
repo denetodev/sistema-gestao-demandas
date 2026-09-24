@@ -1,65 +1,69 @@
-<div class="cabecalho">
-    <h1>Projetos</h1>
-    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-    <p-button icon="pi pi-plus" (onClick)="abrirNovo()">Novo projeto</p-button>
-    }
-</div>
-
-<p-table [value]="projetos.value() ?? []" [loading]="projetos.isLoading()" [paginator]="true" [rows]="10" dataKey="id"
-    [stripedRows]="true">
-    <ng-template pTemplate="header">
-        <tr>
-            <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
-            <th>Cliente</th>
-            <th>Diretoria</th>
-            <th>Status</th>
-            <th>Ações</th>
-        </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-projeto>
-        <tr>
-            <td>{{ projeto.nome }}</td>
-            <td>{{ projeto.clienteNome ?? '—' }}</td>
-            <td>{{ projeto.diretoriaNome ?? '—' }}</td>
-            <td><p-tag [value]="projeto.status" [severity]="severityStatus(projeto.status)" /></td>
-            <td>
-                @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-                <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(projeto)" />
-                }
-            </td>
-        </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-        <tr>
-            <td colspan="5">Nenhum projeto cadastrado.</td>
-        </tr>
-    </ng-template>
-</p-table>
-
-<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar projeto' : 'Novo projeto'" [modal]="true"
-    [style]="{ width: '400px' }">
-    <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
-        <label for="nome">Nome</label>
-        <input pInputText id="nome" formControlName="nome" />
-
-        <label for="cliente">Cliente</label>
-        <p-select inputId="cliente" formControlName="clienteId" [options]="clientes.value() ?? []" optionLabel="nome"
-            optionValue="id" placeholder="Nenhum" [showClear]="true" />
-
-        <label for="diretoria">Diretoria</label>
-        <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
-            optionLabel="nome" optionValue="id" placeholder="Nenhuma" [showClear]="true" />
-
-        <label for="status">Status</label>
-        <p-select inputId="status" formControlName="status" [options]="opcoesStatus" />
-
-        <label for="descricao">Descrição</label>
-        <textarea pTextarea id="descricao" formControlName="descricao" rows="3"></textarea>
-
-        @if (erro()) {
-        <p-message severity="error">{{ erro() }}</p-message>
+<app-barra-pagina titulo="Projetos">
+    <ng-container fim>
+        @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+        <p-button icon="pi pi-plus" (onClick)="abrirNovo()">Novo projeto</p-button>
         }
+    </ng-container>
+</app-barra-pagina>
 
-        <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
-    </form>
-</p-dialog>
+<div class="pagina-corpo">
+    <p-table [value]="projetos.value() ?? []" [loading]="projetos.isLoading()" [paginator]="true" [rows]="10"
+        dataKey="id" [stripedRows]="true">
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+                <th>Cliente</th>
+                <th>Diretoria</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-projeto>
+            <tr>
+                <td>{{ projeto.nome }}</td>
+                <td>{{ projeto.clienteNome ?? '—' }}</td>
+                <td>{{ projeto.diretoriaNome ?? '—' }}</td>
+                <td><p-tag [value]="projeto.status" [severity]="severityStatus(projeto.status)" /></td>
+                <td>
+                    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+                    <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(projeto)" />
+                    }
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="5">Nenhum projeto cadastrado.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+
+    <p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar projeto' : 'Novo projeto'" [modal]="true"
+        [style]="{ width: '400px' }">
+        <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+            <label for="nome">Nome</label>
+            <input pInputText id="nome" formControlName="nome" />
+
+            <label for="cliente">Cliente</label>
+            <p-select inputId="cliente" formControlName="clienteId" [options]="clientes.value() ?? []"
+                optionLabel="nome" optionValue="id" placeholder="Nenhum" [showClear]="true" />
+
+            <label for="diretoria">Diretoria</label>
+            <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
+                optionLabel="nome" optionValue="id" placeholder="Nenhuma" [showClear]="true" />
+
+            <label for="status">Status</label>
+            <p-select inputId="status" formControlName="status" [options]="opcoesStatus" />
+
+            <label for="descricao">Descrição</label>
+            <textarea pTextarea id="descricao" formControlName="descricao" rows="3"></textarea>
+
+            @if (erro()) {
+            <p-message severity="error">{{ erro() }}</p-message>
+            }
+
+            <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
+        </form>
+    </p-dialog>
+</div>

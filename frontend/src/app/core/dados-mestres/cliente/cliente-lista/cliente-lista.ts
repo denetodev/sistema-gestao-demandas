@@ -11,10 +11,11 @@ import { ClienteService } from '../cliente.service';
 import { TipoCliente, type Cliente } from '../cliente.model';
 import { Select } from 'primeng/select';
 import { AuthService } from '../../../auth/auth.service';
+import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
 @Component({
   selector: 'app-cliente-lista',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Button, Message, Tag, Select],
+  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Button, Message, Tag, Select, BarraPagina],
   templateUrl: './cliente-lista.html',
   styleUrl: './cliente-lista.scss',
 })

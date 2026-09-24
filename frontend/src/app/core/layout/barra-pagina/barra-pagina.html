@@ -1,0 +1,11 @@
+<div class="barra">
+    <div class="barra__inicio">
+        @if (titulo()) {
+        <span class="barra__titulo">{{ titulo() }}</span>
+        }
+        <ng-content select="[inicio]" />
+    </div>
+    <div class="barra__fim">
+        <ng-content select="[fim]" />
+    </div>
+</div>

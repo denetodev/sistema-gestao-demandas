@@ -1,57 +1,61 @@
-<div class="cabecalho">
-  <h1>Clientes</h1>
-  @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-  <p-button icon="pi pi-plus" (onClick)="abrirNovo()">Novo cliente</p-button>
-  }
-</div>
-
-<p-table [value]="clientes.value() ?? []" [loading]="clientes.isLoading()" [paginator]="true" [rows]="10" dataKey="id"
-  [stripedRows]="true">
-  <ng-template pTemplate="header">
-    <tr>
-      <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
-      <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" /></th>
-      <th>Situação</th>
-      <th>Ações</th>
-    </tr>
-  </ng-template>
-  <ng-template pTemplate="body" let-cliente>
-    <tr>
-      <td>{{ cliente.nome }}</td>
-      <td>{{ cliente.tipo }}</td>
-      <td>
-        <p-tag [value]="cliente.ativo ? 'Ativo' : 'Inativo'" [severity]="cliente.ativo ? 'success' : 'secondary'" />
-      </td>
-      <td>
-        @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-        <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(cliente)" />
-        }
-      </td>
-    </tr>
-  </ng-template>
-  <ng-template pTemplate="emptymessage">
-    <tr>
-      <td colspan="4">Nenhum cliente cadastrado.</td>
-    </tr>
-  </ng-template>
-</p-table>
-
-<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar cliente' : 'Novo cliente'" [modal]="true"
-  [style]="{ width: '400px' }">
-  <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
-    <label for="nome">Nome</label>
-    <input pInputText id="nome" formControlName="nome" />
-
-    <label for="tipo">Tipo</label>
-    <p-select inputId="tipo" formControlName="tipo" [options]="opcoesTipo" placeholder="Selecione" />
-
-    <label for="observacao">Observação</label>
-    <textarea pTextarea id="observacao" formControlName="observacao" rows="3"></textarea>
-
-    @if (erro()) {
-    <p-message severity="error">{{ erro() }}</p-message>
+<app-barra-pagina titulo="Clientes">
+  <ng-container fim>
+    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+    <p-button icon="pi pi-plus" (onClick)="abrirNovo()">Novo cliente</p-button>
     }
+  </ng-container>
+</app-barra-pagina>
 
-    <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
-  </form>
-</p-dialog>
+<div class="pagina-corpo">
+  <p-table [value]="clientes.value() ?? []" [loading]="clientes.isLoading()" [paginator]="true" [rows]="10" dataKey="id"
+    [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+        <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" /></th>
+        <th>Situação</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-cliente>
+      <tr>
+        <td>{{ cliente.nome }}</td>
+        <td>{{ cliente.tipo }}</td>
+        <td>
+          <p-tag [value]="cliente.ativo ? 'Ativo' : 'Inativo'" [severity]="cliente.ativo ? 'success' : 'secondary'" />
+        </td>
+        <td>
+          @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+          <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(cliente)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="4">Nenhum cliente cadastrado.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+
+  <p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar cliente' : 'Novo cliente'" [modal]="true"
+    [style]="{ width: '400px' }">
+    <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+      <label for="nome">Nome</label>
+      <input pInputText id="nome" formControlName="nome" />
+
+      <label for="tipo">Tipo</label>
+      <p-select inputId="tipo" formControlName="tipo" [options]="opcoesTipo" placeholder="Selecione" />
+
+      <label for="observacao">Observação</label>
+      <textarea pTextarea id="observacao" formControlName="observacao" rows="3"></textarea>
+
+      @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+      }
+
+      <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
+    </form>
+  </p-dialog>
+</div>

@@ -14,23 +14,54 @@
   <p-button [text]="true" (onClick)="sair()">Sair</p-button>
 </div>
 } @else {
-<p-toolbar class="app-header">
-  <ng-template pTemplate="start">
-    <div class="app-marca">
-      <span class="app-title">SGD</span>
-      <p-menubar [model]="itensMenu" />
+<div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()">
+  <header class="app-topbar">
+    <div class="app-topbar__inicio">
+      <span class="app-marca">SGD</span>
     </div>
-  </ng-template>
-  <ng-template pTemplate="end">
-    <div class="app-user">
-      <span>{{ auth.pessoa()?.nome }}</span>
-      <p-tag [value]="auth.pessoa()?.perfil" />
-      <p-button [text]="true" icon="pi pi-sign-out" (onClick)="sair()" />
-    </div>
-  </ng-template>
-</p-toolbar>
 
-<main class="app-content">
-  <router-outlet />
-</main>
+    <div class="app-topbar__fim">
+      <p-button [text]="true" [rounded]="true" [icon]="tema.dark() ? 'pi pi-sun' : 'pi pi-moon'"
+        (onClick)="tema.toggle()" />
+      <p-button [text]="true" [rounded]="true" icon="pi pi-cog" />
+      <div class="app-usuario">
+        <span class="app-usuario__nome">{{ auth.pessoa()?.nome }}</span>
+        <span class="app-usuario__perfil">{{ auth.pessoa()?.perfil }}</span>
+      </div>
+      <div class="app-avatar">{{ iniciais() }}</div>
+      <p-button [text]="true" [rounded]="true" icon="pi pi-sign-out" (onClick)="sair()" />
+    </div>
+  </header>
+
+  <aside class="app-sidebar">
+    <nav class="app-nav">
+      <button type="button" class="app-nav__item app-nav__toggle" (click)="alternarSidebar()"
+        [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'Recolher menu'"
+        [attr.aria-expanded]="!sidebarRecolhida()">
+        <i [class]="sidebarRecolhida() ? 'pi pi-window-maximize' : 'pi pi-sidebar'"></i>
+        <!-- <span>Recolher</span> -->
+      </button>
+
+      <a routerLink="/demandas" routerLinkActive="ativo" class="app-nav__item" title="Demandas">
+        <i class="pi pi-briefcase"></i><span>Demandas</span>
+      </a>
+
+      <span class="app-nav__secao">Cadastros</span>
+
+      <a routerLink="/clientes" routerLinkActive="ativo" class="app-nav__item" title="Clientes">
+        <i class="pi pi-users"></i><span>Clientes</span>
+      </a>
+      <a routerLink="/projetos" routerLinkActive="ativo" class="app-nav__item" title="Projetos">
+        <i class="pi pi-folder"></i><span>Projetos</span>
+      </a>
+      <a routerLink="/campanhas" routerLinkActive="ativo" class="app-nav__item" title="Campanhas">
+        <i class="pi pi-megaphone"></i><span>Campanhas</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="app-conteudo">
+    <router-outlet />
+  </main>
+</div>
 }

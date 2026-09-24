@@ -7,9 +7,10 @@ import type { StatusDemanda, Prioridade } from '../../data-access/demanda.model'
 import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
 @Component({
   selector: 'app-demanda-lista',
-  imports: [TableModule, Tag, DatePipe, CurrencyPipe, RouterLink, Button],
+  imports: [TableModule, Tag, DatePipe, CurrencyPipe, RouterLink, Button, BarraPagina],
   templateUrl: './demanda-lista.html',
   styleUrl: './demanda-lista.scss',
 })
