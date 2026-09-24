@@ -7,13 +7,17 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { providePrimeNG } from 'primeng/config';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { AristocrataPreset } from './core/theme/aristocrata-preset';
+import { ConfirmationService, MessageService } from 'primeng/api';
+import { erroHttpInterceptor } from './core/http/erro-http.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    MessageService,
+    ConfirmationService,
+    provideHttpClient(withInterceptors([authInterceptor, erroHttpInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
