@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 export interface Diretoria {
   id: string;

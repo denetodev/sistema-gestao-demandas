@@ -1,0 +1,58 @@
+<ng-template pTemplate="header">
+    <tr>
+        <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+        <th>Código</th>
+        <th>Projeto</th>
+        <th pSortableColumn="dataInicio">Início <p-sortIcon field="dataInicio" /></th>
+        <th>Fim</th>
+        <th>Ações</th>
+    </tr>
+</ng-template>
+<ng-template pTemplate="body" let-campanha>
+    <tr>
+        <td>{{ campanha.nome }}</td>
+        <td>{{ campanha.codigo ?? '—' }}</td>
+        <td>{{ campanha.projetoNome ?? '—' }}</td>
+        <td>{{ campanha.dataInicio | date:'dd/MM/yyyy' }}</td>
+        <td>{{ campanha.dataFim | date:'dd/MM/yyyy' }}</td>
+        <td>
+            @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(campanha)" />
+            <p-button [text]="true" severity="danger" icon="pi pi-trash" (onClick)="confirmarExclusao(campanha)" />
+            }
+        </td>
+    </tr>
+</ng-template>
+<ng-template pTemplate="emptymessage">
+    <tr>
+        <td colspan="6">Nenhuma campanha cadastrada.</td>
+    </tr>
+</ng-template>
+
+
+<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar campanha' : 'Nova campanha'" [modal]="true"
+    [style]="{ width: '400px' }">
+    <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+        <label for="nome">Nome</label>
+        <input pInputText id="nome" formControlName="nome" />
+
+        <label for="codigo">Código</label>
+        <input pInputText id="codigo" formControlName="codigo" placeholder="Ex.: BC2609CR" />
+
+        <label for="projeto">Projeto</label>
+        <p-select inputId="projeto" formControlName="projetoId" [options]="projetos.value() ?? []" optionLabel="nome"
+            optionValue="id" placeholder="Nenhum" [showClear]="true" />
+
+        <label for="inicio">Data de início</label>
+        <p-datepicker inputId="inicio" formControlName="dataInicio" dateFormat="dd/mm/yy" [showIcon]="true" />
+
+        <label for="fim">Data de fim</label>
+        <p-datepicker inputId="fim" formControlName="dataFim" dateFormat="dd/mm/yy" [showIcon]="true" />
+
+        @if (erro()) {
+        <p-message severity="error">{{ erro() }}</p-message>
+        }
+
+        <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
+    </form>
+</p-dialog>
