@@ -6,6 +6,7 @@ import { DemandaService } from '../../data-access/demanda.service';
 import type { StatusDemanda, Prioridade } from '../../data-access/demanda.model';
 import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
+import { AuthService } from '../../../../core/auth/auth.service';
 @Component({
   selector: 'app-demanda-lista',
   imports: [TableModule, Tag, DatePipe, CurrencyPipe, RouterLink, Button],
@@ -14,7 +15,9 @@ import { Button } from 'primeng/button';
 })
 export class DemandaLista implements OnInit {
   #service = inject(DemandaService);
+  auth = inject(AuthService);
   demandas = this.#service.listar;
+  
 
   ngOnInit() {
     this.demandas.reload();

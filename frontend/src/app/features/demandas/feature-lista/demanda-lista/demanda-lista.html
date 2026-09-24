@@ -1,14 +1,9 @@
+@if (auth.podeEditar()) {
 <p-button routerLink="/demandas/nova">Nova demanda</p-button>
-<p-table
-  [value]="demandas.value() ?? []"
-  [loading]="demandas.isLoading()"
-  [paginator]="true"
-  [rows]="10"
-  [rowsPerPageOptions]="[10, 25, 50]"
-  sortMode="single"
-  dataKey="id"
-  [stripedRows]="true"
->
+}
+
+<p-table [value]="demandas.value() ?? []" [loading]="demandas.isLoading()" [paginator]="true" [rows]="10"
+  [rowsPerPageOptions]="[10, 25, 50]" sortMode="single" dataKey="id" [stripedRows]="true">
   <ng-template pTemplate="header">
     <tr>
       <th pSortableColumn="titulo">Título <p-sortIcon field="titulo" /></th>
@@ -17,23 +12,27 @@
       <th>Diretoria</th>
       <th pSortableColumn="dataPrazo">Prazo <p-sortIcon field="dataPrazo" /></th>
       <th>Valor</th>
+      <th>Ações</th>
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-demanda>
     <tr>
       <td>{{ demanda.titulo }}</td>
       <td><p-tag [value]="demanda.status" [severity]="severityStatus(demanda.status)" /></td>
-      <td>
-        <p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" />
-      </td>
+      <td><p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" /></td>
       <td>{{ demanda.diretoriaNome }}</td>
-      <td>{{ demanda.dataPrazo | date: 'dd/MM/yyyy' }}</td>
-      <td>{{ demanda.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+      <td>{{ demanda.dataPrazo | date:'dd/MM/yyyy' }}</td>
+      <td>{{ demanda.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+      <td>
+        @if (auth.podeEditar()) {
+        <p-button [text]="true" icon="pi pi-pencil" [routerLink]="['/demandas', demanda.id, 'editar']" />
+        }
+      </td>
     </tr>
   </ng-template>
   <ng-template pTemplate="emptymessage">
     <tr>
-      <td colspan="6">Nenhuma demanda encontrada.</td>
+      <td colspan="7">Nenhuma demanda encontrada.</td>
     </tr>
   </ng-template>
 </p-table>
