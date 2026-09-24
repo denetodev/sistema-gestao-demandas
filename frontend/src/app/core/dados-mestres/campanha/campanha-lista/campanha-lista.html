@@ -1,7 +1,7 @@
 <app-barra-pagina titulo="Campanhas">
     <ng-container fim>
         @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-        <p-button icon="pi pi-plus" (onClick)="abrirNovo()">Nova campanha</p-button>
+        <p-button icon="pi pi-plus" label="Nova campanha" (onClick)="abrirNovo()" />
         }
     </ng-container>
 </app-barra-pagina>

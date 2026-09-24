@@ -1,7 +1,7 @@
 <app-barra-pagina titulo="Clientes">
   <ng-container fim>
     @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-    <p-button icon="pi pi-plus" (onClick)="abrirNovo()">Novo cliente</p-button>
+    <p-button icon="pi pi-plus" label="Novo cliente" (onClick)="abrirNovo()" />
     }
   </ng-container>
 </app-barra-pagina>

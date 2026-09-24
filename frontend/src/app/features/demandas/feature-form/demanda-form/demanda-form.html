@@ -1,29 +1,35 @@
-<form [formGroup]="form" (ngSubmit)="salvar()" class="demanda-form">
-  <h1>{{ edicao() ? 'Editar demanda' : 'Nova demanda' }}</h1>
+<p-dialog
+  [(visible)]="visivel"
+  [header]="edicao() ? 'Editar demanda' : 'Nova demanda'"
+  [modal]="true"
+  [style]="{ width: '480px' }"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="demanda-form">
+    <label for="titulo">Título</label>
+    <input pInputText id="titulo" formControlName="titulo" />
 
-  <label for="titulo">Título</label>
-  <input pInputText id="titulo" formControlName="titulo" />
+    <label for="diretoria">Diretoria</label>
+    <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
+              optionLabel="nome" optionValue="id" placeholder="Selecione" />
 
-  <label for="diretoria">Diretoria</label>
-  <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []" optionLabel="nome" optionValue="id" placeholder="Selecione" />
+    <label for="prioridade">Prioridade</label>
+    <p-select inputId="prioridade" formControlName="prioridade" [options]="opcoesPrioridade" />
 
-  <label for="prioridade">Prioridade</label>
-  <p-select inputId="prioridade" formControlName="prioridade" [options]="opcoesPrioridade" />
+    <label for="prazo">Prazo</label>
+    <p-datepicker inputId="prazo" formControlName="dataPrazo" dateFormat="dd/mm/yy" [showIcon]="true" />
 
-  <label for="prazo">Prazo</label>
-  <p-datepicker inputId="prazo" formControlName="dataPrazo" dateFormat="dd/mm/yy" [showIcon]="true" />
+    <label for="valor">Valor</label>
+    <p-inputnumber inputId="valor" formControlName="valor" mode="currency" currency="BRL" locale="pt-BR" />
 
-  <label for="valor">Valor</label>
-  <p-inputnumber inputId="valor" formControlName="valor" mode="currency" currency="BRL" locale="pt-BR" />
+    <label for="observacoes">Observações</label>
+    <textarea pTextarea id="observacoes" formControlName="observacoes" rows="3"></textarea>
 
-  <label for="observacoes">Observações</label>
-  <textarea pTextarea id="observacoes" formControlName="observacoes" rows="3"></textarea>
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
 
-  @if (erro()) {
-    <p-message severity="error">{{ erro() }}</p-message>
-  }
-
-  <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid || carregandoDemanda()">
-  {{ edicao() ? 'Salvar' : 'Criar demanda' }}
-</p-button>
-</form>
+    <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid || carregandoDemanda()">
+      {{ edicao() ? 'Salvar' : 'Criar demanda' }}
+    </p-button>
+  </form>
+</p-dialog>

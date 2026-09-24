@@ -22,4 +22,8 @@ export class DemandaService {
   atualizar(id: string, payload: CriarDemandaPayload) {
     return this.#http.put<Demanda>(`${this.#base}/${id}`, payload);
   }
+
+  excluir(id: string) {
+  return this.#http.delete<void>(`${this.#base}/${id}`);
+}
 }

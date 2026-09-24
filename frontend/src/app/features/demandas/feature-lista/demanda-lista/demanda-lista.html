@@ -1,7 +1,7 @@
 <app-barra-pagina titulo="Demandas">
   <ng-container fim>
     @if (auth.podeEditar()) {
-    <p-button icon="pi pi-plus" routerLink="/demandas/nova">Nova demanda</p-button>
+    <p-button icon="pi pi-plus" label="Nova demanda" (onClick)="abrirNovo()" />
     }
   </ng-container>
 </app-barra-pagina>
@@ -30,7 +30,10 @@
         <td>{{ demanda.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
         <td>
           @if (auth.podeEditar()) {
-          <p-button [text]="true" icon="pi pi-pencil" [routerLink]="['/demandas', demanda.id, 'editar']" />
+          <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demanda)" pTooltip="Editar"
+            tooltipPosition="top" />
+          <p-button [text]="true" severity="danger" icon="pi pi-times-circle" (onClick)="confirmarExclusao(demanda)"
+            pTooltip="Cancelar demanda" tooltipPosition="top" />
           }
         </td>
       </tr>
@@ -42,3 +45,5 @@
     </ng-template>
   </p-table>
 </div>
+
+<app-demanda-form [(visivel)]="dialogAberto" [demandaId]="demandaEditandoId()" (salvo)="demandas.reload()" />

@@ -18,9 +18,13 @@
 
 .barra__inicio,
 .barra__fim {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+.barra__inicio {
+  min-width: 0;
 }
 
 .barra__titulo {

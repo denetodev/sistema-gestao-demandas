@@ -24,20 +24,20 @@ export const routes: Routes = [
           ),
       },
       { path: '', redirectTo: 'demandas', pathMatch: 'full' },
-      {
-        path: 'demandas/nova',
-        canActivate: [naoVisualizadorGuard],
-        loadComponent: () =>
-          import('./features/demandas/feature-form/demanda-form/demanda-form').then(
-            (m) => m.DemandaForm,
-          ),
-      },
-      {
-        path: 'demandas/:id/editar',
-        canActivate: [naoVisualizadorGuard],
-        loadComponent: () =>
-          import('./features/demandas/feature-form/demanda-form/demanda-form').then(m => m.DemandaForm),
-      },
+      // {
+      //   path: 'demandas/nova',
+      //   canActivate: [naoVisualizadorGuard],
+      //   loadComponent: () =>
+      //     import('./features/demandas/feature-form/demanda-form/demanda-form').then(
+      //       (m) => m.DemandaForm,
+      //     ),
+      // },
+      // {
+      //   path: 'demandas/:id/editar',
+      //   canActivate: [naoVisualizadorGuard],
+      //   loadComponent: () =>
+      //     import('./features/demandas/feature-form/demanda-form/demanda-form').then(m => m.DemandaForm),
+      // },
       {
         path: 'clientes',
         canActivate: [perfilGuard('ADMIN', 'GESTOR')],
