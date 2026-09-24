@@ -1,5 +1,5 @@
-<form [formGroup]="form" (ngSubmit)="criar()" class="demanda-form">
-  <h1>Nova demanda</h1>
+<form [formGroup]="form" (ngSubmit)="salvar()" class="demanda-form">
+  <h1>{{ edicao() ? 'Editar demanda' : 'Nova demanda' }}</h1>
 
   <label for="titulo">Título</label>
   <input pInputText id="titulo" formControlName="titulo" />
@@ -23,5 +23,7 @@
     <p-message severity="error">{{ erro() }}</p-message>
   }
 
-  <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Criar demanda</p-button>
+  <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid || carregandoDemanda()">
+  {{ edicao() ? 'Salvar' : 'Criar demanda' }}
+</p-button>
 </form>
