@@ -1,5 +1,7 @@
 package dev.denetodev.sgd_api.controller;
 
+import dev.denetodev.sgd_api.dto.request.AprovarRequest;
+import dev.denetodev.sgd_api.dto.request.AutoCadastroRequest;
 import dev.denetodev.sgd_api.dto.request.PessoaRequest;
 import dev.denetodev.sgd_api.dto.request.VincularAuthRequest;
 import dev.denetodev.sgd_api.dto.response.MeResponse;
@@ -38,11 +40,10 @@ public class PessoaController {
     }
 
     @PostMapping
-    public ResponseEntity<PessoaResponse> criar(@Valid @RequestBody PessoaRequest request) {
-        PessoaResponse criada = pessoaService.criar(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .location(URI.create("/pessoas/" + criada.id()))
-                .body(criada);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<PessoaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PessoaRequest request) {
+        PessoaResponse criada = pessoaService.criar(jwt, request);
+        return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/pessoas/" + criada.id())).body(criada);
     }
 
     @PutMapping("/{id}")
@@ -66,5 +67,24 @@ public class PessoaController {
     public MeResponse meuPerfil(@AuthenticationPrincipal Jwt jwt) {
         UUID authUserId = UUID.fromString(jwt.getSubject());
         return pessoaService.buscarStatusPorAuthUserId(authUserId);
+    }
+
+    @PostMapping("/auto-cadastro")
+    public ResponseEntity<PessoaResponse> autoCadastro(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AutoCadastroRequest request
+    ) {
+        PessoaResponse criada = pessoaService.autoCadastro(jwt, request);
+        return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/pessoas/" + criada.id())).body(criada);
+    }
+
+    @PatchMapping("/{id}/aprovar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public PessoaResponse aprovar(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AprovarRequest request
+    ) {
+        return pessoaService.aprovar(id, jwt, request);
     }
 }

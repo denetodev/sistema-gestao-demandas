@@ -43,6 +43,17 @@ public class Pessoa {
     @Column(name = "updated_at", insertable = false, updatable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(name = "aprovado_em")
+    private OffsetDateTime aprovadoEm;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aprovado_por")
+    private Pessoa aprovadoPor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "referencia_area_id")
+    private Area referenciaArea;
+
     protected Pessoa() {
     }
 
@@ -68,6 +79,12 @@ public class Pessoa {
     public void setAuthUserId(UUID authUserId) { this.authUserId = authUserId; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public OffsetDateTime getAprovadoEm() { return aprovadoEm; }
+    public void setAprovadoEm(OffsetDateTime aprovadoEm) { this.aprovadoEm = aprovadoEm; }
+    public Pessoa getAprovadoPor() { return aprovadoPor; }
+    public void setAprovadoPor(Pessoa aprovadoPor) { this.aprovadoPor = aprovadoPor; }
+    public Area getReferenciaArea() { return referenciaArea; }
+    public void setReferenciaArea(Area referenciaArea) { this.referenciaArea = referenciaArea; }
 
     @Override
     public boolean equals(Object o) {

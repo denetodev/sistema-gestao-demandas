@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pessoas/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/pessoas/auto-cadastro").authenticated()
                         .anyRequest().hasAuthority("VINCULADO")
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

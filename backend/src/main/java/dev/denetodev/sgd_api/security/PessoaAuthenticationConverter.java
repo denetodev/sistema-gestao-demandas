@@ -34,8 +34,10 @@ public class PessoaAuthenticationConverter implements Converter<Jwt, AbstractAut
         }
 
         pessoaRepository.findByAuthUserId(authUserId).ifPresent(pessoa -> {
-            authorities.add(new SimpleGrantedAuthority("VINCULADO"));
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + pessoa.getPerfil().name()));
+            if (pessoa.getAprovadoEm() != null) {
+                authorities.add(new SimpleGrantedAuthority("VINCULADO"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + pessoa.getPerfil().name()));
+            }
         });
 
         return new JwtAuthenticationToken(jwt, authorities);
