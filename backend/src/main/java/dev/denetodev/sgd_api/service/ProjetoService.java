@@ -2,12 +2,12 @@ package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.ProjetoRequest;
 import dev.denetodev.sgd_api.dto.response.ProjetoResponse;
-import dev.denetodev.sgd_api.entity.Cliente;
+import dev.denetodev.sgd_api.entity.Demandante;
 import dev.denetodev.sgd_api.entity.Diretoria;
 import dev.denetodev.sgd_api.entity.Projeto;
 import dev.denetodev.sgd_api.entity.StatusProjeto;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
-import dev.denetodev.sgd_api.repository.ClienteRepository;
+import dev.denetodev.sgd_api.repository.DemandanteRepository;
 import dev.denetodev.sgd_api.repository.DiretoriaRepository;
 import dev.denetodev.sgd_api.repository.ProjetoRepository;
 import dev.denetodev.sgd_api.service.support.Resolvers;
@@ -22,12 +22,12 @@ import java.util.UUID;
 public class ProjetoService {
 
     private final ProjetoRepository projetoRepository;
-    private final ClienteRepository clienteRepository;
+    private final DemandanteRepository demandanteRepository;
     private final DiretoriaRepository diretoriaRepository;
 
-    public ProjetoService(ProjetoRepository projetoRepository, ClienteRepository clienteRepository, DiretoriaRepository diretoriaRepository) {
+    public ProjetoService(ProjetoRepository projetoRepository, DemandanteRepository demandanteRepository, DiretoriaRepository diretoriaRepository) {
         this.projetoRepository = projetoRepository;
-        this.clienteRepository = clienteRepository;
+        this.demandanteRepository = demandanteRepository;
         this.diretoriaRepository = diretoriaRepository;
     }
 
@@ -43,7 +43,7 @@ public class ProjetoService {
 
     public ProjetoResponse criar(ProjetoRequest request) {
         Projeto projeto = new Projeto(request.nome());
-        projeto.setCliente(Resolvers.resolverOuNulo(request.clienteId(), clienteRepository, "Cliente"));
+        projeto.setDemandante(Resolvers.resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
         projeto.setDiretoria(Resolvers.resolverOuNulo(request.diretoriaId(), diretoriaRepository, "Diretoria"));
         projeto.setDescricao(request.descricao());
         if (request.status() != null) {
@@ -55,7 +55,7 @@ public class ProjetoService {
     public ProjetoResponse atualizar(UUID id, ProjetoRequest request) {
         Projeto projeto = buscarEntidade(id);
         projeto.setNome(request.nome());
-        projeto.setCliente(Resolvers.resolverOuNulo(request.clienteId(), clienteRepository, "Cliente"));
+        projeto.setDemandante(Resolvers.resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
         projeto.setDiretoria(Resolvers.resolverOuNulo(request.diretoriaId(), diretoriaRepository, "Diretoria"));
         projeto.setDescricao(request.descricao());
         if (request.status() != null) {
@@ -74,12 +74,12 @@ public class ProjetoService {
     }
 
     private ProjetoResponse paraResponse(Projeto p) {
-        Cliente cliente = p.getCliente();
+        Demandante demandante = p.getDemandante();
         Diretoria diretoria = p.getDiretoria();
         return new ProjetoResponse(
                 p.getId(), p.getNome(),
-                cliente != null ? cliente.getId() : null,
-                cliente != null ? cliente.getNome() : null,
+                demandante != null ? demandante.getId() : null,
+                demandante != null ? demandante.getNome() : null,
                 diretoria != null ? diretoria.getId() : null,
                 diretoria != null ? diretoria.getNome() : null,
                 p.getDescricao(), p.getStatus(),

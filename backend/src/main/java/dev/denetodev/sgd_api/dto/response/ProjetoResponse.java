@@ -7,9 +7,8 @@ import java.util.UUID;
 
 public record ProjetoResponse(
         UUID id, String nome,
-        UUID clienteId, String clienteNome,
+        UUID demandanteId, String demandanteNome,
         UUID diretoriaId, String diretoriaNome,
         String descricao, StatusProjeto status,
         OffsetDateTime createdAt, OffsetDateTime updatedAt
-) {
-}
+) {}

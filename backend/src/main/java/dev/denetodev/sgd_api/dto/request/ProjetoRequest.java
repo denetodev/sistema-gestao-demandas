@@ -7,9 +7,8 @@ import java.util.UUID;
 
 public record ProjetoRequest(
         @NotBlank(message = "nome é obrigatório") String nome,
-        UUID clienteId,
+        UUID demandanteId,
         UUID diretoriaId,
         String descricao,
         StatusProjeto status
-) {
-}
+) {}

@@ -19,7 +19,7 @@ public record DemandaRequest(
         @NotNull(message = "diretoriaId é obrigatório")
         UUID diretoriaId,
 
-        UUID clienteId,
+        UUID demandanteId,
 
         UUID projetoId,
 
