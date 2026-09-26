@@ -8,6 +8,7 @@ import dev.denetodev.sgd_api.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,19 +21,22 @@ public class DemandaService {
     private final DemandanteRepository demandanteRepository;
     private final ProjetoRepository projetoRepository;
     private final CampanhaRepository campanhaRepository;
+    private final PecaRepository pecaRepository;
 
     public DemandaService(
             DemandaRepository demandaRepository,
             DiretoriaRepository diretoriaRepository,
             DemandanteRepository demandanteRepository,
             ProjetoRepository projetoRepository,
-            CampanhaRepository campanhaRepository
+            CampanhaRepository campanhaRepository,
+            PecaRepository pecaRepository
     ) {
         this.demandaRepository = demandaRepository;
         this.diretoriaRepository = diretoriaRepository;
         this.demandanteRepository = demandanteRepository;
         this.projetoRepository = projetoRepository;
         this.campanhaRepository = campanhaRepository;
+        this.pecaRepository = pecaRepository;
     }
 
     @Transactional(readOnly = true)
@@ -102,10 +106,6 @@ public class DemandaService {
         demanda.setObservacoes(request.observacoes());
         demanda.setPrioridade(request.prioridade() != null ? request.prioridade() : demanda.getPrioridade());
 
-        // PUT é substituição completa: demandante/projeto/campanha são
-        // resolvidos e ATRIBUÍDOS SEMPRE — inclusive limpando (null) se o
-        // request não trouxer o id, diferente do criar() (onde "ausente"
-        // simplesmente não seta nada, porque no create já nasce null).
         demanda.setDemandante(resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
         demanda.setProjeto(resolverOuNulo(request.projetoId(), projetoRepository, "Projeto"));
         demanda.setCampanha(resolverOuNulo(request.campanhaId(), campanhaRepository, "Campanha"));
@@ -119,7 +119,6 @@ public class DemandaService {
 
         demanda.setStatus(novoStatus);
         // TODO(M3): registrar em auditoria (usuário, data, status anterior, motivo)
-        // quando existir usuário autenticado pra atribuir a mudança.
 
         return paraResponse(demanda);
     }
@@ -132,6 +131,11 @@ public class DemandaService {
         Demandante demandante = demanda.getDemandante();
         Projeto projeto = demanda.getProjeto();
         Campanha campanha = demanda.getCampanha();
+
+        List<Peca> pecas = pecaRepository.findByDemandaId(demanda.getId());
+        BigDecimal valorCalculado = pecas.isEmpty()
+                ? null
+                : pecas.stream().map(Peca::getValorTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new DemandaResponse(
                 demanda.getId(),
@@ -153,6 +157,7 @@ public class DemandaService {
                 demanda.getDataEntregaReal(),
                 demanda.getValor(),
                 demanda.getObservacoes(),
+                valorCalculado,
                 demanda.getCreatedAt(),
                 demanda.getUpdatedAt()
         );
