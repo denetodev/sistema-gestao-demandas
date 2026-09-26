@@ -5,6 +5,9 @@ import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.*;
+import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.PermissaoService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +25,9 @@ public class DemandaService {
     private final ProjetoRepository projetoRepository;
     private final CampanhaRepository campanhaRepository;
     private final PecaRepository pecaRepository;
+    private final PessoaDemandaRepository pessoaDemandaRepository;
+    private final CurrentPessoaResolver currentPessoaResolver;
+    private final PermissaoService permissaoService;
 
     public DemandaService(
             DemandaRepository demandaRepository,
@@ -29,7 +35,10 @@ public class DemandaService {
             DemandanteRepository demandanteRepository,
             ProjetoRepository projetoRepository,
             CampanhaRepository campanhaRepository,
-            PecaRepository pecaRepository
+            PecaRepository pecaRepository,
+            PessoaDemandaRepository pessoaDemandaRepository,
+            CurrentPessoaResolver currentPessoaResolver,
+            PermissaoService permissaoService
     ) {
         this.demandaRepository = demandaRepository;
         this.diretoriaRepository = diretoriaRepository;
@@ -37,13 +46,30 @@ public class DemandaService {
         this.projetoRepository = projetoRepository;
         this.campanhaRepository = campanhaRepository;
         this.pecaRepository = pecaRepository;
+        this.pessoaDemandaRepository = pessoaDemandaRepository;
+        this.currentPessoaResolver = currentPessoaResolver;
+        this.permissaoService = permissaoService;
     }
 
     @Transactional(readOnly = true)
-    public List<DemandaResponse> listarTodas() {
-        return demandaRepository.findAll().stream()
-                .map(this::paraResponse)
-                .toList();
+    public List<DemandaResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        permissaoService.validarEscopo(usuario, escopo);
+
+        List<Demanda> demandas = switch (escopo) {
+            case MINHAS -> pessoaDemandaRepository.findByPessoa_IdAndDataSaidaIsNull(usuario.getId()).stream()
+                    .map(PessoaDemanda::getDemanda)
+                    .distinct()
+                    .toList();
+            case EQUIPE -> pessoaDemandaRepository.findByPessoa_AreaIdAndDataSaidaIsNull(usuario.getReferenciaArea().getId()).stream()
+                    .map(PessoaDemanda::getDemanda)
+                    .distinct()
+                    .toList();
+            case DIRETORIA -> demandaRepository.findByDiretoriaId(usuario.getArea().getDiretoria().getId());
+            case TODAS -> demandaRepository.findAll();
+        };
+
+        return demandas.stream().map(this::paraResponse).toList();
     }
 
     @Transactional(readOnly = true)

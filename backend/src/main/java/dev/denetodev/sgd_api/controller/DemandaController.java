@@ -3,10 +3,13 @@ package dev.denetodev.sgd_api.controller;
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.request.StatusUpdateRequest;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
+import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.service.DemandaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -24,8 +27,11 @@ public class DemandaController {
     }
 
     @GetMapping
-    public List<DemandaResponse> listar() {
-        return demandaService.listarTodas();
+    public List<DemandaResponse> listar(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo
+    ) {
+        return demandaService.listarComEscopo(jwt, escopo);
     }
 
     @GetMapping("/{id}")

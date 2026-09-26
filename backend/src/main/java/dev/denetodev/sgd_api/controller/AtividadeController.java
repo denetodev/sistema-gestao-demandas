@@ -2,6 +2,7 @@ package dev.denetodev.sgd_api.controller;
 
 import dev.denetodev.sgd_api.dto.request.AtividadeRequest;
 import dev.denetodev.sgd_api.dto.response.AtividadeResponse;
+import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.service.AtividadeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,11 +26,15 @@ public class AtividadeController {
     }
 
     @GetMapping
-    public List<AtividadeResponse> listar(@RequestParam(required = false) UUID demandaId) {
+    public List<AtividadeResponse> listar(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) UUID demandaId,
+            @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo
+    ) {
         if (demandaId != null) {
             return atividadeService.listarPorDemanda(demandaId);
         }
-        return atividadeService.listarTodas();
+        return atividadeService.listarComEscopo(jwt, escopo);
     }
 
     @GetMapping("/{id}")

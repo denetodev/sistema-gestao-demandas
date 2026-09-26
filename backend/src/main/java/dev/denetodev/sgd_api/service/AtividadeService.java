@@ -4,6 +4,7 @@ import dev.denetodev.sgd_api.dto.request.AtividadeRequest;
 import dev.denetodev.sgd_api.dto.response.AtividadeResponse;
 import dev.denetodev.sgd_api.entity.Atividade;
 import dev.denetodev.sgd_api.entity.Demanda;
+import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.entity.Pessoa;
 import dev.denetodev.sgd_api.entity.TipoAtividade;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
@@ -50,8 +51,18 @@ public class AtividadeService {
     }
 
     @Transactional(readOnly = true)
-    public List<AtividadeResponse> listarTodas() {
-        return atividadeRepository.findAll().stream().map(this::paraResponse).toList();
+    public List<AtividadeResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        permissaoService.validarEscopo(usuario, escopo);
+
+        List<Atividade> atividades = switch (escopo) {
+            case MINHAS -> atividadeRepository.findByPessoa_Id(usuario.getId());
+            case EQUIPE -> atividadeRepository.findByPessoa_AreaId(usuario.getReferenciaArea().getId());
+            case DIRETORIA -> atividadeRepository.findByPessoaAreaDiretoriaId(usuario.getArea().getDiretoria().getId());
+            case TODAS -> atividadeRepository.findAll();
+        };
+
+        return atividades.stream().map(this::paraResponse).toList();
     }
 
     @Transactional(readOnly = true)
