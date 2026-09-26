@@ -11,7 +11,11 @@ import dev.denetodev.sgd_api.repository.AtividadeRepository;
 import dev.denetodev.sgd_api.repository.DemandaRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
 import dev.denetodev.sgd_api.repository.TipoAtividadeRepository;
+import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.PermissaoService;
 import dev.denetodev.sgd_api.service.support.Resolvers;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,17 +30,23 @@ public class AtividadeService {
     private final DemandaRepository demandaRepository;
     private final TipoAtividadeRepository tipoAtividadeRepository;
     private final PessoaRepository pessoaRepository;
+    private final CurrentPessoaResolver currentPessoaResolver;
+    private final PermissaoService permissaoService;
 
     public AtividadeService(
             AtividadeRepository atividadeRepository,
             DemandaRepository demandaRepository,
             TipoAtividadeRepository tipoAtividadeRepository,
-            PessoaRepository pessoaRepository
+            PessoaRepository pessoaRepository,
+            CurrentPessoaResolver currentPessoaResolver,
+            PermissaoService permissaoService
     ) {
         this.atividadeRepository = atividadeRepository;
         this.demandaRepository = demandaRepository;
         this.tipoAtividadeRepository = tipoAtividadeRepository;
         this.pessoaRepository = pessoaRepository;
+        this.currentPessoaResolver = currentPessoaResolver;
+        this.permissaoService = permissaoService;
     }
 
     @Transactional(readOnly = true)
@@ -54,37 +64,64 @@ public class AtividadeService {
         return paraResponse(buscarEntidade(id));
     }
 
-    public AtividadeResponse criar(AtividadeRequest request) {
+    public AtividadeResponse criar(Jwt jwt, AtividadeRequest request) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        Pessoa pessoaAlvo = Resolvers.resolverOuNulo(request.pessoaId(), pessoaRepository, "Pessoa");
+
+        if (!permissaoService.podeGerenciar(usuario, pessoaAlvo)) {
+            throw new AccessDeniedException("Sem permissão para lançar atividade em nome dessa pessoa");
+        }
+
         TipoAtividade tipo = Resolvers.resolverObrigatorio(request.tipoAtividadeId(), tipoAtividadeRepository, "Tipo de atividade");
 
         Atividade atividade = new Atividade(tipo);
         atividade.setDemanda(Resolvers.resolverOuNulo(request.demandaId(), demandaRepository, "Demanda"));
-        atividade.setPessoa(Resolvers.resolverOuNulo(request.pessoaId(), pessoaRepository, "Pessoa"));
+        atividade.setPessoa(pessoaAlvo);
         atividade.setDescricao(request.descricao());
         if (request.dataRealizacao() != null) {
             atividade.setDataRealizacao(request.dataRealizacao());
         }
+        atividade.setCreatedBy(usuario.getId());
 
         return paraResponse(atividadeRepository.save(atividade));
     }
 
-    public AtividadeResponse atualizar(UUID id, AtividadeRequest request) {
+    public AtividadeResponse atualizar(Jwt jwt, UUID id, AtividadeRequest request) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
         Atividade atividade = buscarEntidade(id);
+
+        if (!permissaoService.podeGerenciar(usuario, atividade.getPessoa())) {
+            throw new AccessDeniedException("Sem permissão para editar esta atividade");
+        }
+
+        Pessoa novaPessoa = Resolvers.resolverOuNulo(request.pessoaId(), pessoaRepository, "Pessoa");
+        if (!permissaoService.podeGerenciar(usuario, novaPessoa)) {
+            throw new AccessDeniedException("Sem permissão para reatribuir esta atividade a essa pessoa");
+        }
+
         TipoAtividade tipo = Resolvers.resolverObrigatorio(request.tipoAtividadeId(), tipoAtividadeRepository, "Tipo de atividade");
 
         atividade.setTipoAtividade(tipo);
         atividade.setDemanda(Resolvers.resolverOuNulo(request.demandaId(), demandaRepository, "Demanda"));
-        atividade.setPessoa(Resolvers.resolverOuNulo(request.pessoaId(), pessoaRepository, "Pessoa"));
+        atividade.setPessoa(novaPessoa);
         atividade.setDescricao(request.descricao());
         if (request.dataRealizacao() != null) {
             atividade.setDataRealizacao(request.dataRealizacao());
         }
+        atividade.setUpdatedBy(usuario.getId());
 
         return paraResponse(atividade);
     }
 
-    public void remover(UUID id) {
-        atividadeRepository.delete(buscarEntidade(id));
+    public void remover(Jwt jwt, UUID id) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        Atividade atividade = buscarEntidade(id);
+
+        if (!permissaoService.podeGerenciar(usuario, atividade.getPessoa())) {
+            throw new AccessDeniedException("Sem permissão para remover esta atividade");
+        }
+
+        atividadeRepository.delete(atividade);
     }
 
     private Atividade buscarEntidade(UUID id) {

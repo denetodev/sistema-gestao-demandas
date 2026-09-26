@@ -6,6 +6,8 @@ import dev.denetodev.sgd_api.service.AtividadeService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -36,19 +38,19 @@ public class AtividadeController {
     }
 
     @PostMapping
-    public ResponseEntity<AtividadeResponse> criar(@Valid @RequestBody AtividadeRequest request) {
-        AtividadeResponse criada = atividadeService.criar(request);
+    public ResponseEntity<AtividadeResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AtividadeRequest request) {
+        AtividadeResponse criada = atividadeService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/atividades/" + criada.id())).body(criada);
     }
 
     @PutMapping("/{id}")
-    public AtividadeResponse atualizar(@PathVariable UUID id, @Valid @RequestBody AtividadeRequest request) {
-        return atividadeService.atualizar(id, request);
+    public AtividadeResponse atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody AtividadeRequest request) {
+        return atividadeService.atualizar(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remover(@PathVariable UUID id) {
-        atividadeService.remover(id);
+    public ResponseEntity<Void> remover(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        atividadeService.remover(jwt, id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -6,6 +6,8 @@ import dev.denetodev.sgd_api.service.TipoPecaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -33,19 +35,19 @@ public class TipoPecaController {
     }
 
     @PostMapping
-    public ResponseEntity<TipoPecaResponse> criar(@Valid @RequestBody TipoPecaRequest request) {
-        TipoPecaResponse criado = tipoPecaService.criar(request);
+    public ResponseEntity<TipoPecaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody TipoPecaRequest request) {
+        TipoPecaResponse criado = tipoPecaService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/tipos-peca/" + criado.id())).body(criado);
     }
 
     @PutMapping("/{id}")
-    public TipoPecaResponse atualizar(@PathVariable UUID id, @Valid @RequestBody TipoPecaRequest request) {
-        return tipoPecaService.atualizar(id, request);
+    public TipoPecaResponse atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody TipoPecaRequest request) {
+        return tipoPecaService.atualizar(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable UUID id) {
-        tipoPecaService.desativar(id);
+    public ResponseEntity<Void> desativar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        tipoPecaService.desativar(jwt, id);
         return ResponseEntity.noContent().build();
     }
 }
