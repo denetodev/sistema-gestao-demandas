@@ -15,6 +15,8 @@ import dev.denetodev.sgd_api.repository.TipoAtividadeRepository;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
 import dev.denetodev.sgd_api.service.support.PermissaoService;
 import dev.denetodev.sgd_api.service.support.Resolvers;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -51,18 +53,18 @@ public class AtividadeService {
     }
 
     @Transactional(readOnly = true)
-    public List<AtividadeResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo) {
+    public Page<AtividadeResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo, Pageable pageable) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         permissaoService.validarEscopo(usuario, escopo);
 
-        List<Atividade> atividades = switch (escopo) {
-            case MINHAS -> atividadeRepository.findByPessoa_Id(usuario.getId());
-            case EQUIPE -> atividadeRepository.findByPessoa_AreaId(usuario.getReferenciaArea().getId());
-            case DIRETORIA -> atividadeRepository.findByPessoaAreaDiretoriaId(usuario.getArea().getDiretoria().getId());
-            case TODAS -> atividadeRepository.findAll();
+        Page<Atividade> pagina = switch (escopo) {
+            case MINHAS -> atividadeRepository.findByPessoa_Id(usuario.getId(), pageable);
+            case EQUIPE -> atividadeRepository.findByPessoa_AreaId(usuario.getReferenciaArea().getId(), pageable);
+            case DIRETORIA -> atividadeRepository.findByPessoaAreaDiretoriaId(usuario.getArea().getDiretoria().getId(), pageable);
+            case TODAS -> atividadeRepository.findAll(pageable);
         };
 
-        return atividades.stream().map(this::paraResponse).toList();
+        return pagina.map(this::paraResponse);
     }
 
     @Transactional(readOnly = true)

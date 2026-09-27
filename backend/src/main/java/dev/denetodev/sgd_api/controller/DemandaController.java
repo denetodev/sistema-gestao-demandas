@@ -6,6 +6,10 @@ import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.service.DemandaService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,11 +31,12 @@ public class DemandaController {
     }
 
     @GetMapping
-    public List<DemandaResponse> listar(
+    public Page<DemandaResponse> listar(
             @AuthenticationPrincipal Jwt jwt,
-            @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo
+            @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo,
+            @PageableDefault(size = 20, sort = "dataCriacao", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return demandaService.listarComEscopo(jwt, escopo);
+        return demandaService.listarComEscopo(jwt, escopo, pageable);
     }
 
     @GetMapping("/{id}")

@@ -10,6 +10,8 @@ import dev.denetodev.sgd_api.service.support.PermissaoService;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -52,24 +54,18 @@ public class DemandaService {
     }
 
     @Transactional(readOnly = true)
-    public List<DemandaResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo) {
+    public Page<DemandaResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo, Pageable pageable) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         permissaoService.validarEscopo(usuario, escopo);
 
-        List<Demanda> demandas = switch (escopo) {
-            case MINHAS -> pessoaDemandaRepository.findByPessoa_IdAndDataSaidaIsNull(usuario.getId()).stream()
-                    .map(PessoaDemanda::getDemanda)
-                    .distinct()
-                    .toList();
-            case EQUIPE -> pessoaDemandaRepository.findByPessoa_AreaIdAndDataSaidaIsNull(usuario.getReferenciaArea().getId()).stream()
-                    .map(PessoaDemanda::getDemanda)
-                    .distinct()
-                    .toList();
-            case DIRETORIA -> demandaRepository.findByDiretoriaId(usuario.getArea().getDiretoria().getId());
-            case TODAS -> demandaRepository.findAll();
+        Page<Demanda> pagina = switch (escopo) {
+            case MINHAS -> demandaRepository.findMinhas(usuario.getId(), pageable);
+            case EQUIPE -> demandaRepository.findEquipe(usuario.getReferenciaArea().getId(), pageable);
+            case DIRETORIA -> demandaRepository.findByDiretoriaId(usuario.getArea().getDiretoria().getId(), pageable);
+            case TODAS -> demandaRepository.findAll(pageable);
         };
 
-        return demandas.stream().map(this::paraResponse).toList();
+        return pagina.map(this::paraResponse);
     }
 
     @Transactional(readOnly = true)

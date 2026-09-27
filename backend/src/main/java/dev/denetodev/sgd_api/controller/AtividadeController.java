@@ -5,6 +5,8 @@ import dev.denetodev.sgd_api.dto.response.AtividadeResponse;
 import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.service.AtividadeService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.*;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,15 +28,20 @@ public class AtividadeController {
     }
 
     @GetMapping
-    public List<AtividadeResponse> listar(
+    public Page<AtividadeResponse> listar(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false) UUID demandaId,
-            @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo
+            @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo,
+            @PageableDefault(size = 20, sort = "dataRealizacao", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         if (demandaId != null) {
-            return atividadeService.listarPorDemanda(demandaId);
+            List<AtividadeResponse> lista = atividadeService.listarPorDemanda(demandaId);
+            Pageable paginaUnica = lista.isEmpty()
+                    ? Pageable.unpaged()
+                    : PageRequest.of(0, lista.size());
+            return new PageImpl<>(lista, paginaUnica, lista.size());
         }
-        return atividadeService.listarComEscopo(jwt, escopo);
+        return atividadeService.listarComEscopo(jwt, escopo, pageable);
     }
 
     @GetMapping("/{id}")
