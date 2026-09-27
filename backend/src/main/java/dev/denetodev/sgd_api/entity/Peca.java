@@ -1,6 +1,8 @@
 package dev.denetodev.sgd_api.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -26,6 +28,19 @@ public class Peca {
     @Column(name = "descricao", columnDefinition = "text")
     private String descricao;
 
+    @Column(name = "quantidade", nullable = false)
+    private Integer quantidade = 1;
+
+    @Column(name = "valor_unitario", nullable = false, precision = 12, scale = 2)
+    private BigDecimal valorUnitario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pessoa_id")
+    private Pessoa pessoa;
+
+    @Column(name = "data_entrega")
+    private LocalDate dataEntrega;
+
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -45,6 +60,10 @@ public class Peca {
         this.demanda = demanda;
         this.tipoPeca = tipoPeca;
         this.nome = nome;
+        // valor_unitario é sempre copiado do tipo NO MOMENTO da criação —
+        // nunca vem do cliente da API, e nunca é recalculado depois, pra
+        // não mudar retroativamente meses já fechados.
+        this.valorUnitario = tipoPeca.getValorReferencia();
     }
 
     public UUID getId() { return id; }
@@ -56,12 +75,24 @@ public class Peca {
     public void setNome(String nome) { this.nome = nome; }
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+    public Integer getQuantidade() { return quantidade; }
+    public void setQuantidade(Integer quantidade) { this.quantidade = quantidade; }
+    public BigDecimal getValorUnitario() { return valorUnitario; }
+    public Pessoa getPessoa() { return pessoa; }
+    public void setPessoa(Pessoa pessoa) { this.pessoa = pessoa; }
+    public LocalDate getDataEntrega() { return dataEntrega; }
+    public void setDataEntrega(LocalDate dataEntrega) { this.dataEntrega = dataEntrega; }
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public UUID getUpdatedBy() { return updatedBy; }
     public void setUpdatedBy(UUID updatedBy) { this.updatedBy = updatedBy; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+
+    /** quantidade × valorUnitario — nunca persistido, sempre calculado. */
+    public BigDecimal getValorTotal() {
+        return valorUnitario.multiply(BigDecimal.valueOf(quantidade));
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -4,14 +4,14 @@ import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
-import dev.denetodev.sgd_api.repository.CampanhaRepository;
-import dev.denetodev.sgd_api.repository.ClienteRepository;
-import dev.denetodev.sgd_api.repository.DemandaRepository;
-import dev.denetodev.sgd_api.repository.DiretoriaRepository;
-import dev.denetodev.sgd_api.repository.ProjetoRepository;
+import dev.denetodev.sgd_api.repository.*;
+import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.PermissaoService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,29 +21,55 @@ public class DemandaService {
 
     private final DemandaRepository demandaRepository;
     private final DiretoriaRepository diretoriaRepository;
-    private final ClienteRepository clienteRepository;
+    private final DemandanteRepository demandanteRepository;
     private final ProjetoRepository projetoRepository;
     private final CampanhaRepository campanhaRepository;
+    private final PecaRepository pecaRepository;
+    private final PessoaDemandaRepository pessoaDemandaRepository;
+    private final CurrentPessoaResolver currentPessoaResolver;
+    private final PermissaoService permissaoService;
 
     public DemandaService(
             DemandaRepository demandaRepository,
             DiretoriaRepository diretoriaRepository,
-            ClienteRepository clienteRepository,
+            DemandanteRepository demandanteRepository,
             ProjetoRepository projetoRepository,
-            CampanhaRepository campanhaRepository
+            CampanhaRepository campanhaRepository,
+            PecaRepository pecaRepository,
+            PessoaDemandaRepository pessoaDemandaRepository,
+            CurrentPessoaResolver currentPessoaResolver,
+            PermissaoService permissaoService
     ) {
         this.demandaRepository = demandaRepository;
         this.diretoriaRepository = diretoriaRepository;
-        this.clienteRepository = clienteRepository;
+        this.demandanteRepository = demandanteRepository;
         this.projetoRepository = projetoRepository;
         this.campanhaRepository = campanhaRepository;
+        this.pecaRepository = pecaRepository;
+        this.pessoaDemandaRepository = pessoaDemandaRepository;
+        this.currentPessoaResolver = currentPessoaResolver;
+        this.permissaoService = permissaoService;
     }
 
     @Transactional(readOnly = true)
-    public List<DemandaResponse> listarTodas() {
-        return demandaRepository.findAll().stream()
-                .map(this::paraResponse)
-                .toList();
+    public List<DemandaResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        permissaoService.validarEscopo(usuario, escopo);
+
+        List<Demanda> demandas = switch (escopo) {
+            case MINHAS -> pessoaDemandaRepository.findByPessoa_IdAndDataSaidaIsNull(usuario.getId()).stream()
+                    .map(PessoaDemanda::getDemanda)
+                    .distinct()
+                    .toList();
+            case EQUIPE -> pessoaDemandaRepository.findByPessoa_AreaIdAndDataSaidaIsNull(usuario.getReferenciaArea().getId()).stream()
+                    .map(PessoaDemanda::getDemanda)
+                    .distinct()
+                    .toList();
+            case DIRETORIA -> demandaRepository.findByDiretoriaId(usuario.getArea().getDiretoria().getId());
+            case TODAS -> demandaRepository.findAll();
+        };
+
+        return demandas.stream().map(this::paraResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -68,10 +94,10 @@ public class DemandaService {
             demanda.setPrioridade(request.prioridade());
         }
 
-        if (request.clienteId() != null) {
-            Cliente cliente = clienteRepository.findById(request.clienteId())
-                    .orElseThrow(() -> new RecursoNaoEncontradoException("Cliente não encontrado: " + request.clienteId()));
-            demanda.setCliente(cliente);
+        if (request.demandanteId() != null) {
+            Demandante demandante = demandanteRepository.findById(request.demandanteId())
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Demandante não encontrado: " + request.demandanteId()));
+            demanda.setDemandante(demandante);
         }
 
         if (request.projetoId() != null) {
@@ -90,36 +116,6 @@ public class DemandaService {
         return paraResponse(salva);
     }
 
-    private DemandaResponse paraResponse(Demanda demanda) {
-        Cliente cliente = demanda.getCliente();
-        Projeto projeto = demanda.getProjeto();
-        Campanha campanha = demanda.getCampanha();
-
-        return new DemandaResponse(
-                demanda.getId(),
-                demanda.getTitulo(),
-                demanda.getDescricao(),
-                demanda.getCodigo(),
-                demanda.getDiretoria().getId(),
-                demanda.getDiretoria().getNome(),
-                cliente != null ? cliente.getId() : null,
-                cliente != null ? cliente.getNome() : null,
-                projeto != null ? projeto.getId() : null,
-                projeto != null ? projeto.getNome() : null,
-                campanha != null ? campanha.getId() : null,
-                campanha != null ? campanha.getNome() : null,
-                demanda.getPrioridade(),
-                demanda.getStatus(),
-                demanda.getDataCriacao(),
-                demanda.getDataPrazo(),
-                demanda.getDataEntregaReal(),
-                demanda.getValor(),
-                demanda.getObservacoes(),
-                demanda.getCreatedAt(),
-                demanda.getUpdatedAt()
-        );
-    }
-
     public DemandaResponse atualizar(UUID id, DemandaRequest request) {
         Demanda demanda = demandaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + id));
@@ -136,11 +132,7 @@ public class DemandaService {
         demanda.setObservacoes(request.observacoes());
         demanda.setPrioridade(request.prioridade() != null ? request.prioridade() : demanda.getPrioridade());
 
-        // PUT é substituição completa: cliente/projeto/campanha são
-        // resolvidos e ATRIBUÍDOS SEMPRE — inclusive limpando (null) se o
-        // request não trouxer o id, diferente do criar() (onde "ausente"
-        // simplesmente não seta nada, porque no create já nasce null).
-        demanda.setCliente(resolverOuNulo(request.clienteId(), clienteRepository, "Cliente"));
+        demanda.setDemandante(resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
         demanda.setProjeto(resolverOuNulo(request.projetoId(), projetoRepository, "Projeto"));
         demanda.setCampanha(resolverOuNulo(request.campanhaId(), campanhaRepository, "Campanha"));
 
@@ -153,13 +145,48 @@ public class DemandaService {
 
         demanda.setStatus(novoStatus);
         // TODO(M3): registrar em auditoria (usuário, data, status anterior, motivo)
-        // quando existir usuário autenticado pra atribuir a mudança.
 
         return paraResponse(demanda);
     }
 
     public void cancelar(UUID id) {
         atualizarStatus(id, StatusDemanda.CANCELADA);
+    }
+
+    private DemandaResponse paraResponse(Demanda demanda) {
+        Demandante demandante = demanda.getDemandante();
+        Projeto projeto = demanda.getProjeto();
+        Campanha campanha = demanda.getCampanha();
+
+        List<Peca> pecas = pecaRepository.findByDemandaId(demanda.getId());
+        BigDecimal valorCalculado = pecas.isEmpty()
+                ? null
+                : pecas.stream().map(Peca::getValorTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new DemandaResponse(
+                demanda.getId(),
+                demanda.getTitulo(),
+                demanda.getDescricao(),
+                demanda.getCodigo(),
+                demanda.getDiretoria().getId(),
+                demanda.getDiretoria().getNome(),
+                demandante != null ? demandante.getId() : null,
+                demandante != null ? demandante.getNome() : null,
+                projeto != null ? projeto.getId() : null,
+                projeto != null ? projeto.getNome() : null,
+                campanha != null ? campanha.getId() : null,
+                campanha != null ? campanha.getNome() : null,
+                demanda.getPrioridade(),
+                demanda.getStatus(),
+                demanda.getDataCriacao(),
+                demanda.getDataPrazo(),
+                demanda.getDataEntregaReal(),
+                demanda.getValor(),
+                demanda.getObservacoes(),
+                valorCalculado,
+                demanda.getCreatedAt(),
+                demanda.getUpdatedAt()
+        );
     }
 
     private <T> T resolverOuNulo(UUID id, org.springframework.data.jpa.repository.JpaRepository<T, UUID> repository, String nomeEntidade) {

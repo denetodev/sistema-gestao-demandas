@@ -16,8 +16,8 @@ public class Projeto {
     private String nome;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id")
-    private Cliente cliente;
+    @JoinColumn(name = "demandante_id")
+    private Demandante demandante;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "diretoria_id")
@@ -55,12 +55,12 @@ public class Projeto {
         this.nome = nome;
     }
 
-    public Cliente getCliente() {
-        return cliente;
+    public Demandante getDemandante() {
+        return demandante;
     }
 
-    public void setCliente(Cliente cliente) {
-        this.cliente = cliente;
+    public void setDemandante(Demandante demandante) {
+        this.demandante = demandante;
     }
 
     public Diretoria getDiretoria() {

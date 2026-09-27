@@ -15,8 +15,8 @@ public record DemandaResponse(
         String codigo,
         UUID diretoriaId,
         String diretoriaNome,
-        UUID clienteId,
-        String clienteNome,
+        UUID demandanteId,
+        String demandanteNome,
         UUID projetoId,
         String projetoNome,
         UUID campanhaId,
@@ -28,6 +28,7 @@ public record DemandaResponse(
         LocalDate dataEntregaReal,
         BigDecimal valor,
         String observacoes,
+        BigDecimal valorCalculado,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {

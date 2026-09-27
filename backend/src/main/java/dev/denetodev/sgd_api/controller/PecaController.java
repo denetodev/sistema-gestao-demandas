@@ -6,6 +6,8 @@ import dev.denetodev.sgd_api.service.PecaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -36,19 +38,19 @@ public class PecaController {
     }
 
     @PostMapping
-    public ResponseEntity<PecaResponse> criar(@Valid @RequestBody PecaRequest request) {
-        PecaResponse criada = pecaService.criar(request);
+    public ResponseEntity<PecaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PecaRequest request) {
+        PecaResponse criada = pecaService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/pecas/" + criada.id())).body(criada);
     }
 
     @PutMapping("/{id}")
-    public PecaResponse atualizar(@PathVariable UUID id, @Valid @RequestBody PecaRequest request) {
-        return pecaService.atualizar(id, request);
+    public PecaResponse atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody PecaRequest request) {
+        return pecaService.atualizar(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remover(@PathVariable UUID id) {
-        pecaService.remover(id);
+    public ResponseEntity<Void> remover(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        pecaService.remover(jwt, id);
         return ResponseEntity.noContent().build();
     }
 }

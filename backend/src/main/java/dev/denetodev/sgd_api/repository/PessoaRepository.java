@@ -8,4 +8,6 @@ import java.util.UUID;
 
 public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
     Optional<Pessoa> findByAuthUserId(UUID authUserId);
+
 }
+

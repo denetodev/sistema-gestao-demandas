@@ -12,8 +12,8 @@ public record PessoaResponse(
         UUID areaId, String areaNome,
         UUID cargoId, String cargoNome,
         StatusPessoa status, PerfilPessoa perfil,
-        UUID authUserId, OffsetDateTime createdAt, OffsetDateTime updatedAt
+        UUID authUserId,
+        UUID aprovadoPorId, String aprovadoPorNome, OffsetDateTime aprovadoEm,
+        OffsetDateTime createdAt, OffsetDateTime updatedAt
 ) {
-
 }
-

@@ -6,6 +6,8 @@ import dev.denetodev.sgd_api.service.EvidenciaService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -33,14 +35,14 @@ public class EvidenciaController {
     }
 
     @PostMapping
-    public ResponseEntity<EvidenciaResponse> criar(@Valid @RequestBody EvidenciaRequest request) {
-        EvidenciaResponse criada = evidenciaService.criar(request);
-        return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/evidencias/" + criada.id())).body(criada);
+    public ResponseEntity<EvidenciaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody EvidenciaRequest request) {
+        EvidenciaResponse criada = evidenciaService.criar(jwt, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(criada);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> remover(@PathVariable UUID id) {
-        evidenciaService.remover(id);
+    public ResponseEntity<Void> remover(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        evidenciaService.remover(jwt, id);
         return ResponseEntity.noContent().build();
     }
 }

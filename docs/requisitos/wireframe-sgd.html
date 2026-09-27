@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SGD: wireframe navegável</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 system-ui,Arial,sans-serif;color:#222;background:#fff}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:#eee;border:1px solid #888;padding:4px 10px;cursor:pointer;border-radius:2px}
+button:hover{background:#ddd}
+button.pri{background:#444;color:#fff;border-color:#444}
+button.lnk{background:none;border:none;padding:0;text-decoration:underline;cursor:pointer}
+button.mini{padding:1px 6px;font-size:12px}
+button:disabled{opacity:.4;cursor:not-allowed}
+input,select,textarea{border:1px solid #888;padding:4px 6px;background:#fff;border-radius:2px;max-width:100%}
+input[readonly]{background:#eee;color:#555}
+textarea{width:100%}
+.proto{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:6px 12px;background:#222;color:#fff;font-size:13px}
+.proto select{padding:1px 4px;color:#222}
+.proto label{display:flex;gap:5px;align-items:center}
+.proto .tt{font-weight:700;letter-spacing:.06em}
+.app{display:grid;grid-template-columns:210px 1fr;grid-template-rows:auto 1fr;min-height:calc(100vh - 36px)}
+.top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;border-bottom:2px solid #444;gap:8px 12px;flex-wrap:wrap}
+.side{border-right:1px solid #888;padding:10px 0;background:#f4f4f4}
+.side a{display:flex;justify-content:space-between;padding:7px 16px;cursor:pointer;color:#222;text-decoration:none}
+.side a:hover{background:#e4e4e4}
+.side a.on{background:#c8c8c8;font-weight:600}
+.side hr{border:0;border-top:1px dashed #888;margin:8px 12px}
+.side .sec{font-size:11px;color:#777;padding:6px 16px 2px;text-transform:uppercase}
+main{padding:16px 20px 40px;min-width:0}
+h1{font-size:20px;margin:0}
+h2{font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.05em}
+.box{border:1px solid #888;padding:12px;margin-bottom:14px}
+.box.ro{background:#f6f6f6}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.mb{margin-bottom:12px}
+.muted{color:#666}
+.small{font-size:12px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #bbb;padding:5px 8px;text-align:left;vertical-align:middle}
+th{background:#e6e6e6;font-weight:600;white-space:nowrap}
+tr.click{cursor:pointer}
+tr.click:hover td{background:#f1f1f1}
+td select{padding:1px 3px}
+.tag{display:inline-block;border:1px solid #777;padding:0 6px;font-size:12px;border-radius:2px;background:#f2f2f2;white-space:nowrap}
+.tag.dk{background:#444;color:#fff;border-color:#444}
+.tag.dash{border-style:dashed}
+.av{display:inline-flex;width:26px;height:26px;border:1px solid #555;border-radius:50%;align-items:center;justify-content:center;font-size:10px;background:#fff;margin-right:-5px;font-weight:600}
+.tabs{display:flex;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border-radius:0;margin-right:-1px}
+.tabs button.on{background:#444;color:#fff;border-color:#444}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kpi{border:1px solid #888;padding:8px}
+.kpi .n{font-size:22px;font-weight:700}
+.kpi.alert{border:2px solid #222}
+.form{display:flex;flex-direction:column;gap:4px;max-width:440px}
+.form label{font-weight:600;font-size:13px;margin-top:6px}
+.form .hint{font-size:12px;color:#666}
+.dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.dl div{border:1px solid #ccc;padding:6px 8px}
+.dl small{display:block;color:#666;font-size:11px;text-transform:uppercase}
+.hmwrap{overflow-x:auto;padding-bottom:4px}
+.hm{display:grid;grid-template-rows:repeat(7,11px);grid-auto-flow:column;grid-auto-columns:11px;gap:2px}
+.hmm{display:grid;grid-auto-columns:11px;grid-auto-flow:column;gap:2px;font-size:10px;color:#666;height:14px}
+.hmm span{white-space:nowrap;overflow:visible}
+.hm i,.lg i{width:11px;height:11px;border:1px solid #bbb;display:inline-block}
+.l0{background:#fff}.l1{background:#d6d6d6}.l2{background:#a6a6a6}.l3{background:#6a6a6a}.l4{background:#222}
+.lg{display:flex;gap:2px;align-items:center;font-size:11px;color:#666}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumb{width:132px;border:1px solid #888;font-size:12px}
+.thumb .img{height:72px;background:repeating-linear-gradient(45deg,#f2f2f2 0 6px,#e0e0e0 6px 12px);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;border-bottom:1px solid #888}
+.thumb .cap{padding:4px 6px;display:flex;justify-content:space-between;gap:4px;word-break:break-all}
+.grp{border:1px dashed #999;padding:8px;margin-bottom:8px}
+.note{border:2px dashed #777;background:#fafafa;padding:10px 14px;margin:18px 0 0;font-size:13px}
+.note ul{margin:6px 0 0;padding-left:18px}
+.hide-notes .note{display:none}
+.banner{border:1px solid #888;background:#eee;padding:6px 10px;margin-bottom:12px;font-size:13px}
+.auth{display:flex;justify-content:center;padding:56px 16px}
+.card{border:2px solid #444;padding:20px;width:340px;max-width:100%}
+.modalbg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:30;padding:16px}
+.modal{background:#fff;border:2px solid #333;padding:16px;width:440px;max-width:100%;max-height:90vh;overflow:auto}
+.toast{position:fixed;right:16px;bottom:16px;background:#222;color:#fff;padding:8px 14px;z-index:40;font-size:13px}
+.doc{border:1px solid #888;padding:28px 36px;max-width:780px;font-family:Georgia,'Times New Roman',serif;background:#fff}
+.doc h3{text-align:center;margin:0 0 4px;font-size:18px}
+.doc table{font-family:system-ui,Arial,sans-serif;font-size:13px}
+.photo{width:96px;height:96px;border:1px solid #555;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(45deg,#f2f2f2 0 6px,#e0e0e0 6px 12px);font-size:11px}
+.strike td{text-decoration:line-through;color:#888}
+@media (max-width:760px){
+  .app{grid-template-columns:1fr}
+  .side{border-right:0;border-bottom:1px solid #888;display:flex;flex-wrap:wrap;padding:4px}
+  .side a{padding:5px 10px}
+  .side hr,.side .sec{display:none}
+  main{padding:12px 16px 32px}
+  .doc{padding:18px}
+}
+</style>
+</head>
+<body>
+<div class="proto">
+  <span class="tt">PROTÓTIPO SGD</span>
+  <label>Papel do usuário logado:
+    <select id="roleSel" onchange="setRole(this.value)">
+      <option value="visualizador">Visualizador</option>
+      <option value="profissional">Profissional</option>
+      <option value="referencia">Referência de Equipe</option>
+      <option value="gestor">Gestor</option>
+      <option value="admin">Admin</option>
+    </select>
+  </label>
+  <label>Ir para tela:
+    <select id="jump" onchange="jump(this.value)">
+      <option value="login">1. Login</option>
+      <option value="cadastro">2. Cadastro</option>
+      <option value="aguardando">3. Aguardando aprovação</option>
+      <option value="dashboard">4. Dashboard</option>
+      <option value="demandas">5. Demandas (lista)</option>
+      <option value="demanda">6. Demanda (detalhe)</option>
+      <option value="demandaForm">7. Nova / Editar demanda</option>
+      <option value="demandantes">8a. Demandantes</option>
+      <option value="projetos">8b. Projetos</option>
+      <option value="campanhas">8c. Campanhas</option>
+      <option value="tiposPeca">8d. Tipos de Peça (valores)</option>
+      <option value="pessoas">9. Pessoas</option>
+      <option value="pessoa">9b. Pessoa (aprovar / editar)</option>
+      <option value="perfil">10. Meu perfil</option>
+      <option value="relatorio">11. Relatório mensal</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="notesChk" checked onchange="state.notes=this.checked;render()"> mostrar notas</label>
+</div>
+<div id="root"></div>
+
+<script>
+/* ============ utilidades ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const TODAY = '2026-09-25';
+const AVULSAS = 'Atividades sem demanda vinculada';
+const MES_ATUAL = TODAY.slice(0,7);
+const brl = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmt = d => d ? d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4) : '—';
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const nomeMes = ym => MESES[+ym.slice(5,7)-1]+'/'+ym.slice(0,4);
+const ini = n => n.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+const uid = p => p + Math.random().toString(36).slice(2,7);
+const opt = (v,l,sel) => `<option value="${esc(v)}" ${String(v)===String(sel)?'selected':''}>${esc(l)}</option>`;
+const opts = (arr,sel) => arr.map(a => Array.isArray(a) ? opt(a[0],a[1],sel) : opt(a,a,sel)).join('');
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function toast(msg){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),1900)}
+
+/* ============ domínio ============ */
+const DIRETORIAS = ['CRM','UGR','COMIN'];
+const AREAS = ['Designers','Videomakers','Redatores','HTML','Motion'];
+const CARGOS = ['Designer Júnior','Designer Pleno','Designer Sênior','Videomaker','Motion Designer','Redator(a)','Desenvolvedor(a) HTML','Analista'];
+const PERFIS = ['Visualizador','Profissional','Gestor','Admin'];
+const PAPEIS = ['Responsável principal','Responsável','Participante','Apoio','Revisor'];
+const STATUS = {NAO_INICIADA:'Não iniciada',EM_ANDAMENTO:'Em andamento',EM_APROVACAO:'Em aprovação',CONCLUIDA:'Concluída',CANCELADA:'Cancelada'};
+const PRIOR = {BAIXA:'Baixa',NORMAL:'Normal',ALTA:'Alta',URGENTE:'Urgente'};
+const ETAPAS = ['A fazer','Em andamento','Em revisão','Concluída','Cancelada'];
+const TIPOS_ATV = ['Captação','Edição','Redação','Motion','Design','HTML','Revisão'];
+const TIPOS_EVID = ['Print','Imagem','Link','Vídeo','Arquivo','Texto'];
+
+const ROLES = {
+  visualizador:{label:'Visualizador', me:'p9'},
+  profissional:{label:'Profissional', me:'p1'},
+  referencia:{label:'Referência de Equipe', me:'p2'},
+  gestor:{label:'Gestor', me:'p10'},
+  admin:{label:'Admin', me:'p11'},
+};
+
+const db = {
+  pessoas:[
+    {id:'p1',nome:'Bruno Alves',email:'bruno.alves@aristocrata.com',diretoria:'CRM',area:'HTML',cargo:'Desenvolvedor(a) HTML',perfil:'Profissional',ref:null,status:'ativo'},
+    {id:'p2',nome:'Carla Mendes',email:'carla.mendes@aristocrata.com',diretoria:'CRM',area:'Designers',cargo:'Designer Sênior',perfil:'Profissional',ref:'Designers',status:'ativo'},
+    {id:'p3',nome:'Diego Souza',email:'diego.souza@aristocrata.com',diretoria:'CRM',area:'Designers',cargo:'Designer Pleno',perfil:'Profissional',ref:null,status:'ativo'},
+    {id:'p4',nome:'Elisa Ramos',email:'elisa.ramos@aristocrata.com',diretoria:'CRM',area:'Designers',cargo:'Designer Júnior',perfil:'Profissional',ref:null,status:'ativo'},
+    {id:'p5',nome:'Fábio Nunes',email:'fabio.nunes@aristocrata.com',diretoria:'UGR',area:'Videomakers',cargo:'Videomaker',perfil:'Profissional',ref:'Videomakers',status:'ativo'},
+    {id:'p6',nome:'Gabi Torres',email:'gabi.torres@aristocrata.com',diretoria:'CRM',area:'Redatores',cargo:'Redator(a)',perfil:'Profissional',ref:null,status:'ativo'},
+    {id:'p7',nome:'Hugo Lima',email:'hugo.lima@aristocrata.com',diretoria:'UGR',area:'Motion',cargo:'Motion Designer',perfil:'Profissional',ref:null,status:'ativo'},
+    {id:'p8',nome:'Iara Costa',email:'iara.costa@aristocrata.com',diretoria:'COMIN',area:'Redatores',cargo:'Redator(a)',perfil:'Profissional',ref:null,status:'ativo'},
+    {id:'p9',nome:'Paula Viana',email:'paula.viana@aristocrata.com',diretoria:'CRM',area:null,cargo:'Analista',perfil:'Visualizador',ref:null,status:'ativo'},
+    {id:'p10',nome:'Marcos Lima',email:'marcos.lima@aristocrata.com',diretoria:'CRM',area:null,cargo:'Gestor',perfil:'Gestor',ref:null,status:'ativo'},
+    {id:'p11',nome:'Júlia Rocha',email:'julia.rocha@aristocrata.com',diretoria:'CRM',area:null,cargo:'Analista',perfil:'Admin',ref:null,status:'ativo'},
+    {id:'p12',nome:'Rafael Dias',email:'rafael.dias@aristocrata.com',diretoria:'CRM',area:'Designers',cargo:'Designer Júnior',perfil:null,ref:null,status:'aguardando'},
+    {id:'p13',nome:'Sofia Melo',email:'sofia.melo@aristocrata.com',diretoria:'UGR',area:'Videomakers',cargo:'Videomaker',perfil:null,ref:null,status:'aguardando'},
+  ],
+  demandantes:[
+    {id:'c1',nome:'DIMAC',tipo:'Unidade',diretoria:'CRM',ativo:true},
+    {id:'c2',nome:'Fernanda Parizi',tipo:'Pessoa',diretoria:'CRM',ativo:true},
+    {id:'c3',nome:'Agronegócio',tipo:'Unidade',diretoria:'UGR',ativo:true},
+    {id:'c4',nome:'Comunicação Interna',tipo:'Unidade',diretoria:'COMIN',ativo:true},
+    {id:'c5',nome:'Gabriel Porto Carvalho',tipo:'Pessoa',diretoria:'CRM',ativo:true},
+    {id:'c6',nome:'Seguridade',tipo:'Externo',diretoria:'UGR',ativo:false},
+  ],
+  projetos:[
+    {id:'pr1',nome:'Régua de Relacionamento',demandante:'c1',diretoria:'CRM',status:'ATIVO'},
+    {id:'pr2',nome:'Plano Safra 26/27',demandante:'c3',diretoria:'UGR',status:'ATIVO'},
+    {id:'pr3',nome:'Black Friday Cartões',demandante:'c5',diretoria:'CRM',status:'ATIVO'},
+    {id:'pr4',nome:'Endomarketing 2026',demandante:'c4',diretoria:'COMIN',status:'PAUSADO'},
+    {id:'pr5',nome:'Onboarding Digital',demandante:'c2',diretoria:'CRM',status:'ATIVO'},
+  ],
+  campanhas:[
+    {id:'cp1',nome:'Safra Lançamento',codigo:'BC2609SF',projeto:'pr2',inicio:'2026-09-01',fim:'2026-10-31'},
+    {id:'cp2',nome:'Régua Boas-vindas',codigo:'BC2609RB',projeto:'pr1',inicio:'2026-09-01',fim:'2026-12-31'},
+    {id:'cp3',nome:'BF Cartões 2026',codigo:'BC2611BF',projeto:'pr3',inicio:'2026-10-15',fim:'2026-11-30'},
+    {id:'cp4',nome:'Semana da Inclusão',codigo:null,projeto:'pr4',inicio:'2026-09-01',fim:'2026-09-12'},
+    {id:'cp5',nome:'App Novo',codigo:'BC2610AN',projeto:'pr5',inicio:'2026-10-01',fim:'2026-11-15'},
+  ],
+  demandas:[
+    {id:'d1',titulo:'Campanha Plano Safra',descricao:'Vídeo, banners e key visual do lançamento do Plano Safra.',diretoria:'UGR',demandante:'c3',projeto:'pr2',campanha:'cp1',prioridade:'ALTA',status:'EM_ANDAMENTO',prazo:'2026-10-03',link:'https://planner.exemplo/tarefa/123',
+      part:[{pid:'p5',papel:'Responsável principal'},{pid:'p7',papel:'Responsável'},{pid:'p3',papel:'Participante'},{pid:'p6',papel:'Revisor'}]},
+    {id:'d2',titulo:'E-mail Boas-vindas da Régua',descricao:'Primeiro e-mail da régua de relacionamento.',diretoria:'CRM',demandante:'c1',projeto:'pr1',campanha:'cp2',prioridade:'NORMAL',status:'EM_APROVACAO',prazo:'2026-09-22',link:'',
+      part:[{pid:'p1',papel:'Responsável principal'},{pid:'p4',papel:'Participante'},{pid:'p6',papel:'Revisor'}]},
+    {id:'d3',titulo:'Black Friday Cartões',descricao:'Pacote de e-mails e banners para a Black Friday.',diretoria:'CRM',demandante:'c5',projeto:'pr3',campanha:'cp3',prioridade:'URGENTE',status:'EM_ANDAMENTO',prazo:'2026-09-30',link:'https://clickup.exemplo/t/abc',
+      part:[{pid:'p2',papel:'Responsável principal'},{pid:'p1',papel:'Responsável'},{pid:'p3',papel:'Participante'},{pid:'p7',papel:'Apoio'}]},
+    {id:'d4',titulo:'Banner App Novo',descricao:'',diretoria:'CRM',demandante:'c2',projeto:'pr5',campanha:'cp5',prioridade:'BAIXA',status:'NAO_INICIADA',prazo:'2026-10-15',link:'',
+      part:[{pid:'p4',papel:'Responsável principal'}]},
+    {id:'d5',titulo:'Semana da Inclusão',descricao:'Peças para intranet e TV corporativa.',diretoria:'COMIN',demandante:'c4',projeto:'pr4',campanha:'cp4',prioridade:'NORMAL',status:'CONCLUIDA',prazo:'2026-09-10',link:'',
+      part:[{pid:'p8',papel:'Responsável principal'},{pid:'p3',papel:'Apoio'}]},
+    {id:'d6',titulo:'Vídeo institucional DIMAC',descricao:'Vídeo de 2 minutos com entrevistas.',diretoria:'CRM',demandante:'c1',projeto:'pr1',campanha:null,prioridade:'ALTA',status:'EM_ANDAMENTO',prazo:'2026-09-20',link:'',
+      part:[{pid:'p5',papel:'Responsável principal'},{pid:'p6',papel:'Participante'}]},
+    {id:'d7',titulo:'Newsletter Agro setembro',descricao:'',diretoria:'UGR',demandante:'c3',projeto:'pr2',campanha:null,prioridade:'NORMAL',status:'CANCELADA',prazo:'2026-09-12',link:'',
+      part:[{pid:'p6',papel:'Responsável principal'}]},
+    {id:'d8',titulo:'Landing Onboarding',descricao:'Landing page do onboarding digital.',diretoria:'CRM',demandante:'c2',projeto:'pr5',campanha:null,prioridade:'NORMAL',status:'EM_ANDAMENTO',prazo:'2026-10-08',link:'',
+      part:[{pid:'p1',papel:'Responsável principal'},{pid:'p2',papel:'Revisor'}]},
+  ],
+  atividades:[
+    {id:'a1',demanda:'d1',pid:'p5',tipo:'Captação',data:'2026-09-15',descricao:'Captação na fazenda parceira',status:'Concluída'},
+    {id:'a2',demanda:'d1',pid:'p5',tipo:'Edição',data:'2026-09-22',descricao:'Corte do vídeo de 60s',status:'Em andamento'},
+    {id:'a3',demanda:'d1',pid:'p7',tipo:'Motion',data:'2026-09-23',descricao:'Vinheta de abertura',status:'Em andamento'},
+    {id:'a4',demanda:'d1',pid:'p3',tipo:'Design',data:'2026-09-18',descricao:'Key visual da campanha',status:'Concluída'},
+    {id:'a5',demanda:'d1',pid:'p6',tipo:'Redação',data:'2026-09-16',descricao:'Roteiro e texto de locução',status:'Concluída'},
+    {id:'a6',demanda:'d2',pid:'p1',tipo:'HTML',data:'2026-09-10',descricao:'Codificação do e-mail 1 da régua',status:'Concluída'},
+    {id:'a7',demanda:'d2',pid:'p1',tipo:'HTML',data:'2026-09-17',descricao:'Ajustes de dark mode',status:'Em revisão'},
+    {id:'a8',demanda:'d2',pid:'p4',tipo:'Design',data:'2026-09-08',descricao:'Mockup do e-mail',status:'Concluída'},
+    {id:'a9',demanda:'d2',pid:'p6',tipo:'Revisão',data:'2026-09-18',descricao:'Revisão de texto',status:'Concluída'},
+    {id:'a10',demanda:'d3',pid:'p2',tipo:'Design',data:'2026-09-21',descricao:'Key visual Black Friday',status:'Em andamento'},
+    {id:'a11',demanda:'d3',pid:'p1',tipo:'HTML',data:'2026-09-24',descricao:'E-mail teaser',status:'A fazer'},
+    {id:'a12',demanda:'d3',pid:'p3',tipo:'Design',data:'2026-09-23',descricao:'Banners mobile',status:'Em andamento'},
+    {id:'a13',demanda:'d3',pid:'p7',tipo:'Motion',data:'2026-09-24',descricao:'GIF animado do e-mail',status:'A fazer'},
+    {id:'a14',demanda:'d5',pid:'p8',tipo:'Redação',data:'2026-09-03',descricao:'Textos da campanha',status:'Concluída'},
+    {id:'a15',demanda:'d5',pid:'p3',tipo:'Design',data:'2026-09-05',descricao:'Peças para intranet',status:'Concluída'},
+    {id:'a16',demanda:'d6',pid:'p5',tipo:'Captação',data:'2026-09-12',descricao:'Entrevistas com gestores',status:'Concluída'},
+    {id:'a17',demanda:'d6',pid:'p6',tipo:'Redação',data:'2026-09-11',descricao:'Roteiro do vídeo',status:'Concluída'},
+    {id:'a18',demanda:'d8',pid:'p1',tipo:'HTML',data:'2026-09-19',descricao:'Estrutura da landing',status:'Em andamento'},
+    {id:'a19',demanda:null,pid:'p1',tipo:'HTML',data:'2026-09-09',descricao:'Suporte técnico a template legado',status:'Concluída'},
+    {id:'a20',demanda:'d2',pid:'p1',tipo:'HTML',data:'2026-08-27',descricao:'Protótipo do e-mail',status:'Concluída'},
+    {id:'a21',demanda:'d3',pid:'p4',tipo:'Design',data:'2026-08-28',descricao:'Moodboard',status:'Concluída'},
+    {id:'a22',demanda:null,pid:'p2',tipo:'Design',data:'2026-09-05',descricao:'Treinamento interno de Figma',status:'Concluída'},
+    {id:'a23',demanda:'d3',pid:'p1',tipo:'HTML',data:'2026-09-02',descricao:'Template base (cancelado pelo demandante)',status:'Cancelada'},
+  ],
+  tiposPeca:[
+    {id:'tp1',nome:'Ajustes HTML e-mail marketing',area:'HTML',valor:6000,ativo:true,fonte:'informado por Neto'},
+    {id:'tp2',nome:'Peça de e-mail MKT (HTML) Dese+imple+teste',area:'HTML',valor:8500,ativo:true,fonte:'exemplo'},
+    {id:'tp3',nome:'Implementação e testes (HTML)',area:'HTML',valor:3200,ativo:true,fonte:'exemplo'},
+    {id:'tp4',nome:'Peça de e-mail MKT (PNG)',area:'Designers',valor:2400,ativo:true,fonte:'exemplo'},
+    {id:'tp5',nome:'Banner Retângulo médio',area:'Designers',valor:1100,ativo:true,fonte:'exemplo'},
+    {id:'tp6',nome:'Marca Logotipo de produto',area:'Designers',valor:6054.31,ativo:true,fonte:'planilha'},
+    {id:'tp7',nome:'Ícones e Símbolos',area:'Designers',valor:605.42,ativo:true,fonte:'planilha'},
+    {id:'tp8',nome:'Mood Board',area:'Designers',valor:1800,ativo:false,fonte:'exemplo'},
+    {id:'tp9',nome:'Roteiro de vídeo',area:'Redatores',valor:3000,ativo:true,fonte:'planilha'},
+    {id:'tp10',nome:'Produção de conteúdo (Pauta)',area:'Redatores',valor:450,ativo:true,fonte:'planilha'},
+    {id:'tp11',nome:'Captação de Vídeo - Estúdio (diária)',area:'Videomakers',valor:5000,ativo:true,fonte:'planilha'},
+    {id:'tp12',nome:'Captação de Vídeo - Estúdio (até 1 hora)',area:'Videomakers',valor:1500,ativo:true,fonte:'planilha'},
+    {id:'tp13',nome:'Motion loop 15seg/ GIF',area:'Motion',valor:2200,ativo:true,fonte:'exemplo'},
+    {id:'tp14',nome:'Vinheta',area:'Motion',valor:4000,ativo:true,fonte:'exemplo'},
+  ],
+  pecas:[
+    {id:'pc1',demanda:'d1',tipo:'tp11',nome:'Captação Plano Safra',qtd:1,vu:5000,pid:'p5',data:'2026-09-15'},
+    {id:'pc2',demanda:'d1',tipo:'tp5',nome:'Banner Mobile Safra',qtd:3,vu:1100,pid:'p3',data:'2026-09-18'},
+    {id:'pc3',demanda:'d1',tipo:'tp9',nome:'Roteiro do vídeo Safra',qtd:1,vu:3000,pid:'p6',data:'2026-09-16'},
+    {id:'pc4',demanda:'d2',tipo:'tp2',nome:'E-mail Boas-vindas 1 (Varejo e Estilo)',qtd:2,vu:8500,pid:'p1',data:'2026-09-10'},
+    {id:'pc5',demanda:'d2',tipo:'tp1',nome:'Ajustes de dark mode',qtd:1,vu:6000,pid:'p1',data:'2026-09-17'},
+    {id:'pc6',demanda:'d2',tipo:'tp4',nome:'Mockup do e-mail',qtd:1,vu:2400,pid:'p4',data:'2026-09-08'},
+    {id:'pc7',demanda:'d3',tipo:'tp4',nome:'KV do e-mail BF',qtd:2,vu:2400,pid:'p2',data:'2026-09-21'},
+    {id:'pc8',demanda:'d3',tipo:'tp5',nome:'Banners mobile BF',qtd:4,vu:1100,pid:'p3',data:'2026-09-23'},
+    {id:'pc9',demanda:'d5',tipo:'tp10',nome:'Pautas Semana da Inclusão',qtd:3,vu:450,pid:'p8',data:'2026-09-03'},
+    {id:'pc10',demanda:'d6',tipo:'tp12',nome:'Entrevistas com gestores',qtd:2,vu:1500,pid:'p5',data:'2026-09-12'},
+    {id:'pc11',demanda:'d8',tipo:'tp3',nome:'Implementação da landing',qtd:1,vu:3200,pid:'p1',data:'2026-09-19'},
+    {id:'pc12',demanda:'d2',tipo:'tp2',nome:'Protótipo do e-mail',qtd:1,vu:8500,pid:'p1',data:'2026-08-27'},
+  ],
+  evidencias:[
+    {id:'e1',alvo:'a1',tipo:'Vídeo',nome:'bruto_captacao.mp4'},
+    {id:'e2',alvo:'a4',tipo:'Print',nome:'kv_v3.png'},
+    {id:'e3',alvo:'pc2',tipo:'Imagem',nome:'banner_mobile_final.png'},
+    {id:'e4',alvo:'a6',tipo:'Link',nome:'Preview no SFMC'},
+    {id:'e5',alvo:'pc4',tipo:'Print',nome:'print_outlook.png'},
+    {id:'e6',alvo:'a9',tipo:'Texto',nome:'Comentários da revisão'},
+    {id:'e7',alvo:'a10',tipo:'Arquivo',nome:'kv_bf.fig'},
+    {id:'e8',alvo:'pc9',tipo:'Arquivo',nome:'pautas_final.docx'},
+  ],
+};
+
+const state = {
+  role:'profissional', screen:'login', id:null, notes:true, naoAprovado:false,
+  scope:null, busca:'', dashSel:'equipe', dashDir:'Todas', dashPorPessoa:false,
+  editAtv:null, novaAtv:false, novaEvid:false, pessoasFiltro:'todos',
+  form:null, pform:null, modal:null, senha:false, rels:{}, relMes:MES_ATUAL, novaAvulsa:false,
+};
+
+/* ============ acesso a dados ============ */
+const P = id => db.pessoas.find(p=>p.id===id);
+const C = id => db.demandantes.find(c=>c.id===id);
+const PR = id => db.projetos.find(p=>p.id===id);
+const CP = id => db.campanhas.find(c=>c.id===id);
+const D = id => db.demandas.find(d=>d.id===id);
+const A = id => db.atividades.find(a=>a.id===id);
+const TP = id => db.tiposPeca.find(t=>t.id===id);
+const valorPeca = p => p.qtd*p.vu;
+const valorDemanda = d => db.pecas.filter(p=>p.demanda===d.id).reduce((s,p)=>s+valorPeca(p),0);
+function valorGerado(pids, prefix){ return db.pecas.filter(p=>pids.includes(p.pid) && p.data.startsWith(prefix) && D(p.demanda)?.status!=='CANCELADA').reduce((s,p)=>s+valorPeca(p),0); }
+const PC = id => db.pecas.find(p=>p.id===id);
+const me = () => P(ROLES[state.role].me);
+const isGA = () => state.role==='gestor' || state.role==='admin';
+const isRef = () => state.role==='referencia';
+const isViewer = () => state.role==='visualizador';
+const ativa = d => d.status!=='CONCLUIDA' && d.status!=='CANCELADA';
+const atrasada = d => ativa(d) && d.prazo && d.prazo < TODAY;
+
+/* ============ regras de permissão (a matriz do protótipo) ============ */
+const participa = (d,pid=me().id) => d.part.some(x=>x.pid===pid);
+const principal = d => d.part.some(x=>x.pid===me().id && x.papel==='Responsável principal');
+const temDaEquipe = d => !!me().ref && d.part.some(x=>P(x.pid).area===me().ref);
+function canEditDemanda(d){
+  if(isViewer()) return false;
+  if(isGA()) return true;
+  if(participa(d)) return true;
+  return isRef() && temDaEquipe(d);
+}
+function canEditItem(pid){
+  if(isViewer()) return false;
+  if(isGA() || pid===me().id) return true;
+  return isRef() && P(pid)?.area===me().ref;
+}
+function canManagePart(d,pid){
+  if(isViewer()) return false;
+  if(isGA() || principal(d)) return true;
+  if(isRef() && P(pid)?.area===me().ref) return true;
+  return pid===me().id; // sair da demanda
+}
+const canEditTipo = t => isGA() || (isRef() && t.area===me().ref);
+const canAddPart = d => !isViewer() && (isGA() || principal(d) || isRef());
+function canSee(screen){
+  if(['demandantes','pessoas','pessoa'].includes(screen)) return isGA();
+  return true;
+}
+function scopes(){
+  const s=[];
+  if(!isViewer()) s.push(['minhas','Minhas demandas']);
+  if(isRef()) s.push(['equipe','Minha equipe']);
+  s.push(['diretoria','Minha diretoria']);
+  if(isGA()) s.push(['todas','Todas']);
+  return s;
+}
+const defaultScope = () => isViewer() ? 'diretoria' : 'minhas';
+function inScope(d,sc){
+  if(sc==='minhas') return participa(d);
+  if(sc==='equipe') return temDaEquipe(d);
+  if(sc==='diretoria') return d.diretoria===me().diretoria;
+  return true;
+}
+
+/* ============ navegação ============ */
+function go(screen,id){
+  state.screen=screen; state.id=id ?? null;
+  state.editAtv=null; state.novaAtv=false; state.novaEvid=false; state.modal=null; state.senha=false; state.novaAvulsa=false;
+  if(screen==='demandaForm'){
+    const d = id ? D(id) : null;
+    state.form = d ? {...d} : {titulo:'',descricao:'',diretoria:me().diretoria,demandante:'',projeto:'',campanha:'',prioridade:'NORMAL',prazo:'',link:''};
+  }
+  if(screen==='pessoa'){ const p=P(id); state.pform = p ? {...p} : null; if(p && p.status==='aguardando' && !state.pform.perfil) state.pform.perfil='Profissional'; }
+  render(); window.scrollTo(0,0);
+}
+function jump(s){
+  if(s==='demanda') return go('demanda', state.id && D(state.id) ? state.id : 'd3');
+  if(s==='pessoa') return go('pessoa', db.pessoas.find(p=>p.status==='aguardando')?.id || 'p3');
+  go(s);
+}
+function setRole(r){
+  state.role=r; state.scope=defaultScope(); state.dashSel='equipe'; state.editAtv=null; state.novaAtv=false; state.novaEvid=false;
+  if(state.screen==='demandaForm' && !state.id && state.form) state.form.diretoria = me().diretoria;
+  render(); toast('Papel: '+ROLES[r].label+' ('+me().nome+')');
+}
+function sair(){ go('login'); }
+
+/* ============ blocos reutilizáveis ============ */
+function note(lines){
+  return `<div class="note"><b>NOTA DO PROTÓTIPO</b> <span class="muted">(papel atual: ${ROLES[state.role].label})</span><ul>${lines.filter(Boolean).map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
+}
+function blocked(msg){
+  return `<div class="box ro"><h1 class="mb">Acesso negado</h1><p>${msg}</p><button onclick="go('dashboard')">Voltar ao Dashboard</button></div>`;
+}
+const tagStatus = s => `<span class="tag ${s==='CONCLUIDA'?'dk':''} ${s==='CANCELADA'?'dash':''}">${STATUS[s]}</span>`;
+const tagPrior = p => `<span class="tag ${p==='URGENTE'?'dk':''}">${p==='URGENTE'?'!! ':p==='ALTA'?'! ':''}${PRIOR[p]}</span>`;
+const avatar = (pid,extra='') => { const p=P(pid); return `<span class="av" title="${esc(p.nome)}${extra?' ('+esc(extra)+')':''}">${ini(p.nome)}</span>`; };
+
+/* ============ render raiz ============ */
+function render(){
+  document.body.classList.toggle('hide-notes', !state.notes);
+  $('#roleSel').value = state.role;
+  $('#jump').value = state.screen;
+  const auth = ['login','cadastro','aguardando'].includes(state.screen);
+  $('#root').innerHTML = auth ? SCREENS[state.screen]() : shell();
+}
+
+function shell(){
+  const m = me(); const pend = db.pessoas.filter(p=>p.status==='aguardando').length;
+  const on = s => state.screen===s || (s==='demandas' && ['demanda','demandaForm'].includes(state.screen)) || (s==='pessoas' && state.screen==='pessoa');
+  const item = (s,l,extra='') => `<a class="${on(s)?'on':''}" onclick="go('${s}')"><span>${l}</span>${extra}</a>`;
+  const content = canSee(state.screen) ? SCREENS[state.screen]() :
+    blocked(`A tela <b>${state.screen}</b> não aparece no menu de <b>${ROLES[state.role].label}</b> e a rota fica protegida pelo guard de perfil.`) +
+    note(['Mesma regra do <code>perfil.guard.ts</code> que já existe no repo: menu esconde, guard bloqueia a URL digitada direto.']);
+  return `<div class="app">
+    <header class="top">
+      <div class="row"><b>[ SGD ]</b><span class="muted small">Sistema de Gestão de Demandas · Aristocrata</span></div>
+      <div class="row">
+        <span class="av" style="margin:0">${ini(m.nome)}</span>
+        <span><b>${esc(m.nome)}</b><br><span class="small muted">${m.perfil}${m.ref?' · Referência de '+m.ref:''}</span></span>
+        <button title="Meu perfil" onclick="go('perfil')">⚙ Meu perfil</button>
+        <button onclick="sair()">Sair ⇥</button>
+      </div>
+    </header>
+    <nav class="side">
+      ${item('dashboard','▦ Dashboard')}
+      ${item('demandas','☰ Demandas')}
+      <div class="sec">Cadastros</div>
+      ${isGA()?item('demandantes','◇ Demandantes'):''}
+      ${item('projetos','◇ Projetos')}
+      ${item('campanhas','◇ Campanhas')}
+      ${item('tiposPeca','◇ Tipos de Peça')}
+      ${isGA()?item('pessoas','☺ Pessoas', pend?`<span class="tag dk">${pend}</span>`:''):''}
+      <hr>
+      ${item('relatorio','▤ Relatório Mensal')}
+    </nav>
+    <main>${content}</main>
+  </div>${state.modal?renderModal():''}`;
+}
+
+/* ============ 1 a 3: autenticação ============ */
+function scr_login(){
+  return `<div class="auth"><div>
+    <div class="card"><form class="form" onsubmit="event.preventDefault();entrar()">
+      <h1>Entrar</h1>
+      <label>E-mail</label><input type="email" value="${esc(me().email)}">
+      <label>Senha</label><input type="password" value="12345678">
+      <button class="pri" style="margin-top:10px">Entrar</button>
+      <button type="button" class="lnk" onclick="go('cadastro')" style="align-self:flex-start;margin-top:6px">Criar conta</button>
+    </form></div>
+    <div class="note" style="max-width:340px"><b>NOTA DO PROTÓTIPO</b>
+      <label class="row" style="margin-top:6px"><input type="checkbox" ${state.naoAprovado?'checked':''} onchange="state.naoAprovado=this.checked"> simular conta ainda não aprovada</label>
+      <ul><li>Aprovada: o login leva direto ao Dashboard, já com o papel escolhido no topo.</li><li>Não aprovada: o login leva à tela 3 (Aguardando aprovação).</li></ul>
+    </div></div></div>`;
+}
+function entrar(){ go(state.naoAprovado ? 'aguardando' : 'dashboard'); }
+function scr_cadastro(){
+  return `<div class="auth"><div>
+    <div class="card"><form class="form" onsubmit="event.preventDefault();go('aguardando')">
+      <h1>Criar conta</h1>
+      <label>Nome completo</label><input placeholder="Seu nome">
+      <label>E-mail</label><input type="email" placeholder="nome@aristocrata.com">
+      <label>Senha</label><input type="password" placeholder="mínimo 8 caracteres">
+      <label>Diretoria</label><select required>${opt('','Selecione…','')}${opts(DIRETORIAS)}</select>
+      <label>Área</label><select required>${opt('','Selecione…','')}${opts(AREAS)}</select>
+      <label>Cargo</label><select required>${opt('','Selecione…','')}${opts(CARGOS)}</select>
+      <button class="pri" style="margin-top:10px">Criar conta</button>
+      <button type="button" class="lnk" onclick="go('login')" style="align-self:flex-start;margin-top:6px">Já tenho conta</button>
+    </form></div>
+    <div class="note" style="max-width:340px"><b>NOTA DO PROTÓTIPO</b><ul><li>A própria pessoa informa diretoria, área e cargo.</li><li>Perfil de sistema <b>não</b> é escolhido aqui: quem define é o Gestor ou Admin na aprovação (padrão Profissional). Deixar a pessoa escolher o próprio perfil seria uma porta aberta pra alguém se dar Admin.</li><li>Cria a Pessoa com status <i>aguardando</i>, já vinculada à conta do Supabase Auth.</li></ul></div>
+  </div></div>`;
+}
+function scr_aguardando(){
+  return `<div class="auth"><div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:32px">⏳</div>
+      <h1 class="mb">Conta aguardando aprovação</h1>
+      <p>Sua conta foi criada, mas precisa ser liberada por um administrador antes de você acessar o sistema.</p>
+      <p class="muted small">Você receberá acesso assim que o Gestor ou Admin aprovar seu cadastro.</p>
+      <button onclick="sair()">Sair</button>
+    </div>
+    <div class="note" style="max-width:340px"><b>NOTA DO PROTÓTIPO</b><ul><li>Sem menu e sem dados. Só existe o botão Sair.</li><li>A pessoa aparece em Pessoas &gt; Aguardando aprovação.</li></ul></div>
+  </div></div>`;
+}
+
+/* ============ 4: dashboard ============ */
+function heatmap(seedStr, pessoasAlvo, scale){
+  const r = rng(hash(seedStr));
+  const end = new Date(TODAY+'T12:00:00');
+  const start = new Date(end); start.setDate(start.getDate()-364); start.setDate(start.getDate()-start.getDay());
+  let cells='', months='', total=0, col=0, lastMonth=-1;
+  for(const d=new Date(start); d<=end; d.setDate(d.getDate()+1)){
+    const iso = d.toISOString().slice(0,10); const wd = d.getDay();
+    if(wd===0){ col++; const m=d.getMonth(); if(m!==lastMonth){ months+=`<span style="grid-column:${col}">${MESES[m].slice(0,3)}</span>`; lastMonth=m; } }
+    const base = (wd===0||wd===6) ? (r()<.08?1:0) : Math.floor(r()*r()*6*scale);
+    const real = db.atividades.filter(a=>a.data===iso && pessoasAlvo.includes(a.pid)).length;
+    const n = base+real; total+=n; const q=n/scale;
+    const lv = n===0?0 : q<=1?1 : q<=2?2 : q<=3.5?3 : 4;
+    cells += `<i class="l${lv}" title="${fmt(iso)}: ${n} atividade(s)"></i>`;
+  }
+  return `<div class="hmwrap"><div class="hmm">${months}</div><div class="hm">${cells}</div></div>
+    <div class="row between small" style="margin-top:6px"><span class="muted">${total} atividades registradas nos últimos 12 meses</span>
+    <span class="lg">menos <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> mais</span></div>`;
+}
+function metricas(demandas, pessoasAlvo){
+  const cont = Object.keys(STATUS).map(s=>[s, demandas.filter(d=>d.status===s).length]);
+  const atvMes = db.atividades.filter(a=>pessoasAlvo.includes(a.pid) && a.data.startsWith(MES_ATUAL) && a.status!=='Cancelada').length;
+  const atr = demandas.filter(atrasada).length;
+  return `<div class="kpis">
+    ${cont.map(([s,n])=>`<div class="kpi"><div class="small muted">${STATUS[s]}</div><div class="n">${n}</div></div>`).join('')}
+    <div class="kpi"><div class="small muted">Atividades em ${MESES[+MES_ATUAL.slice(5)-1].toLowerCase()}</div><div class="n">${atvMes}</div></div>
+    <div class="kpi alert"><div class="small muted">Demandas atrasadas</div><div class="n">${atr}</div></div>
+  </div>
+  <div class="kpis" style="margin-top:8px">
+    <div class="kpi alert" style="grid-column:span 2"><div class="small muted">Valor gerado em ${MESES[+MES_ATUAL.slice(5)-1].toLowerCase()} (referência de mercado)</div><div class="n">${brl(valorGerado(pessoasAlvo, MES_ATUAL))}</div></div>
+    <div class="kpi" style="grid-column:span 2"><div class="small muted">Valor gerado em ${MES_ATUAL.slice(0,4)}</div><div class="n">${brl(valorGerado(pessoasAlvo, MES_ATUAL.slice(0,4)))}</div></div>
+  </div>`;
+}
+function scr_dashboard(){
+  const m = me(); let titulo, alvo, demandas, ctrl='', extra='', notas=[];
+  const ativos = db.pessoas.filter(p=>p.status==='ativo' && p.perfil==='Profissional');
+  if(state.role==='profissional'){
+    titulo='Meus números'; alvo=[m.id]; demandas=db.demandas.filter(d=>participa(d));
+    notas=['Mostra só os números da própria pessoa: demandas em que participa, atividades que registrou e o valor das peças que ela produziu.','Não existe seletor de pessoa nem de diretoria.'];
+  } else if(isRef()){
+    const team = ativos.filter(p=>p.area===m.ref);
+    if(state.dashSel!=='equipe' && !team.some(p=>p.id===state.dashSel)) state.dashSel='equipe';
+    alvo = state.dashSel==='equipe' ? team.map(p=>p.id) : [state.dashSel];
+    demandas = db.demandas.filter(d=>d.part.some(x=>alvo.includes(x.pid)));
+    titulo = state.dashSel==='equipe' ? `Equipe ${m.ref} (agregado, ${team.length} pessoas)` : `Individual: ${P(state.dashSel).nome}`;
+    ctrl = `<label class="row">Ver: <select onchange="state.dashSel=this.value;render()">${opt('equipe','Equipe '+m.ref+' (agregado)',state.dashSel)}${team.map(p=>opt(p.id,p.nome,state.dashSel)).join('')}</select></label>`;
+    notas=[`Padrão: agregado da equipe que a pessoa referencia (${m.ref}). O seletor abre a visão individual de cada colega da área.`,
+      'No banco: <code>perfil = PROFISSIONAL</code> e <code>referencia_area = Designers</code>. Referência de Equipe é função, não perfil: por isso ela não aparece como opção de Perfil em Pessoas.'];
+  } else {
+    const dir = isViewer() ? m.diretoria : state.dashDir;
+    const naDir = p => dir==='Todas' || p.diretoria===dir;
+    alvo = ativos.filter(naDir).map(p=>p.id);
+    demandas = db.demandas.filter(d=>dir==='Todas' || d.diretoria===dir);
+    titulo = dir==='Todas' ? 'Todas as diretorias (agregado)' : 'Diretoria '+dir+' (agregado)';
+    if(isGA()) ctrl = `<label class="row">Diretoria: <select onchange="state.dashDir=this.value;render()">${opts(['Todas',...DIRETORIAS],state.dashDir)}</select></label>
+      <label class="row"><input type="checkbox" ${state.dashPorPessoa?'checked':''} onchange="state.dashPorPessoa=this.checked;render()"> Detalhar por pessoa</label>`;
+    const linhas = AREAS.map(a=>{
+      const ps = alvo.filter(id=>P(id).area===a);
+      const ds = demandas.filter(d=>d.part.some(x=>ps.includes(x.pid)));
+      return `<tr><td>${a}</td><td>${ps.length}</td><td>${ds.filter(ativa).length}</td><td>${db.atividades.filter(x=>ps.includes(x.pid)&&x.data.startsWith(MES_ATUAL)&&x.status!=='Cancelada').length}</td><td>${ds.filter(atrasada).length}</td><td>${brl(valorGerado(ps, MES_ATUAL))}</td></tr>`;
+    }).join('');
+    extra = `<div class="box"><h2>Por área</h2><div class="tw"><table><tr><th>Área</th><th>Pessoas</th><th>Demandas ativas</th><th>Atividades no mês</th><th>Atrasadas</th><th>Valor no mês</th></tr>${linhas}</table></div></div>`;
+    if(isGA() && state.dashPorPessoa){
+      extra += `<div class="box"><h2>Por pessoa (detalhamento opcional)</h2><div class="tw"><table><tr><th>Pessoa</th><th>Área</th><th>Diretoria</th><th>Demandas ativas</th><th>Atividades no mês</th><th>Valor no mês</th></tr>${
+        alvo.map(id=>{const p=P(id);return `<tr><td>${esc(p.nome)}</td><td>${p.area}</td><td>${p.diretoria}</td><td>${db.demandas.filter(d=>ativa(d)&&participa(d,id)).length}</td><td>${db.atividades.filter(a=>a.pid===id&&a.data.startsWith(MES_ATUAL)&&a.status!=='Cancelada').length}</td><td>${brl(valorGerado([id], MES_ATUAL))}</td></tr>`}).join('')}</table></div></div>`;
+    }
+    notas = isViewer()
+      ? ['Somente leitura: agregado da diretoria da pessoa (CRM), sem seletor e sem atalhos de criação.','Visualizador não registra atividades, então não tem "meus números".']
+      : ['Agregado por diretoria e área. Produtividade individual fica escondida por padrão e só aparece ao marcar "Detalhar por pessoa".','Gestor e Admin têm a mesma visão aqui.'];
+  }
+  notas.push('Valor gerado = soma de quantidade × valor unitário das peças produzidas pela pessoa (ou pelo grupo). O valor unitário fica congelado no lançamento da peça. Cada peça tem um único "produzida por", então somar equipe ou diretoria nunca conta a mesma peça duas vezes. Demandas canceladas ficam fora.');
+  const pend = db.pessoas.filter(p=>p.status==='aguardando').length;
+  const atalhos = [
+    !isViewer() && `<button class="pri" onclick="go('demandaForm')">+ Nova demanda</button>`,
+    `<button onclick="state.scope='${isViewer()?'diretoria':'minhas'}';go('demandas')">${isViewer()?'Ver demandas da diretoria':'Minhas demandas'}</button>`,
+    isRef() && `<button onclick="state.scope='equipe';go('demandas')">Demandas da minha equipe</button>`,
+    !isViewer() && `<button onclick="go('relatorio')">Relatório mensal</button>`,
+    isGA() && `<button onclick="state.pessoasFiltro='aguardando';go('pessoas')">Aprovar cadastros (${pend})</button>`,
+  ].filter(Boolean).join('');
+  const seed = state.role+'|'+(isRef()?state.dashSel:isGA()?state.dashDir:'');
+  return `<div class="row between mb"><h1>Dashboard</h1><div class="row">${ctrl}</div></div>
+    <div class="box"><h2>Atalhos</h2><div class="row">${atalhos}</div></div>
+    <div class="box"><h2>Atividade diária: ${esc(titulo)}</h2>${heatmap(seed, alvo, Math.max(1, Math.round(alvo.length/2)))}</div>
+    <div class="box"><h2>Resumo: ${esc(titulo)}</h2>${metricas(demandas, alvo)}</div>
+    ${extra}
+    ${note(notas)}`;
+}
+
+/* ============ 5: lista de demandas ============ */
+function upd(id,field,val){
+  const d=D(id); d[field]=val;
+  const label = field==='status'?STATUS[val]:field==='prioridade'?PRIOR[val]:C(val)?.nome;
+  toast('Salvo na linha: '+field+' = '+label); render();
+}
+function scr_demandas(){
+  if(!state.scope || !scopes().some(s=>s[0]===state.scope)) state.scope=defaultScope();
+  const q = state.busca.toLowerCase();
+  const list = db.demandas.filter(d=>inScope(d,state.scope)).filter(d=>!q || d.titulo.toLowerCase().includes(q));
+  const rows = list.map(d=>{
+    const ed = canEditDemanda(d); const stop='onclick="event.stopPropagation()"';
+    const cliOpts = db.demandantes.filter(c=>c.diretoria===d.diretoria || c.id===d.demandante).map(c=>[c.id,c.nome]);
+    return `<tr class="click" onclick="go('demanda','${d.id}')">
+      <td><b>${esc(d.titulo)}</b></td>
+      <td>${ed?`<select ${stop} onchange="upd('${d.id}','demandante',this.value)">${opts(cliOpts,d.demandante)}</select>`:esc(C(d.demandante)?.nome)}</td>
+      <td>${d.diretoria}</td>
+      <td>${ed?`<select ${stop} onchange="upd('${d.id}','status',this.value)">${opts(Object.entries(STATUS),d.status)}</select>`:tagStatus(d.status)}</td>
+      <td>${ed?`<select ${stop} onchange="upd('${d.id}','prioridade',this.value)">${opts(Object.entries(PRIOR),d.prioridade)}</select>`:tagPrior(d.prioridade)}</td>
+      <td style="white-space:nowrap">${fmt(d.prazo)} ${atrasada(d)?'<span class="tag dk">atrasada</span>':''}</td>
+      <td style="white-space:nowrap">${brl(valorDemanda(d))}</td>
+      <td style="white-space:nowrap">${d.part.map(x=>avatar(x.pid,x.papel)).join('')}</td>
+    </tr>`;}).join('');
+  const nomes = {minhas:'em que você participa',equipe:`com alguém da equipe ${me().ref}`,diretoria:`da diretoria ${me().diretoria}`,todas:'de todas as diretorias'};
+  return `<div class="row between mb"><h1>Demandas</h1>${isViewer()?'':`<button class="pri" onclick="go('demandaForm')">+ Nova demanda</button>`}</div>
+    <div class="row between">
+      <div class="tabs">${scopes().map(([k,l])=>`<button class="${state.scope===k?'on':''}" onclick="state.scope='${k}';render()">${l}</button>`).join('')}</div>
+      <input placeholder="Buscar por título…" value="${esc(state.busca)}" onchange="state.busca=this.value;render()" style="margin-bottom:12px">
+    </div>
+    <p class="small muted" style="margin:0 0 8px">${list.length} demanda(s) ${nomes[state.scope]}. Clique numa linha para abrir. Campos com seletor podem ser editados direto na linha.</p>
+    <div class="tw"><table>
+      <tr><th>Título</th><th>Demandante</th><th>Diretoria</th><th>Status</th><th>Prioridade</th><th>Prazo</th><th>Valor ref.</th><th>Participantes</th></tr>
+      ${rows || `<tr><td colspan="8" class="muted">Nenhuma demanda neste escopo.</td></tr>`}
+    </table></div>
+    ${note([
+      `Abas visíveis para ${ROLES[state.role].label}: ${scopes().map(s=>s[1]).join(', ')}. Padrão: <b>${scopes().find(s=>s[0]===defaultScope())[1]}</b>.`,
+      isViewer() && 'Visualizador não participa de demandas, então "Minhas demandas" não existe e nada é editável na linha.',
+      state.role==='profissional' && 'Edição na linha (status, prioridade, demandante) só nas demandas em que a pessoa participa. As outras da diretoria aparecem como texto.',
+      isRef() && `Edita na linha as próprias demandas e as que têm alguém da equipe ${me().ref}. "Minha equipe" = demandas com pelo menos um participante da área.`,
+      isGA() && 'Gestor e Admin editam qualquer linha. "Minhas demandas" pode vir vazia para eles; talvez valha abrir em "Todas" por padrão (decisão sua).',
+      'A lista de demandantes na linha é filtrada pela diretoria da demanda.',
+    ])}`;
+}
+
+/* ============ 6: detalhe da demanda ============ */
+function mutDemanda(fn,msg){ fn(); if(msg) toast(msg); render(); }
+function addPart(did){
+  const pid=$('#np-p').value, papel=$('#np-r').value; if(!pid) return;
+  mutDemanda(()=>D(did).part.push({pid,papel}),'Participante adicionado');
+}
+function rmPart(did,pid){ if(confirm('Remover '+P(pid).nome+' da demanda?')) mutDemanda(()=>{const d=D(did);d.part=d.part.filter(x=>x.pid!==pid)},'Participante removido'); }
+function setPapel(did,pid,v){ D(did).part.find(x=>x.pid===pid).papel=v; toast('Papel alterado'); render(); }
+function addAtv(did){
+  const a={id:uid('a'),demanda:did,pid:$('#na-p').value,tipo:$('#na-t').value,data:$('#na-d').value||TODAY,descricao:$('#na-x').value||'(sem descrição)',status:'A fazer'};
+  state.novaAtv=false; mutDemanda(()=>db.atividades.push(a),'Atividade registrada');
+}
+function saveAtv(id){ const a=A(id); a.status=$('#ea-s').value; a.descricao=$('#ea-x').value; state.editAtv=null; toast('Atividade salva'); render(); }
+function cancelAtv(id){ if(confirm('Cancelar esta atividade?')){ A(id).status='Cancelada'; toast('Atividade cancelada'); render(); } }
+function addPeca(did){ const nome=$('#npc-n').value.trim(); if(!nome){toast('Informe o nome da peça');return;} const t=TP($('#npc-t').value); const q=Math.max(1,+$('#npc-q').value||1); mutDemanda(()=>db.pecas.push({id:uid('pc'),demanda:did,tipo:t.id,nome,qtd:q,vu:t.valor,pid:$('#npc-p').value,data:TODAY}),'Peça adicionada: '+brl(t.valor*q)); }
+function rmPeca(id){ if(confirm('Remover peça?')) mutDemanda(()=>{db.pecas=db.pecas.filter(p=>p.id!==id)},'Peça removida'); }
+function addEvid(){ const alvo=$('#ne-a').value, nome=$('#ne-n').value.trim()||'arquivo_sem_nome'; state.novaEvid=false; mutDemanda(()=>db.evidencias.push({id:uid('e'),alvo,tipo:$('#ne-t').value,nome}),'Evidência adicionada'); }
+function rmEvid(id){ mutDemanda(()=>{db.evidencias=db.evidencias.filter(e=>e.id!==id)},'Evidência removida'); }
+function cancelarDemanda(id){ if(confirm('Cancelar a demanda inteira?')) mutDemanda(()=>{D(id).status='CANCELADA'},'Demanda cancelada'); }
+const donoAlvo = alvo => alvo.startsWith('a') ? A(alvo)?.pid : null;
+const canEditAlvo = (d,alvo) => alvo.startsWith('pc') ? canEditItem(PC(alvo)?.pid) : canEditItem(A(alvo)?.pid);
+
+function scr_demanda(){
+  const d = D(state.id) || db.demandas[0]; state.id=d.id;
+  const ed = canEditDemanda(d);
+  const atvs = db.atividades.filter(a=>a.demanda===d.id);
+  const pecas = db.pecas.filter(p=>p.demanda===d.id);
+  const partIds = d.part.map(x=>x.pid);
+
+  // participantes
+  const disponiveis = db.pessoas.filter(p=>p.status==='ativo' && p.perfil!=='Visualizador' && !partIds.includes(p.id) && (isGA()||principal(d)||(isRef()&&p.area===me().ref)));
+  const partRows = d.part.map(x=>{const p=P(x.pid); const pode=canManagePart(d,x.pid) && ed;
+    return `<tr><td>${avatar(x.pid)}&nbsp;&nbsp;${esc(p.nome)}${x.pid===me().id?' <span class="tag">você</span>':''}</td><td>${p.area}</td>
+      <td>${pode?`<select onchange="setPapel('${d.id}','${x.pid}',this.value)">${opts(PAPEIS,x.papel)}</select>`:x.papel}</td>
+      <td>${pode?`<button class="mini" onclick="rmPart('${d.id}','${x.pid}')">✕ ${x.pid===me().id&&!isGA()&&!principal(d)?'Sair':'Remover'}</button>`:''}</td></tr>`}).join('');
+  const addPartForm = ed && canAddPart(d) && disponiveis.length ? `<div class="row" style="margin-top:8px"><select id="np-p">${opts(disponiveis.map(p=>[p.id,p.nome+' ('+p.area+')']))}</select><select id="np-r">${opts(PAPEIS,'Participante')}</select><button onclick="addPart('${d.id}')">+ Adicionar participante</button></div>` : '';
+
+  // atividades
+  const atvRows = atvs.map(a=>{const pode=canEditItem(a.pid) && d.status!=='CANCELADA';
+    if(state.editAtv===a.id) return `<tr><td>${esc(P(a.pid).nome)}</td><td>${a.tipo}</td><td>${fmt(a.data)}</td>
+      <td><input id="ea-x" value="${esc(a.descricao)}" style="width:100%"></td><td><select id="ea-s">${opts(ETAPAS,a.status)}</select></td>
+      <td style="white-space:nowrap"><button class="mini pri" onclick="saveAtv('${a.id}')">Salvar</button> <button class="mini" onclick="state.editAtv=null;render()">Voltar</button></td></tr>`;
+    return `<tr class="${a.status==='Cancelada'?'strike':''}"><td>${esc(P(a.pid).nome)}${a.pid===me().id?' <span class="tag">você</span>':''}</td><td>${a.tipo}</td><td>${fmt(a.data)}</td><td>${esc(a.descricao)}</td><td><span class="tag">${a.status}</span></td>
+      <td style="white-space:nowrap">${pode&&a.status!=='Cancelada'?`<button class="mini" onclick="state.editAtv='${a.id}';render()">✎ Editar</button> <button class="mini" onclick="cancelAtv('${a.id}')">✕ Cancelar</button>`:'<span class="muted small">somente leitura</span>'}</td></tr>`}).join('');
+  const quemRegistra = isGA() ? partIds : isRef() ? partIds.filter(id=>id===me().id||P(id).area===me().ref) : partIds.filter(id=>id===me().id);
+  const novaAtv = ed && quemRegistra.length ? (state.novaAtv ? `<div class="box ro" style="margin:8px 0 0"><div class="row">
+      <select id="na-p">${opts(quemRegistra.map(id=>[id,P(id).nome]))}</select><select id="na-t">${opts(TIPOS_ATV)}</select><input id="na-d" type="date" value="${TODAY}">
+      <input id="na-x" placeholder="Descrição" style="flex:1;min-width:160px"><button class="pri" onclick="addAtv('${d.id}')">Registrar</button><button onclick="state.novaAtv=false;render()">Fechar</button></div></div>`
+      : `<button style="margin-top:8px" onclick="state.novaAtv=true;render()">+ Nova atividade</button>`) : '';
+
+  // peças
+  const pecaRows = pecas.map(p=>{const pode=canEditItem(p.pid)&&d.status!=='CANCELADA'; return `<tr><td>${esc(TP(p.tipo).nome)}</td><td>${esc(p.nome)}</td><td>${esc(P(p.pid).nome.split(' ')[0])}</td><td>${p.qtd}</td><td style="white-space:nowrap">${brl(p.vu)}</td><td style="white-space:nowrap"><b>${brl(valorPeca(p))}</b></td><td>${db.evidencias.filter(e=>e.alvo===p.id).length}</td><td>${pode?`<button class="mini" onclick="rmPeca('${p.id}')">✕</button>`:''}</td></tr>`}).join('')
+    + (pecas.length?`<tr><td colspan="5"><b>Total da demanda</b></td><td style="white-space:nowrap"><b>${brl(valorDemanda(d))}</b></td><td colspan="2"></td></tr>`:'');
+  const minhaArea = me().ref || me().area;
+  const tiposAtivos = db.tiposPeca.filter(t=>t.ativo).sort((a,b)=>(b.area===minhaArea)-(a.area===minhaArea) || a.area.localeCompare(b.area));
+  const addPecaForm = ed && quemRegistra.length && d.status!=='CANCELADA' ? `<div class="row" style="margin-top:8px">
+      <select id="npc-t">${tiposAtivos.map(t=>opt(t.id, t.area+' · '+t.nome+' · '+brl(t.valor))).join('')}</select>
+      <input id="npc-n" placeholder="Nome da peça" style="min-width:140px"><label class="row small">Qtd <input id="npc-q" type="number" min="1" value="1" style="width:60px"></label>
+      <select id="npc-p">${opts(quemRegistra.map(id=>[id,'Produzida por '+P(id).nome]))}</select>
+      <button onclick="addPeca('${d.id}')">+ Adicionar peça</button></div>
+      <p class="small muted" style="margin:6px 0 0">O valor unitário vem do catálogo Tipos de Peça e fica congelado na peça.</p>` : '';
+
+  // evidências
+  const alvos = [...atvs.map(a=>({id:a.id,label:`Atividade: ${a.descricao} (${P(a.pid).nome.split(' ')[0]})`})), ...pecas.map(p=>({id:p.id,label:`Peça: ${p.nome}`}))];
+  const grupos = alvos.map(al=>{const ev=db.evidencias.filter(e=>e.alvo===al.id); if(!ev.length) return '';
+    return `<div class="grp"><div class="small" style="margin-bottom:6px"><b>${esc(al.label)}</b></div><div class="thumbs">${ev.map(e=>`<div class="thumb"><div class="img">[${e.tipo.toUpperCase()}]</div><div class="cap"><span>${esc(e.nome)}</span>${canEditAlvo(d,al.id)?`<button class="lnk small" title="remover" onclick="rmEvid('${e.id}')">✕</button>`:''}</div></div>`).join('')}</div></div>`}).join('');
+  const alvosEditaveis = alvos.filter(al=>canEditAlvo(d,al.id));
+  const novaEvid = alvosEditaveis.length ? (state.novaEvid ? `<div class="box ro" style="margin:8px 0 0"><div class="form" style="max-width:none">
+      <label>Vincular a</label><select id="ne-a">${opts(alvosEditaveis.map(a=>[a.id,a.label]))}</select>
+      <label>Tipo</label><div class="row">${TIPOS_EVID.map((t,i)=>`<label class="row" style="font-weight:400;margin:0"><input type="radio" name="ne" ${i===0?'checked':''} onchange="$('#ne-t').value='${t}'">${t}</label>`).join('')}<input type="hidden" id="ne-t" value="Print"></div>
+      <label>Arquivo, URL ou texto</label><div class="row"><input id="ne-n" placeholder="ex.: print_final.png ou https://…" style="flex:1"><button>📎 Escolher arquivo</button></div>
+      <div class="row" style="margin-top:8px"><button class="pri" onclick="addEvid()">Adicionar evidência</button><button onclick="state.novaEvid=false;render()">Fechar</button></div></div></div>`
+      : `<button style="margin-top:8px" onclick="state.novaEvid=true;render()">+ Adicionar evidência (print, link, arquivo)</button>`) : '';
+
+  const motivoRO = isViewer() ? 'Visualizador: tudo em somente leitura.' : 'Você não participa desta demanda e ninguém da sua equipe está nela: somente leitura.';
+  return `<div class="row between mb"><button class="lnk" onclick="go('demandas')">← Voltar para Demandas</button>
+      <div class="row">${ed?`<button onclick="go('demandaForm','${d.id}')">✎ Editar demanda</button>`:''}${(isGA()||principal(d))&&d.status!=='CANCELADA'?`<button onclick="cancelarDemanda('${d.id}')">✕ Cancelar demanda</button>`:''}</div></div>
+    ${ed?'':`<div class="banner">🔒 ${motivoRO}</div>`}
+    <div class="box">
+      <div class="row between mb"><h1>${esc(d.titulo)}</h1>
+        <div class="row">Status: ${ed?`<select onchange="upd('${d.id}','status',this.value)">${opts(Object.entries(STATUS),d.status)}</select>`:tagStatus(d.status)}</div></div>
+      ${d.descricao?`<p class="muted" style="margin-top:0">${esc(d.descricao)}</p>`:''}
+      <div class="dl">
+        <div><small>Demandante</small>${esc(C(d.demandante)?.nome)}</div><div><small>Diretoria</small>${d.diretoria}</div>
+        <div><small>Projeto</small>${esc(PR(d.projeto)?.nome||'—')}</div><div><small>Campanha</small>${esc(CP(d.campanha)?.nome||'—')}</div>
+        <div><small>Prioridade</small>${tagPrior(d.prioridade)}</div><div><small>Prazo</small>${fmt(d.prazo)} ${atrasada(d)?'<span class="tag dk">atrasada</span>':''}</div>
+        <div><small>Valor de referência</small><b>${brl(valorDemanda(d))}</b></div>
+        <div><small>Link externo</small>${d.link?`<a href="#" onclick="return false">${esc(d.link)}</a>`:'—'}</div>
+      </div>
+    </div>
+    <div>
+      <div class="box"><h2>Participantes (${d.part.length})</h2><div class="tw"><table><tr><th>Pessoa</th><th>Área</th><th>Papel</th><th></th></tr>${partRows}</table></div>${addPartForm}</div>
+      <div class="box"><h2>Peças (${pecas.length})</h2><div class="tw"><table><tr><th>Tipo</th><th>Nome</th><th>Por</th><th>Qtd</th><th>Valor unit.</th><th>Total</th><th>Evid.</th><th></th></tr>${pecaRows||'<tr><td colspan="8" class="muted">Nenhuma peça.</td></tr>'}</table></div>${addPecaForm}</div>
+    </div>
+    <div class="box"><h2>Atividades (${atvs.length})</h2><div class="tw"><table><tr><th>Pessoa</th><th>Tipo</th><th>Data</th><th>Descrição</th><th>Status</th><th>Ações</th></tr>${atvRows||'<tr><td colspan="6" class="muted">Nenhuma atividade.</td></tr>'}</table></div>${novaAtv}</div>
+    <div class="box"><h2>Evidências (${db.evidencias.filter(e=>alvos.some(a=>a.id===e.alvo)).length})</h2>${grupos||'<p class="muted">Nenhuma evidência ainda.</p>'}${novaEvid}</div>
+    ${note([
+      isViewer() && 'Visualizador vê tudo e não edita nada: sem seletores, sem botões de ação.',
+      state.role==='profissional' && `Profissional só edita e cancela as <b>próprias</b> atividades e evidências. Participantes: pode mudar o próprio papel ou sair; adicionar e remover outras pessoas fica com o Responsável principal${principal(d)?' (que é você nesta demanda)':''}.`,
+      isRef() && `Referência de Equipe edita e cancela itens de colegas da área <b>${me().ref}</b> (ex.: Diego e Elisa) além dos próprios. Itens de outras áreas ficam em somente leitura. Pode adicionar ao time pessoas da própria área.`,
+      isGA() && 'Gestor e Admin editam tudo, adicionam qualquer pessoa e cancelam a demanda.',
+      !isGA() && !isViewer() && 'Cancelar a demanda inteira fica só com Gestor, Admin e o Responsável principal.',
+      'Teste: abra "Black Friday Cartões" como Profissional (Bruno), depois como Referência (Carla) e compare os botões ✎ e ✕ nas atividades.',
+      'Peça tem um único "produzida por": só essa pessoa (ou a Referência da área dela, ou Gestor/Admin) remove a peça e as evidências dela.', 'Evidência aponta para uma atividade, uma peça ou as duas (CHECK intencional do banco). No protótipo simplifiquei para um vínculo só.',
+    ])}`;
+}
+
+/* ============ 7: formulário de demanda ============ */
+function ff(k,v,rerender){ state.form[k]=v; if(k==='diretoria'){state.form.demandante='';state.form.projeto='';state.form.campanha='';} if(k==='demandante'){state.form.projeto='';state.form.campanha='';} if(k==='projeto'){state.form.campanha='';} if(rerender) render(); }
+function salvarDemanda(){
+  const f=state.form;
+  if(!f.titulo.trim() || !f.demandante){ toast('Preencha título e demandante'); return; }
+  let id=f.id;
+  if(id){ Object.assign(D(id), f); }
+  else { id=uid('d'); db.demandas.unshift({...f,id,status:'NAO_INICIADA',part:[{pid:me().id,papel:'Responsável principal'}]}); }
+  toast(f.id?'Demanda atualizada':'Demanda criada'); go('demanda',id);
+}
+function scr_demandaForm(){
+  const f=state.form; const edit=!!f.id;
+  if(isViewer()) return blocked('Visualizador não cria nem edita demandas.');
+  if(edit && !canEditDemanda(D(f.id))) return blocked('Você não pode editar esta demanda.');
+  const demandantes = db.demandantes.filter(c=>c.ativo && c.diretoria===f.diretoria);
+  const projetos = db.projetos.filter(p=>p.diretoria===f.diretoria && (!f.demandante || p.demandante===f.demandante) && p.status!=='ENCERRADO');
+  const campanhas = db.campanhas.filter(c=>f.projeto && c.projeto===f.projeto);
+  return `<button class="lnk mb" onclick="${edit?`go('demanda','${f.id}')`:`go('demandas')`}">← Cancelar e voltar</button>
+    <div class="box" style="max-width:560px"><h1 class="mb">${edit?'Editar demanda':'Nova demanda'}</h1>
+    <div class="form">
+      <label>Título *</label><input value="${esc(f.titulo)}" onchange="ff('titulo',this.value)" placeholder="ex.: Campanha Plano Safra">
+      <label>Descrição</label><textarea rows="3" onchange="ff('descricao',this.value)">${esc(f.descricao)}</textarea>
+      <label>Diretoria *</label><select onchange="ff('diretoria',this.value,true)">${opts(DIRETORIAS,f.diretoria)}</select>
+      <span class="hint">Pré-selecionada com a diretoria de ${esc(me().nome)} (${me().diretoria}).</span>
+      <label>Demandante *</label><select onchange="ff('demandante',this.value,true)">${opt('','Selecione…',f.demandante)}${opts(demandantes.map(c=>[c.id,c.nome]),f.demandante)}</select>
+      <span class="hint">${demandantes.length} demandante(s) ativos da diretoria ${f.diretoria}.</span>
+      <label>Projeto</label><select onchange="ff('projeto',this.value,true)">${opt('','Nenhum',f.projeto)}${opts(projetos.map(p=>[p.id,p.nome]),f.projeto)}</select>
+      <label>Campanha</label><select ${f.projeto?'':'disabled'} onchange="ff('campanha',this.value)">${opt('',f.projeto?'Nenhuma':'Escolha um projeto antes',f.campanha)}${opts(campanhas.map(c=>[c.id,c.nome+(c.codigo?' ('+c.codigo+')':'')]),f.campanha)}</select>
+      <label>Prioridade</label><select onchange="ff('prioridade',this.value)">${opts(Object.entries(PRIOR),f.prioridade)}</select>
+      <label>Prazo</label><input type="date" value="${f.prazo||''}" onchange="ff('prazo',this.value)">
+      <label>Link externo (opcional)</label><input value="${esc(f.link)}" onchange="ff('link',this.value)" placeholder="URL do Planner ou ClickUp">
+      <div class="row" style="margin-top:12px"><button class="pri" onclick="salvarDemanda()">${edit?'Salvar':'Criar demanda'}</button></div>
+    </div></div>
+    ${note([
+      'Cascata de filtros: Diretoria filtra Demandante e Projeto; Demandante filtra Projeto; Projeto filtra Campanha. Trocar um nível limpa os de baixo.',
+      !edit && 'Ao criar, quem criou entra automaticamente como <b>Responsável principal</b> e o status nasce "Não iniciada". Depois abre o detalhe (tela 6).',
+      'Status não aparece aqui de propósito: ele muda na lista ou no detalhe.',
+    ])}`;
+}
+
+/* ============ 8: cadastros ============ */
+const LBL={demandante:'demandante',projeto:'projeto',campanha:'campanha',tipoPeca:'tipo de peça'};
+const NOVO={demandante:'Novo demandante',projeto:'Novo projeto',campanha:'Nova campanha',tipoPeca:'Novo tipo de peça'};
+function openModal(kind,id){ const src={demandante:C,projeto:PR,campanha:CP,tipoPeca:TP}[kind]; state.modal={kind,id,data: id?{...src(id)}:{}}; render(); }
+function mf(k,v){ state.modal.data[k]=v; }
+function saveModal(){
+  const {kind,id,data}=state.modal; const col={demandante:'demandantes',projeto:'projetos',campanha:'campanhas',tipoPeca:'tiposPeca'}[kind];
+  if(kind==='tipoPeca' && !(data.valor>0)){ toast('Informe um valor unitário maior que zero'); return; }
+  if(!data.nome){ toast('Informe o nome'); return; }
+  if(id) Object.assign(db[col].find(x=>x.id===id),data);
+  else db[col].push({...{demandante:{tipo:'Pessoa',diretoria:'CRM',ativo:true},projeto:{diretoria:'CRM',status:'ATIVO',demandante:'c1'},campanha:{projeto:'pr1'},tipoPeca:{area:isRef()?me().ref:'HTML',ativo:true,fonte:'cadastrado no sistema'}}[kind],...data,id:uid(kind.slice(0,3))});
+  state.modal=null; toast('Salvo'); render();
+}
+function renderModal(){
+  const {kind,id,data:d}=state.modal; let body='';
+  if(kind==='demandante') body=`<label>Nome</label><input value="${esc(d.nome)}" onchange="mf('nome',this.value)">
+    <label>Tipo</label><select onchange="mf('tipo',this.value)">${opts(['Pessoa','Área','Unidade','Externo'],d.tipo)}</select>
+    <label>Diretoria</label><select onchange="mf('diretoria',this.value)">${opts(DIRETORIAS,d.diretoria)}</select>
+    <label>Situação</label><select onchange="mf('ativo',this.value==='1')">${opts([['1','Ativo'],['0','Inativo']],d.ativo===false?'0':'1')}</select>
+    <label>Observação</label><textarea rows="2"></textarea>`;
+  if(kind==='tipoPeca') body=`<label>Nome do serviço / peça</label><input value="${esc(d.nome)}" onchange="mf('nome',this.value)" placeholder="ex.: Ajustes HTML e-mail marketing">
+    <label>Área</label><select ${isRef()?'disabled':''} onchange="mf('area',this.value)">${opts(AREAS,d.area||(isRef()?me().ref:'HTML'))}</select>
+    ${isRef()?'<span class="hint">Referência de Equipe cadastra só na própria área.</span>':''}
+    <label>Valor unitário (R$)</label><input type="number" min="0" step="0.01" value="${d.valor??''}" onchange="mf('valor',+this.value)">
+    <span class="hint">${id?'O novo valor vale só para peças lançadas daqui pra frente.':'Referência de mercado para o serviço avulso.'}</span>
+    <label>Situação</label><select onchange="mf('ativo',this.value==='1')">${opts([['1','Ativo'],['0','Inativo']],d.ativo===false?'0':'1')}</select>`;
+  if(kind==='projeto') body=`<label>Nome</label><input value="${esc(d.nome)}" onchange="mf('nome',this.value)">
+    <label>Demandante</label><select onchange="mf('demandante',this.value)">${opts(db.demandantes.map(c=>[c.id,c.nome]),d.demandante)}</select>
+    <label>Diretoria</label><select onchange="mf('diretoria',this.value)">${opts(DIRETORIAS,d.diretoria)}</select>
+    <label>Status</label><select onchange="mf('status',this.value)">${opts(['ATIVO','PAUSADO','ENCERRADO'],d.status)}</select>
+    <label>Descrição</label><textarea rows="2"></textarea>`;
+  if(kind==='campanha') body=`<label>Nome</label><input value="${esc(d.nome)}" onchange="mf('nome',this.value)">
+    <label>Código</label><input value="${esc(d.codigo)}" placeholder="ex.: BC2609CR" onchange="mf('codigo',this.value)">
+    <label>Projeto</label><select onchange="mf('projeto',this.value)">${opts(db.projetos.map(p=>[p.id,p.nome]),d.projeto)}</select>
+    <label>Data de início</label><input type="date" value="${d.inicio||''}" onchange="mf('inicio',this.value)">
+    <label>Data de fim</label><input type="date" value="${d.fim||''}" onchange="mf('fim',this.value)">`;
+  return `<div class="modalbg"><div class="modal"><div class="row between"><h1>${id?'Editar '+LBL[kind]:NOVO[kind]}</h1><button onclick="state.modal=null;render()">✕</button></div>
+    <div class="form" style="max-width:none">${body}<div class="row" style="margin-top:12px"><button class="pri" onclick="saveModal()">Salvar</button><button onclick="state.modal=null;render()">Cancelar</button></div></div></div></div>`;
+}
+function cadastro(titulo,kind,cols,rows,extraNote){
+  const novo = kind==='campanha'?'Nova campanha':'Novo '+kind;
+  const acao=isGA();
+  return `<div class="row between mb"><h1>${titulo}</h1>${acao?`<button class="pri" onclick="openModal('${kind}')">+ ${novo}</button>`:''}</div>
+    <div class="tw"><table><tr>${cols.map(c=>`<th>${c}</th>`).join('')}${acao?'<th>Ações</th>':''}</tr>
+    ${rows.map(r=>`<tr>${r.cells.map(c=>`<td>${c}</td>`).join('')}${acao?`<td><button class="mini" onclick="openModal('${kind}','${r.id}')">✎ Editar</button></td>`:''}</tr>`).join('')}</table></div>
+    ${note([acao?'Gestor e Admin veem "+ Novo" e a coluna Ações.':`${ROLES[state.role].label} vê a lista, mas sem botões de ação.`, extraNote])}`;
+}
+function scr_demandantes(){
+  return cadastro('Demandantes','demandante',['Nome','Tipo','Diretoria','Situação'],
+    db.demandantes.map(c=>({id:c.id,cells:[esc(c.nome),c.tipo,c.diretoria,c.ativo?'<span class="tag">Ativo</span>':'<span class="tag dash">Inativo</span>']})),
+    'Demandantes só aparece no menu para Gestor e Admin. Demandante inativo some do formulário de demanda.', 'Demandante pode ser uma pessoa (como na coluna Cliente da planilha: Fernanda Parizi, Gabriel Porto) ou uma área/unidade: o <code>tipo</code> que já existe no banco cobre os dois casos.');
+}
+function scr_projetos(){
+  return cadastro('Projetos','projeto',['Nome','Demandante','Diretoria','Status'],
+    db.projetos.map(p=>({id:p.id,cells:[esc(p.nome),esc(C(p.demandante)?.nome),p.diretoria,`<span class="tag">${p.status}</span>`]})),
+    'Projeto ENCERRADO não aparece no formulário de demanda.');
+}
+function scr_campanhas(){
+  return cadastro('Campanhas','campanha',['Nome','Código','Projeto','Início','Fim'],
+    db.campanhas.map(c=>({id:c.id,cells:[esc(c.nome),c.codigo||'—',esc(PR(c.projeto)?.nome),fmt(c.inicio),fmt(c.fim)]})), null);
+}
+
+function rmTipo(id){
+  const t=TP(id); const uso=db.pecas.filter(p=>p.tipo===id).length;
+  if(uso){ if(confirm('"'+t.nome+'" já foi usado em '+uso+' peça(s). Excluir apagaria o histórico. Desativar em vez disso?')){ t.ativo=false; toast('Tipo desativado'); render(); } }
+  else if(confirm('Excluir "'+t.nome+'"?')){ db.tiposPeca=db.tiposPeca.filter(x=>x.id!==id); toast('Tipo excluído'); render(); }
+}
+function scr_tiposPeca(){
+  const podeCriar = isGA()||isRef();
+  const f = state.tpArea||'Todas';
+  const list = db.tiposPeca.filter(t=>f==='Todas'||t.area===f).sort((a,b)=>a.area.localeCompare(b.area)||a.nome.localeCompare(b.nome));
+  const rows = list.map(t=>{const uso=db.pecas.filter(p=>p.tipo===t.id).length; const pode=canEditTipo(t);
+    return `<tr class="${t.ativo?'':'strike'}"><td>${t.area}</td><td><b>${esc(t.nome)}</b></td><td style="white-space:nowrap">${brl(t.valor)}</td><td>${t.ativo?'<span class="tag">Ativo</span>':'<span class="tag dash">Inativo</span>'}</td><td>${uso}</td><td class="small muted">${esc(t.fonte)}</td>
+      <td style="white-space:nowrap">${pode?`<button class="mini" onclick="openModal('tipoPeca','${t.id}')">✎ Editar</button> <button class="mini" onclick="rmTipo('${t.id}')">✕ Excluir</button>`:'<span class="small muted">somente leitura</span>'}</td></tr>`}).join('');
+  return `<div class="row between mb"><h1>Tipos de Peça</h1>${podeCriar?`<button class="pri" onclick="openModal('tipoPeca')">+ Novo tipo de peça</button>`:''}</div>
+    <p class="small muted" style="margin:0 0 8px">Catálogo de serviços com valor unitário de referência (tabela Sinapro / Adegraf da planilha). É o que dá o valor de cada peça lançada.</p>
+    <div class="tabs">${['Todas',...AREAS].map(a=>`<button class="${f===a?'on':''}" onclick="state.tpArea='${a}';render()">${a}</button>`).join('')}</div>
+    <div class="tw"><table><tr><th>Área</th><th>Nome</th><th>Valor unitário</th><th>Situação</th><th>Em uso</th><th>Fonte do valor</th><th>Ações</th></tr>${rows||'<tr><td colspan="7" class="muted">Nenhum tipo nesta área.</td></tr>'}</table></div>
+    ${note([
+      isGA() && 'Gestor e Admin incluem, editam e excluem tipos de qualquer área.',
+      isRef() && `Referência de Equipe gerencia só os tipos da própria área (<b>${me().ref}</b>). Os outros aparecem em somente leitura. (Sugestão minha: me diga se prefere liberar todas as áreas.)`,
+      (state.role==='profissional'||isViewer()) && 'Profissional e Visualizador só consultam: veem os valores, mas não mudam o catálogo.',
+      'Excluir um tipo que já tem peças lançadas vira <b>desativar</b>: some do formulário de peça e o histórico continua íntegro.',
+      'Mudar o valor de um tipo não altera peças já lançadas: cada peça guarda o valor unitário do momento (<code>peca.valor_unitario</code>). Isso mantém os relatórios de meses fechados estáveis.',
+      'Valores: "Ajustes HTML e-mail marketing" (R$ 6.000) veio de você; os marcados "planilha" saíram da aba DADOS; os demais são exemplos.',
+    ])}`;
+}
+
+/* ============ 9: pessoas ============ */
+function scr_pessoas(){
+  const pend = db.pessoas.filter(p=>p.status==='aguardando');
+  const f = state.pessoasFiltro;
+  const list = db.pessoas.filter(p=> f==='todos' || (f==='aguardando'?p.status==='aguardando':p.status!=='aguardando'));
+  return `<div class="row between mb"><h1>Pessoas</h1></div>
+    <div class="tabs">${[['todos','Todos'],['aguardando',`Aguardando aprovação (${pend.length})`],['ativos','Aprovados']].map(([k,l])=>`<button class="${f===k?'on':''}" onclick="state.pessoasFiltro='${k}';render()">${l}</button>`).join('')}</div>
+    <div class="tw"><table><tr><th>Nome</th><th>E-mail</th><th>Diretoria</th><th>Área</th><th>Cargo</th><th>Perfil</th><th>Referência de</th><th>Status</th></tr>
+    ${list.map(p=>`<tr class="click" onclick="go('pessoa','${p.id}')"><td><b>${esc(p.nome)}</b></td><td class="small">${p.email}</td><td>${p.diretoria||'—'}</td><td>${p.area||'—'}</td><td>${p.cargo||'—'}</td><td>${p.perfil||'—'}</td><td>${p.ref||'—'}</td>
+      <td>${p.status==='aguardando'?'<span class="tag dk">aguardando aprovação</span>':p.status==='inativo'?'<span class="tag dash">inativo</span>':'<span class="tag">ativo</span>'}</td></tr>`).join('')}
+    </table></div>
+    ${note(['Clique numa pessoa aguardando para abrir o formulário de aprovação. Clique numa aprovada para editar perfil, área, cargo, diretoria e a função de Referência de Equipe.',
+      state.role==='gestor' && 'Gestor não consegue promover ninguém a Admin nem editar uma conta Admin. Troque para Admin e compare.'])}`;
+}
+function pf(k,v){ state.pform[k]=v||null; }
+function salvarPessoa(aprovar){
+  const f=state.pform;
+  if(aprovar && (!f.diretoria||!f.cargo||!f.perfil||(f.perfil==='Profissional'&&!f.area))){ toast('Defina diretoria, área, cargo e perfil antes de aprovar'); return; }
+  if(f.perfil!=='Profissional') f.ref=null;
+  Object.assign(P(f.id), f, aprovar?{status:'ativo'}:{});
+  toast(aprovar?f.nome+' aprovado(a)':'Alterações salvas'); go('pessoas');
+}
+function recusar(){ if(confirm('Recusar e excluir este cadastro?')){ db.pessoas=db.pessoas.filter(p=>p.id!==state.pform.id); toast('Cadastro recusado'); go('pessoas'); } }
+function scr_pessoa(){
+  const f=state.pform; if(!f) return blocked('Pessoa não encontrada.');
+  const pendente = f.status==='aguardando';
+  const travado = state.role==='gestor' && P(f.id).perfil==='Admin';
+  const perfis = state.role==='admin' ? PERFIS : PERFIS.filter(p=>p!=='Admin');
+  const dis = travado ? 'disabled' : '';
+  const orig = P(f.id);
+  const chg = k => pendente && (f[k]||null)!==(orig[k]||null) ? `<span class="hint"><b>ajustado pelo gestor</b> (a pessoa informou: ${esc(orig[k]||'nada')})</span>` : '';
+  return `<button class="lnk mb" onclick="go('pessoas')">← Voltar para Pessoas</button>
+    <div class="box" style="max-width:560px">
+      <h1>${pendente?'Aprovar cadastro':'Editar pessoa'}</h1>
+      <p class="muted" style="margin:4px 0 8px">${esc(f.nome)} · ${f.email}</p>
+      ${travado?'<div class="banner">🔒 Conta Admin: só um Admin pode alterar.</div>':''}
+      ${pendente?'<div class="banner">Dados informados pela própria pessoa no cadastro. Confira, ajuste se precisar, defina o perfil e aprove.</div>':''}
+      <div class="form">
+        <label>Diretoria *</label><select ${dis} onchange="pf('diretoria',this.value);render()">${opt('','Selecione…',f.diretoria)}${opts(DIRETORIAS,f.diretoria)}</select>${chg('diretoria')}
+        <label>Área ${f.perfil==='Profissional'?'*':''}</label><select ${dis} onchange="pf('area',this.value);render()">${opt('','Nenhuma',f.area)}${opts(AREAS,f.area)}</select>${chg('area')}
+        <label>Cargo *</label><select ${dis} onchange="pf('cargo',this.value);render()">${opt('','Selecione…',f.cargo)}${opts(CARGOS,f.cargo)}</select>${chg('cargo')}
+        <label>Perfil de sistema *</label><select ${dis} onchange="pf('perfil',this.value);render()">${opt('','Selecione…',f.perfil)}${opts(perfis,f.perfil)}</select>
+        <span class="hint">${state.role==='admin'?'Admin pode conceder qualquer perfil.':'Gestor não concede o perfil Admin.'}</span>
+        ${f.perfil==='Profissional'?`<label>É Referência de Equipe de qual área?</label><select ${dis} onchange="pf('ref',this.value)">${opt('','Não é referência',f.ref)}${opts(AREAS,f.ref)}</select>
+        <span class="hint">Função de referência dentro do time. Não muda o perfil nem cria chefia formal.</span>`:''}
+        ${pendente?'':`<label>Status</label><select ${dis} onchange="pf('status',this.value)">${opts([['ativo','Ativo'],['inativo','Inativo']],f.status)}</select>`}
+        <div class="row" style="margin-top:12px">${pendente?`<button class="pri" onclick="salvarPessoa(true)">✓ Aprovar</button><button onclick="recusar()">Recusar</button>`:`<button class="pri" ${dis} onclick="salvarPessoa(false)">Salvar</button>`}</div>
+      </div>
+    </div>
+    ${note(['"Referência de Equipe" só aparece quando o perfil é Profissional: é um atributo da pessoa (área referenciada), não um quinto perfil.',
+      pendente && 'Aprovação: a pessoa já preencheu diretoria, área e cargo. O Gestor confere, define o perfil (vem Profissional por padrão) e pode ajustar qualquer campo. Ajustes aparecem marcados e devem ir pra auditoria (valor informado x valor aprovado).'])}`;
+}
+
+/* ============ 10: meu perfil ============ */
+function scr_perfil(){
+  const m=me();
+  return `<h1 class="mb">Meu perfil</h1>
+    <div class="box" style="max-width:560px"><div class="row" style="align-items:flex-start;gap:16px">
+      <div><div class="photo">[ FOTO ]</div><button class="mini" style="margin-top:6px">Trocar foto</button></div>
+      <div class="form" style="flex:1;min-width:220px">
+        <label>Nome</label><input value="${esc(m.nome)}" onchange="me().nome=this.value;toast('Nome atualizado')">
+        <label>E-mail</label><input value="${m.email}" readonly>
+        <span class="hint">O e-mail é o login e não pode ser alterado aqui.</span>
+      </div></div>
+      <div class="dl" style="margin-top:12px">
+        <div><small>Diretoria</small>${m.diretoria||'—'}</div><div><small>Área</small>${m.area||'—'}</div>
+        <div><small>Cargo</small>${m.cargo||'—'}</div><div><small>Perfil</small>${m.perfil}${m.ref?' · Ref. '+m.ref:''}</div>
+      </div>
+      <p class="small muted">Diretoria, área, cargo e perfil são definidos pelo Gestor ou Admin.</p>
+      ${state.senha?`<div class="box ro form" style="max-width:none"><label>Senha atual</label><input type="password"><label>Nova senha</label><input type="password"><label>Confirmar nova senha</label><input type="password">
+        <div class="row" style="margin-top:8px"><button class="pri" onclick="state.senha=false;toast('Senha alterada');render()">Salvar nova senha</button><button onclick="state.senha=false;render()">Cancelar</button></div></div>`
+      :`<button onclick="state.senha=true;render()">🔑 Trocar senha</button>`}
+    </div>
+    ${note(['Igual para todos os papéis. Só nome e foto são editáveis pela própria pessoa.'])}`;
+}
+
+/* ============ 11: relatório mensal ============ */
+function rel(){
+  const k=state.relMes;
+  if(!state.rels[k]){
+    const ids = db.atividades.filter(a=>a.pid===me().id && a.data.startsWith(k)).map(a=>a.id);
+    state.rels[k] = {pid:me().id, sel:new Set(ids.filter(id=>A(id).status!=='Cancelada')), obs:'', fase:'selecao', aprovadoEm:null};
+  }
+  if(state.rels[k].pid!==me().id){ delete state.rels[k]; return rel(); }
+  return state.rels[k];
+}
+function toggleSel(id,on){ const r=rel(); on?r.sel.add(id):r.sel.delete(id); }
+function addAvulsa(){
+  const a={id:uid('a'),demanda:null,pid:me().id,tipo:$('#av-t').value,data:$('#av-d').value||TODAY,descricao:$('#av-x').value||'(sem descrição)',status:'Concluída'};
+  if(!a.data.startsWith(state.relMes)) { toast('A data precisa estar em '+nomeMes(state.relMes)); return; }
+  db.atividades.push(a); rel().sel.add(a.id); state.novaAvulsa=false; toast('Atividade avulsa adicionada'); render();
+}
+function scr_relatorio(){
+  if(isViewer()) return `<h1 class="mb">Relatório mensal</h1><div class="box ro">Visualizador não registra atividades, então não tem relatório mensal.</div>`+note(['Assumido na revisão do plano: relatório pertence a quem produz. Se o Visualizador precisar ver relatórios de outras pessoas, isso vira uma tela de consulta separada.']);
+  const r=rel(); const mesesOpt=['2026-04','2026-05','2026-06','2026-07','2026-08','2026-09'];
+  const atvs = db.atividades.filter(a=>a.pid===me().id && a.data.startsWith(state.relMes)).sort((a,b)=>a.data.localeCompare(b.data));
+  const aprovado=!!r.aprovadoEm;
+  const header = `<div class="row between mb"><h1>Relatório mensal</h1>
+    <label class="row">Mês: <select onchange="state.relMes=this.value;render()">${opts(mesesOpt.map(m=>[m,nomeMes(m)]),state.relMes)}</select></label></div>
+    <div class="banner">Status: <b>${aprovado?'Aprovado por '+esc(me().nome)+' em '+fmt(r.aprovadoEm):r.fase==='previa'?'Rascunho gerado, aguardando sua aprovação':'Em preparação'}</b></div>`;
+  if(r.fase==='previa'){
+    const escolhidas = atvs.filter(a=>r.sel.has(a.id));
+    const grupos = {}; escolhidas.forEach(a=>{const k=a.demanda?D(a.demanda).titulo:AVULSAS;(grupos[k]=grupos[k]||[]).push(a)});
+    const m=me();
+    const minhasPecas = db.pecas.filter(p=>p.pid===m.id && p.data.startsWith(state.relMes) && D(p.demanda)?.status!=='CANCELADA');
+    return header+`<div class="doc">
+      <h3>RELATÓRIO MENSAL DE ATIVIDADES</h3><p style="text-align:center;margin:0 0 18px">${nomeMes(state.relMes)}</p>
+      <p><b>Profissional:</b> ${esc(m.nome)}<br><b>Diretoria:</b> ${m.diretoria} &nbsp; <b>Área:</b> ${m.area||'—'} &nbsp; <b>Cargo:</b> ${m.cargo}</p>
+      ${Object.entries(grupos).sort((a,b)=>(a[0]===AVULSAS)-(b[0]===AVULSAS)).map(([g,l])=>`<p style="margin:14px 0 4px"><b>${esc(g)}</b></p><table><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Status</th></tr>${l.map(a=>`<tr><td>${fmt(a.data)}</td><td>${a.tipo}</td><td>${esc(a.descricao)}</td><td>${a.status}</td></tr>`).join('')}</table>`).join('') || '<p><i>Nenhuma atividade selecionada.</i></p>'}
+      <p style="margin-top:16px"><b>Total:</b> ${escolhidas.length} atividade(s)</p>
+      <p style="margin:14px 0 4px"><b>Peças produzidas no mês</b></p>
+      ${minhasPecas.length?`<table><tr><th>Demanda</th><th>Peça</th><th>Tipo</th><th>Qtd</th><th>Valor</th></tr>${minhasPecas.map(p=>`<tr><td>${esc(D(p.demanda).titulo)}</td><td>${esc(p.nome)}</td><td>${esc(TP(p.tipo).nome)}</td><td>${p.qtd}</td><td style="white-space:nowrap">${brl(valorPeca(p))}</td></tr>`).join('')}</table>
+      <p><b>Valor de referência gerado:</b> ${brl(minhasPecas.reduce((s,p)=>s+valorPeca(p),0))}</p>`:'<p><i>Nenhuma peça registrada no mês.</i></p>'}
+      <p><b>Observações gerais:</b><br>${esc(r.obs)||'<i>Sem observações.</i>'}</p>
+      <p style="margin-top:28px">_______________________________<br>${esc(m.nome)}${aprovado?' · aprovado em '+fmt(r.aprovadoEm):''}</p>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button ${aprovado?'disabled':''} onclick="rel().fase='selecao';render()">✎ Editar</button>
+      <button class="pri" ${aprovado?'disabled':''} onclick="if(confirm('Aprovar o relatório de ${nomeMes(state.relMes)}? Depois disso ele fica travado.')){rel().aprovadoEm='${TODAY}';toast('Relatório aprovado');render()}">✓ Aprovar</button>
+      <button onclick="toast('Exportação simulada: PDF ou DOCX')">⇩ Exportar</button>
+    </div>
+    ${note(['A própria pessoa aprova o relatório (decidido na revisão). Depois de aprovado, Editar e Aprovar ficam desabilitados; só Exportar continua.',
+      'Agrupado por demanda; atividades avulsas ficam num grupo próprio no fim.', 'Peças produzidas e o valor de referência entram automaticamente, a partir do "produzida por" de cada peça.'])}`;
+  }
+  return header+`<div class="box"><h2>Atividades de ${nomeMes(state.relMes)} (${atvs.length})</h2>
+    <p class="small muted" style="margin-top:0">Pré-carregadas a partir do que você registrou nas demandas. Desmarque o que não deve entrar.</p>
+    <div class="tw"><table><tr><th></th><th>Data</th><th>Demanda</th><th>Tipo</th><th>Descrição</th><th>Status</th></tr>
+    ${atvs.map(a=>`<tr><td><input type="checkbox" ${r.sel.has(a.id)?'checked':''} onchange="toggleSel('${a.id}',this.checked)"></td><td>${fmt(a.data)}</td><td>${a.demanda?esc(D(a.demanda).titulo):'<span class="tag dash">avulsa</span>'}</td><td>${a.tipo}</td><td>${esc(a.descricao)}</td><td>${a.status}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Nenhuma atividade registrada neste mês.</td></tr>'}
+    </table></div>
+    ${state.novaAvulsa?`<div class="box ro" style="margin:8px 0 0"><div class="row"><select id="av-t">${opts(TIPOS_ATV)}</select><input id="av-d" type="date" value="${state.relMes===MES_ATUAL?TODAY:state.relMes+'-15'}"><input id="av-x" placeholder="Descrição da atividade avulsa" style="flex:1;min-width:180px"><button class="pri" onclick="addAvulsa()">Adicionar</button><button onclick="state.novaAvulsa=false;render()">Fechar</button></div></div>`
+      :`<button style="margin-top:8px" onclick="state.novaAvulsa=true;render()">+ Adicionar atividade avulsa</button>`}
+    </div>
+    <div class="box"><h2>Observações gerais</h2><textarea rows="3" onchange="rel().obs=this.value" placeholder="Contexto do mês, férias, bloqueios…">${esc(r.obs)}</textarea></div>
+    <button class="pri" ${aprovado?'disabled':''} onclick="rel().fase='previa';render()">Gerar relatório</button>
+    ${aprovado?' <button onclick="rel().fase=\'previa\';render()">Ver relatório aprovado</button>':''}
+    ${note(['O relatório é sempre de quem está logado. Troque o papel no topo e veja a lista mudar de pessoa.',
+      'Atividade avulsa = atividade sem demanda (<code>demanda_id</code> nulo). Ela também passa a contar no Dashboard.',
+      'Atividades canceladas vêm desmarcadas por padrão.'])}`;
+}
+
+const SCREENS = {
+  login:scr_login, cadastro:scr_cadastro, aguardando:scr_aguardando, dashboard:scr_dashboard,
+  demandas:scr_demandas, demanda:scr_demanda, demandaForm:scr_demandaForm,
+  demandantes:scr_demandantes, projetos:scr_projetos, campanhas:scr_campanhas, tiposPeca:scr_tiposPeca,
+  pessoas:scr_pessoas, pessoa:scr_pessoa, perfil:scr_perfil, relatorio:scr_relatorio,
+};
+state.scope = defaultScope();
+render();
+</script>
+</body>
+</html>
