@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { DatePipe, CurrencyPipe } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import { DemandaService } from '../../data-access/demanda.service';
 import type { StatusDemanda, Prioridade, Demanda } from '../../data-access/demanda.model';
@@ -21,10 +21,10 @@ export class DemandaLista implements OnInit {
   #service = inject(DemandaService);
   auth = inject(AuthService);
   demandas = this.#service.listar;
+  filtro = this.#service.filtro;
   dialogAberto = signal(false);
   demandaEditandoId = signal<string | null>(null);
   #confirmationService = inject(ConfirmationService);
-
 
   ngOnInit() {
     this.demandas.reload();
@@ -87,5 +87,15 @@ export class DemandaLista implements OnInit {
     } catch {
       // o toast do interceptor já informou o motivo
     }
+  }
+
+  aoCarregar(evento: TableLazyLoadEvent) {
+    const size = evento.rows ?? 20;
+    const page = Math.floor((evento.first ?? 0) / size);
+    const sort = evento.sortField
+      ? `${evento.sortField},${evento.sortOrder === -1 ? 'desc' : 'asc'}`
+      : undefined;
+
+    this.filtro.update((f) => ({ ...f, page, size, sort }));
   }
 }

@@ -1,19 +1,28 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Demanda, CriarDemandaPayload, EscopoDemanda } from './demanda.model';
+import { Demanda, CriarDemandaPayload, EscopoDemanda, DemandaFiltro } from './demanda.model';
+import { Pagina } from '../../../core/http/pagina.model';
 
 @Injectable({ providedIn: 'root' })
 export class DemandaService {
   #http = inject(HttpClient);
   #base = `${environment.apiUrl}/demandas`;
 
-  escopo = signal<EscopoDemanda>('MINHAS');
+  filtro = signal<DemandaFiltro>({ escopo: 'MINHAS', page: 0, size: 20 });
 
-  listar = httpResource<Demanda[]>(() => ({
-    url: this.#base,
-    params: { escopo: this.escopo() },
-  }));
+  listar = httpResource<Pagina<Demanda>>(() => {
+    const f = this.filtro();
+    return {
+      url: this.#base,
+      params: {
+        escopo: f.escopo,
+        page: f.page,
+        size: f.size,
+        ...(f.sort ? { sort: f.sort } : {}),
+      },
+    };
+  });
 
   buscarPorId(id: string) {
     return this.#http.get<Demanda>(`${this.#base}/${id}`);

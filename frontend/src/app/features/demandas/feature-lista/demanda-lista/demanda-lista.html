@@ -1,14 +1,25 @@
 <app-barra-pagina titulo="Demandas">
   <ng-container fim>
     @if (auth.podeEditar()) {
-    <p-button icon="pi pi-plus" label="Nova demanda" (onClick)="abrirNovo()" />
+      <p-button icon="pi pi-plus" label="Nova demanda" (onClick)="abrirNovo()" />
     }
   </ng-container>
 </app-barra-pagina>
 
 <div class="pagina-corpo">
-  <p-table [value]="demandas.value() ?? []" [loading]="demandas.isLoading()" [paginator]="true" [rows]="10"
-    [rowsPerPageOptions]="[10, 25, 50]" sortMode="single" dataKey="id" [stripedRows]="true">
+  <p-table
+    [value]="demandas.value()?.content ?? []"
+    [loading]="demandas.isLoading()"
+    [lazy]="true"
+    (onLazyLoad)="aoCarregar($event)"
+    [paginator]="true"
+    [rows]="20"
+    [totalRecords]="demandas.value()?.totalElements ?? 0"
+    [rowsPerPageOptions]="[20, 50, 100]"
+    sortMode="single"
+    dataKey="id"
+    [stripedRows]="true"
+  >
     <ng-template pTemplate="header">
       <tr>
         <th pSortableColumn="titulo">Título <p-sortIcon field="titulo" /></th>
@@ -24,26 +35,43 @@
       <tr>
         <td>{{ demanda.titulo }}</td>
         <td><p-tag [value]="demanda.status" [severity]="severityStatus(demanda.status)" /></td>
-        <td><p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" /></td>
+        <td>
+          <p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" />
+        </td>
         <td>{{ demanda.diretoriaNome }}</td>
-        <td>{{ demanda.dataPrazo | date:'dd/MM/yyyy' }}</td>
-        <td>{{ demanda.valor | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+        <td>{{ demanda.dataPrazo | date: 'dd/MM/yyyy' }}</td>
+        <td>{{ demanda.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
         <td>
           @if (auth.podeEditar()) {
-          <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demanda)" pTooltip="Editar"
-            tooltipPosition="top" />
-          <p-button [text]="true" severity="danger" icon="pi pi-times-circle" (onClick)="confirmarExclusao(demanda)"
-            pTooltip="Cancelar demanda" tooltipPosition="top" />
+            <p-button
+              [text]="true"
+              icon="pi pi-pencil"
+              (onClick)="abrirEdicao(demanda)"
+              pTooltip="Editar"
+              tooltipPosition="top"
+            />
+            <p-button
+              [text]="true"
+              severity="danger"
+              icon="pi pi-times-circle"
+              (onClick)="confirmarExclusao(demanda)"
+              pTooltip="Cancelar demanda"
+              tooltipPosition="top"
+            />
           }
         </td>
       </tr>
     </ng-template>
     <ng-template pTemplate="emptymessage">
       <tr>
-        <td colspan="7">Nenhuma demanda encontrada.</td>
+        <td colspan="8">Nenhuma demanda encontrada.</td>
       </tr>
     </ng-template>
   </p-table>
 </div>
 
-<app-demanda-form [(visivel)]="dialogAberto" [demandaId]="demandaEditandoId()" (salvo)="demandas.reload()" />
+<app-demanda-form
+  [(visivel)]="dialogAberto"
+  [demandaId]="demandaEditandoId()"
+  (salvo)="demandas.reload()"
+/>

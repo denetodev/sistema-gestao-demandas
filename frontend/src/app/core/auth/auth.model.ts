@@ -4,13 +4,22 @@ export interface PessoaMe {
   id: string;
   nome: string;
   email: string | null;
-  perfil: Perfil;
-  areaId: string | null;
-  areaNome: string | null;
   diretoriaId: string | null;
   diretoriaNome: string | null;
+  areaId: string | null;
+  areaNome: string | null;
+  cargoId: string | null;
+  cargoNome: string | null;
+  referenciaAreaId: string | null;
+  referenciaAreaNome: string | null;
   status: string;
+  perfil: Perfil;
   authUserId: string;
+  aprovadoPorId: string | null;
+  aprovadoPorNome: string | null;
+  aprovadoEm: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PessoaMeResponse {

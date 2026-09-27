@@ -29,6 +29,7 @@ export interface Demanda {
   observacoes: string | null;
   createdAt: string;
   updatedAt: string;
+  valorCalculado: number | null;
 }
 
 export interface CriarDemandaPayload {
@@ -38,4 +39,11 @@ export interface CriarDemandaPayload {
   dataPrazo: string | null;
   valor: number | null;
   observacoes: string | null;
+}
+
+export interface DemandaFiltro {
+  escopo: EscopoDemanda;
+  page: number;
+  size: number;
+  sort?: string;
 }
