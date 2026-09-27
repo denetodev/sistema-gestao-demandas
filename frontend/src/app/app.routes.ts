@@ -39,20 +39,26 @@ export const routes: Routes = [
       //     import('./features/demandas/feature-form/demanda-form/demanda-form').then(m => m.DemandaForm),
       // },
       {
-        path: 'clientes',
+        path: 'demandantes',
         canActivate: [perfilGuard('ADMIN', 'GESTOR')],
         loadComponent: () =>
-          import('./core/dados-mestres/cliente/cliente-lista/cliente-lista').then(m => m.ClienteLista),
+          import('./core/dados-mestres/demandante/demandante-lista/demandante-lista').then(
+            (m) => m.DemandanteLista,
+          ),
       },
       {
         path: 'campanhas',
         loadComponent: () =>
-          import('./core/dados-mestres/campanha/campanha-lista/campanha-lista').then(m => m.CampanhaLista),
+          import('./core/dados-mestres/campanha/campanha-lista/campanha-lista').then(
+            (m) => m.CampanhaLista,
+          ),
       },
       {
         path: 'projetos',
         loadComponent: () =>
-          import('./core/dados-mestres/projeto/projeto-lista/projeto-lista').then(m => m.ProjetoLista),
+          import('./core/dados-mestres/projeto/projeto-lista/projeto-lista').then(
+            (m) => m.ProjetoLista,
+          ),
       },
     ],
   },

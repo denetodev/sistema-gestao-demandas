@@ -4,26 +4,41 @@ import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
+import { Textarea } from 'primeng/textarea';
+import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
-import { ClienteService } from '../cliente.service';
-import { TipoCliente, type Cliente } from '../cliente.model';
-import { Select } from 'primeng/select';
+import { DemandanteService } from '../demandante.service';
+import { DiretoriaService } from '../../diretoria/diretoria.service';
 import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
+import type { Demandante, TipoDemandante } from '../demandante.model';
 
 @Component({
-  selector: 'app-cliente-lista',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Button, Message, Tag, Select, BarraPagina],
-  templateUrl: './cliente-lista.html',
-  styleUrl: './cliente-lista.scss',
+  selector: 'app-demandante-lista',
+  imports: [
+    ReactiveFormsModule,
+    TableModule,
+    Dialog,
+    InputText,
+    Textarea,
+    Select,
+    Button,
+    Message,
+    Tag,
+    BarraPagina,
+  ],
+  templateUrl: './demandante-lista.html',
+  styleUrl: './demandante-lista.scss',
 })
-export class ClienteLista {
+export class DemandanteLista {
   #fb = inject(FormBuilder);
-  #service = inject(ClienteService);
+  #service = inject(DemandanteService);
 
-  clientes = this.#service.listar;
+  auth = inject(AuthService);
+  demandantes = this.#service.listar;
+  diretorias = inject(DiretoriaService).listar;
 
   opcoesTipo = [
     { label: 'Pessoa', value: 'PESSOA' },
@@ -39,10 +54,10 @@ export class ClienteLista {
 
   form = this.#fb.nonNullable.group({
     nome: ['', Validators.required],
-    tipo: this.#fb.control<TipoCliente | null>(null, Validators.required),
-    observacao: ['',]
+    tipo: this.#fb.control<TipoDemandante | null>(null, Validators.required),
+    observacao: [''],
+    diretoriaId: this.#fb.control<string | null>(null),
   });
-auth = inject(AuthService);
 
   abrirNovo() {
     this.editandoId.set(null);
@@ -51,13 +66,14 @@ auth = inject(AuthService);
     this.dialogAberto.set(true);
   }
 
-  abrirEdicao(cliente: Cliente) {
-    this.editandoId.set(cliente.id);
+  abrirEdicao(demandante: Demandante) {
+    this.editandoId.set(demandante.id);
     this.erro.set(null);
     this.form.setValue({
-      nome: cliente.nome,
-      tipo: cliente.tipo,
-      observacao: cliente.observacao ?? '',
+      nome: demandante.nome,
+      tipo: demandante.tipo,
+      observacao: demandante.observacao ?? '',
+      diretoriaId: demandante.diretoriaId,
     });
     this.dialogAberto.set(true);
   }
@@ -71,14 +87,17 @@ auth = inject(AuthService);
       nome: v.nome,
       tipo: v.tipo!,
       observacao: v.observacao || null,
+      diretoriaId: v.diretoriaId,
     };
     const id = this.editandoId();
     try {
-      await firstValueFrom(id ? this.#service.atualizar(id, payload) : this.#service.criar(payload));
+      await firstValueFrom(
+        id ? this.#service.atualizar(id, payload) : this.#service.criar(payload),
+      );
       this.dialogAberto.set(false);
-      this.clientes.reload();
+      this.demandantes.reload();
     } catch {
-      this.erro.set('Não foi possível salvar o cliente.');
+      this.erro.set('Não foi possível salvar o demandante.');
     } finally {
       this.salvando.set(false);
     }

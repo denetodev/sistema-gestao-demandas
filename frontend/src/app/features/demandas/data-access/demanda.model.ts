@@ -5,6 +5,7 @@ export type StatusDemanda =
   | 'CONCLUIDA'
   | 'CANCELADA';
 export type Prioridade = 'BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE';
+export type EscopoDemanda = 'MINHAS' | 'EQUIPE' | 'DIRETORIA' | 'TODAS';
 
 export interface Demanda {
   id: string;
@@ -13,8 +14,8 @@ export interface Demanda {
   codigo: string | null;
   diretoriaId: string;
   diretoriaNome: string;
-  clienteId: string | null;
-  clienteNome: string | null;
+  demandanteId: string | null;
+  demandanteNome: string | null;
   projetoId: string | null;
   projetoNome: string | null;
   campanhaId: string | null;
@@ -29,6 +30,7 @@ export interface Demanda {
   createdAt: string;
   updatedAt: string;
 }
+
 export interface CriarDemandaPayload {
   titulo: string;
   diretoriaId: string;

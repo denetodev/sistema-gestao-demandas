@@ -9,17 +9,27 @@ import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
 import { Tag } from 'primeng/tag';
-import { ClienteService } from '../../cliente/cliente.service';
+import { DemandanteService } from '../../demandante/demandante.service';
 import { DiretoriaService } from '../../diretoria/diretoria.service';
 import { StatusProjeto, Projeto } from '../projeto.model';
 import { ProjetoService } from '../projeto.service';
 import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
-
 @Component({
   selector: 'app-projeto-lista',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Textarea, Select, Button, Message, Tag, BarraPagina],
+  imports: [
+    ReactiveFormsModule,
+    TableModule,
+    Dialog,
+    InputText,
+    Textarea,
+    Select,
+    Button,
+    Message,
+    Tag,
+    BarraPagina,
+  ],
   templateUrl: './projeto-lista.html',
   styleUrl: './projeto-lista.scss',
 })
@@ -28,7 +38,7 @@ export class ProjetoLista {
   #service = inject(ProjetoService);
 
   projetos = this.#service.listar;
-  clientes = inject(ClienteService).listar;
+  demandantes = inject(DemandanteService).listar;
   diretorias = inject(DiretoriaService).listar;
 
   opcoesStatus = [
@@ -44,18 +54,21 @@ export class ProjetoLista {
 
   form = this.#fb.nonNullable.group({
     nome: ['', Validators.required],
-    clienteId: this.#fb.control<string | null>(null),
+    demandanteId: this.#fb.control<string | null>(null),
     diretoriaId: this.#fb.control<string | null>(null),
     descricao: [''],
     status: ['ATIVO' as StatusProjeto],
   });
-auth = inject(AuthService);
+  auth = inject(AuthService);
 
   severityStatus(status: StatusProjeto) {
     switch (status) {
-      case 'ATIVO': return 'success';
-      case 'PAUSADO': return 'warn';
-      default: return 'secondary';
+      case 'ATIVO':
+        return 'success';
+      case 'PAUSADO':
+        return 'warn';
+      default:
+        return 'secondary';
     }
   }
 
@@ -71,7 +84,7 @@ auth = inject(AuthService);
     this.erro.set(null);
     this.form.setValue({
       nome: projeto.nome,
-      clienteId: projeto.clienteId,
+      demandanteId: projeto.demandanteId,
       diretoriaId: projeto.diretoriaId,
       descricao: projeto.descricao ?? '',
       status: projeto.status,
@@ -87,7 +100,9 @@ auth = inject(AuthService);
     const payload = { ...v, descricao: v.descricao || null };
     const id = this.editandoId();
     try {
-      await firstValueFrom(id ? this.#service.atualizar(id, payload) : this.#service.criar(payload));
+      await firstValueFrom(
+        id ? this.#service.atualizar(id, payload) : this.#service.criar(payload),
+      );
       this.dialogAberto.set(false);
       this.projetos.reload();
     } catch {

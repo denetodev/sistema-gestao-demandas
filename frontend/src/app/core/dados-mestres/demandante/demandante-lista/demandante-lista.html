@@ -1,0 +1,91 @@
+<app-barra-pagina titulo="Demandantes">
+  <ng-container fim>
+    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+      <p-button icon="pi pi-plus" label="Novo demandante" (onClick)="abrirNovo()" />
+    }
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  <p-table
+    [value]="demandantes.value() ?? []"
+    [loading]="demandantes.isLoading()"
+    [paginator]="true"
+    [rows]="10"
+    dataKey="id"
+    [stripedRows]="true"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+        <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" /></th>
+        <th>Diretoria</th>
+        <th>Situação</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-demandante>
+      <tr>
+        <td>{{ demandante.nome }}</td>
+        <td>{{ demandante.tipo }}</td>
+        <td>{{ demandante.diretoriaNome ?? '—' }}</td>
+        <td>
+          <p-tag
+            [value]="demandante.ativo ? 'Ativo' : 'Inativo'"
+            [severity]="demandante.ativo ? 'success' : 'secondary'"
+          />
+        </td>
+        <td>
+          @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demandante)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="5">Nenhum demandante cadastrado.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [(visible)]="dialogAberto"
+  [header]="editandoId() ? 'Editar demandante' : 'Novo demandante'"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+    <label for="nome">Nome</label>
+    <input pInputText id="nome" formControlName="nome" />
+
+    <label for="tipo">Tipo</label>
+    <p-select
+      inputId="tipo"
+      formControlName="tipo"
+      [options]="opcoesTipo"
+      placeholder="Selecione"
+    />
+
+    <label for="diretoria">Diretoria</label>
+    <p-select
+      inputId="diretoria"
+      formControlName="diretoriaId"
+      [options]="diretorias.value() ?? []"
+      optionLabel="nome"
+      optionValue="id"
+      placeholder="Nenhuma"
+      [showClear]="true"
+    />
+
+    <label for="observacao">Observação</label>
+    <textarea pTextarea id="observacao" formControlName="observacao" rows="3"></textarea>
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+
+    <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
+  </form>
+</p-dialog>

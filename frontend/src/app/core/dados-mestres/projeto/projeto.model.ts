@@ -3,8 +3,8 @@ export type StatusProjeto = 'ATIVO' | 'PAUSADO' | 'ENCERRADO';
 export interface Projeto {
   id: string;
   nome: string;
-  clienteId: string | null;
-  clienteNome: string | null;
+  demandanteId: string | null;
+  demandanteNome: string | null;
   diretoriaId: string | null;
   diretoriaNome: string | null;
   descricao: string | null;
@@ -15,7 +15,7 @@ export interface Projeto {
 
 export interface ProjetoPayload {
   nome: string;
-  clienteId: string | null;
+  demandanteId: string | null;
   diretoriaId: string | null;
   descricao: string | null;
   status: StatusProjeto | null;
