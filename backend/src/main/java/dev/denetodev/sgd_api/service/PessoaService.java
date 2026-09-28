@@ -1,6 +1,7 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.AprovarRequest;
+import dev.denetodev.sgd_api.dto.request.AtualizarPerfilRequest;
 import dev.denetodev.sgd_api.dto.request.AutoCadastroRequest;
 import dev.denetodev.sgd_api.dto.request.PessoaRequest;
 import dev.denetodev.sgd_api.dto.response.MeResponse;
@@ -198,18 +199,28 @@ public class PessoaService {
     private PessoaResponse paraResponse(Pessoa pessoa) {
         Cargo cargo = pessoa.getCargo();
         Pessoa aprovadoPor = pessoa.getAprovadoPor();
+        Area referenciaArea = pessoa.getReferenciaArea();
         return new PessoaResponse(
-                pessoa.getId(), pessoa.getNome(), pessoa.getEmail(),
+                pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
                 pessoa.getArea().getId(), pessoa.getArea().getNome(),
                 cargo != null ? cargo.getId() : null,
                 cargo != null ? cargo.getNome() : null,
                 pessoa.getStatus(), pessoa.getPerfil(),
+                referenciaArea != null ? referenciaArea.getId() : null,
+                referenciaArea != null ? referenciaArea.getNome() : null,
                 pessoa.getAuthUserId(),
                 aprovadoPor != null ? aprovadoPor.getId() : null,
                 aprovadoPor != null ? aprovadoPor.getNome() : null,
                 pessoa.getAprovadoEm(),
                 pessoa.getCreatedAt(), pessoa.getUpdatedAt()
         );
+    }
+
+    public PessoaResponse atualizarPerfilProprio(Jwt jwt, AtualizarPerfilRequest request) {
+        Pessoa pessoa = currentPessoaResolver.resolver(jwt);
+        pessoa.setNome(request.nome());
+        pessoa.setFotoUrl(request.fotoUrl());
+        return paraResponse(pessoa);
     }
 }

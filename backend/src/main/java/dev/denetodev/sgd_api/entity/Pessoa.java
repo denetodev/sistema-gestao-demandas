@@ -18,6 +18,9 @@ public class Pessoa {
     @Column(name = "email", length = 180)
     private String email;
 
+    @Column(name = "foto_url", columnDefinition = "text")
+    private String fotoUrl;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "area_id", nullable = false)
     private Area area;
@@ -34,14 +37,12 @@ public class Pessoa {
     @Column(name = "perfil", nullable = false, length = 20)
     private PerfilPessoa perfil = PerfilPessoa.PROFISSIONAL;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "referencia_area_id")
+    private Area referenciaArea;
+
     @Column(name = "auth_user_id")
     private UUID authUserId;
-
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at", insertable = false, updatable = false)
-    private OffsetDateTime updatedAt;
 
     @Column(name = "aprovado_em")
     private OffsetDateTime aprovadoEm;
@@ -50,9 +51,11 @@ public class Pessoa {
     @JoinColumn(name = "aprovado_por")
     private Pessoa aprovadoPor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "referencia_area_id")
-    private Area referenciaArea;
+    @Column(name = "created_at", insertable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "updated_at", insertable = false, updatable = false)
+    private OffsetDateTime updatedAt;
 
     protected Pessoa() {
     }
@@ -63,28 +66,42 @@ public class Pessoa {
     }
 
     public UUID getId() { return id; }
+
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getFotoUrl() { return fotoUrl; }
+    public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
+
     public Area getArea() { return area; }
     public void setArea(Area area) { this.area = area; }
+
     public Cargo getCargo() { return cargo; }
     public void setCargo(Cargo cargo) { this.cargo = cargo; }
+
     public StatusPessoa getStatus() { return status; }
     public void setStatus(StatusPessoa status) { this.status = status; }
+
     public PerfilPessoa getPerfil() { return perfil; }
     public void setPerfil(PerfilPessoa perfil) { this.perfil = perfil; }
-    public UUID getAuthUserId() { return authUserId; }
-    public void setAuthUserId(UUID authUserId) { this.authUserId = authUserId; }
-    public OffsetDateTime getCreatedAt() { return createdAt; }
-    public OffsetDateTime getUpdatedAt() { return updatedAt; }
-    public OffsetDateTime getAprovadoEm() { return aprovadoEm; }
-    public void setAprovadoEm(OffsetDateTime aprovadoEm) { this.aprovadoEm = aprovadoEm; }
-    public Pessoa getAprovadoPor() { return aprovadoPor; }
-    public void setAprovadoPor(Pessoa aprovadoPor) { this.aprovadoPor = aprovadoPor; }
+
     public Area getReferenciaArea() { return referenciaArea; }
     public void setReferenciaArea(Area referenciaArea) { this.referenciaArea = referenciaArea; }
+
+    public UUID getAuthUserId() { return authUserId; }
+    public void setAuthUserId(UUID authUserId) { this.authUserId = authUserId; }
+
+    public OffsetDateTime getAprovadoEm() { return aprovadoEm; }
+    public void setAprovadoEm(OffsetDateTime aprovadoEm) { this.aprovadoEm = aprovadoEm; }
+
+    public Pessoa getAprovadoPor() { return aprovadoPor; }
+    public void setAprovadoPor(Pessoa aprovadoPor) { this.aprovadoPor = aprovadoPor; }
+
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
 
     @Override
     public boolean equals(Object o) {
@@ -94,5 +111,7 @@ public class Pessoa {
     }
 
     @Override
-    public int hashCode() { return getClass().hashCode(); }
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

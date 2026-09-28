@@ -1,9 +1,6 @@
 package dev.denetodev.sgd_api.controller;
 
-import dev.denetodev.sgd_api.dto.request.AprovarRequest;
-import dev.denetodev.sgd_api.dto.request.AutoCadastroRequest;
-import dev.denetodev.sgd_api.dto.request.PessoaRequest;
-import dev.denetodev.sgd_api.dto.request.VincularAuthRequest;
+import dev.denetodev.sgd_api.dto.request.*;
 import dev.denetodev.sgd_api.dto.response.MeResponse;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.service.PessoaService;
@@ -47,11 +44,13 @@ public class PessoaController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public PessoaResponse atualizar(@PathVariable UUID id, @Valid @RequestBody PessoaRequest request) {
         return pessoaService.atualizar(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> desativar(@PathVariable UUID id) {
         pessoaService.desativar(id);
         return ResponseEntity.noContent().build();
@@ -86,5 +85,10 @@ public class PessoaController {
             @Valid @RequestBody AprovarRequest request
     ) {
         return pessoaService.aprovar(id, jwt, request);
+    }
+
+    @PutMapping("/me")
+    public PessoaResponse atualizarPerfilProprio(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AtualizarPerfilRequest request) {
+        return pessoaService.atualizarPerfilProprio(jwt, request);
     }
 }
