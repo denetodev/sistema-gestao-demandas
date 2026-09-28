@@ -35,6 +35,11 @@ export class AuthService {
     return perfil ? perfis.includes(perfil) : false;
   }
 
+  ehReferenciaDa(areaId: string | null | undefined): boolean {
+    const ref = this.pessoa()?.referenciaAreaId;
+    return !!ref && !!areaId && ref === areaId;
+  }
+
   /** Todo perfil vinculado exceto VISUALIZADOR. */
   podeEditar(): boolean {
     const perfil = this.pessoa()?.perfil;

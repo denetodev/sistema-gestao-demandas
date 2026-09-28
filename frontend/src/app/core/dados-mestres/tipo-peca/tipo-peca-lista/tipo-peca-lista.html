@@ -1,0 +1,84 @@
+<app-barra-pagina titulo="Tipos de peça">
+  <ng-container fim>
+    @if (podeCriar()) {
+      <p-button icon="pi pi-plus" label="Novo tipo" (onClick)="abrirNovo()" />
+    }
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  <p-table
+    [value]="tiposOrdenados()"
+    [loading]="tipos.isLoading()"
+    [paginator]="true"
+    [rows]="20"
+    dataKey="id"
+    [stripedRows]="true"
+    [groupRowsBy]="'areaNome'"
+    rowGroupMode="subheader"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Nome</th>
+        <th>Descrição</th>
+        <th>Valor de referência</th>
+        <th>Situação</th>
+        <th>Ações</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="groupheader" let-tipo>
+      <tr pRowGroupHeader>
+        <td colspan="5"><strong>{{ tipo.areaNome }}</strong></td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-tipo>
+      <tr>
+        <td>{{ tipo.nome }}</td>
+        <td>{{ tipo.descricao ?? '—' }}</td>
+        <td>{{ tipo.valorReferencia | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+        <td>
+          <p-tag [value]="tipo.ativo ? 'Ativo' : 'Inativo'"
+                 [severity]="tipo.ativo ? 'success' : 'secondary'" />
+        </td>
+        <td>
+          @if (podeGerenciar(tipo)) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(tipo)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">Nenhum tipo de peça cadastrado.</td></tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [(visible)]="dialogAberto"
+  [header]="editandoId() ? 'Editar tipo de peça' : 'Novo tipo de peça'"
+  [modal]="true"
+  [style]="{ width: '440px' }"
+>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+    <label for="nome">Nome</label>
+    <input pInputText id="nome" formControlName="nome" />
+
+    <label for="area">Área</label>
+    <p-select inputId="area" formControlName="areaId" [options]="areas.value() ?? []"
+              optionLabel="nome" optionValue="id" placeholder="Selecione"
+              [disabled]="areaTravada()" />
+
+    <label for="valor">Valor de referência</label>
+    <p-inputnumber inputId="valor" formControlName="valorReferencia"
+                   mode="currency" currency="BRL" locale="pt-BR" />
+
+    <label for="descricao">Descrição</label>
+    <textarea pTextarea id="descricao" formControlName="descricao" rows="3"></textarea>
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+
+    <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
+  </form>
+</p-dialog>

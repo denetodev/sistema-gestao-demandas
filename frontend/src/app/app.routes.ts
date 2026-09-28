@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
+import { perfilGuard } from './core/auth/perfil.guard';
 
 export const routes: Routes = [
   {
@@ -38,6 +38,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'projetos',
+        loadComponent: () =>
+          import('./core/dados-mestres/projeto/projeto-lista/projeto-lista').then(
+            (m) => m.ProjetoLista,
+          ),
+      },
+      {
         path: 'campanhas',
         loadComponent: () =>
           import('./core/dados-mestres/campanha/campanha-lista/campanha-lista').then(
@@ -45,10 +52,10 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'projetos',
+        path: 'tipos-peca',
         loadComponent: () =>
-          import('./core/dados-mestres/projeto/projeto-lista/projeto-lista').then(
-            (m) => m.ProjetoLista,
+          import('./core/dados-mestres/tipo-peca/tipo-peca-lista/tipo-peca-lista').then(
+            (m) => m.TipoPecaLista,
           ),
       },
     ],
