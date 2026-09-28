@@ -1,0 +1,24 @@
+.perfil {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 480px;
+}
+.cartao h2 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.somente-leitura {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+  padding: 0.5rem 0;
+}

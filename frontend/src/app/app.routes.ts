@@ -17,6 +17,10 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/app-shell/app-shell').then((m) => m.AppShell),
     children: [
       {
+        path: 'meu-perfil',
+        loadComponent: () => import('./features/meu-perfil/meu-perfil').then((m) => m.MeuPerfil),
+      },
+      {
         path: 'demandas',
         loadComponent: () =>
           import('./features/demandas/feature-lista/demanda-lista/demanda-lista').then(
@@ -24,20 +28,7 @@ export const routes: Routes = [
           ),
       },
       { path: '', redirectTo: 'demandas', pathMatch: 'full' },
-      // {
-      //   path: 'demandas/nova',
-      //   canActivate: [naoVisualizadorGuard],
-      //   loadComponent: () =>
-      //     import('./features/demandas/feature-form/demanda-form/demanda-form').then(
-      //       (m) => m.DemandaForm,
-      //     ),
-      // },
-      // {
-      //   path: 'demandas/:id/editar',
-      //   canActivate: [naoVisualizadorGuard],
-      //   loadComponent: () =>
-      //     import('./features/demandas/feature-form/demanda-form/demanda-form').then(m => m.DemandaForm),
-      // },
+
       {
         path: 'demandantes',
         canActivate: [perfilGuard('ADMIN', 'GESTOR')],

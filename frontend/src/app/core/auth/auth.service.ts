@@ -1,5 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { httpResource } from '@angular/common/http';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient, httpResource } from '@angular/common/http';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase-client';
 import { environment } from '../../../environments/environment';
@@ -11,11 +11,12 @@ export class AuthService {
   session = this.#session.asReadonly();
   autenticado = computed(() => this.#session() !== null);
   ready: Promise<void>;
+  #http = inject(HttpClient);
+  emailSessao = computed(() => this.#session()?.user.email ?? null);
 
   me = httpResource<PessoaMeResponse>(() =>
     this.#session() ? `${environment.apiUrl}/pessoas/me` : undefined,
   );
-
 
   vinculado = computed(() => {
     if (this.me.status() === 'error') return false;
@@ -66,5 +67,14 @@ export class AuthService {
 
   get accessToken(): string | null {
     return this.#session()?.access_token ?? null;
+  }
+
+  atualizarPerfil(payload: { nome: string; fotoUrl: string | null }) {
+    return this.#http.put<PessoaMe>(`${environment.apiUrl}/pessoas/me`, payload);
+  }
+
+  async trocarSenha(novaSenha: string) {
+    const { error } = await supabase.auth.updateUser({ password: novaSenha });
+    if (error) throw error;
   }
 }

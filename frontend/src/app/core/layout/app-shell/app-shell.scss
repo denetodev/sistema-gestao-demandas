@@ -80,6 +80,26 @@
   color: var(--p-text-muted-color);
 }
 
+.app-usuario-botao {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.25rem 0.375rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sgd-hover-bg);
+  }
+}
+
+img.app-avatar {
+  object-fit: cover;
+}
+
 .app-avatar {
   display: flex;
   align-items: center;

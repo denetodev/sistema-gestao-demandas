@@ -20,6 +20,7 @@ export interface PessoaMe {
   aprovadoEm: string | null;
   createdAt: string;
   updatedAt: string;
+  fotoUrl: string | null;
 }
 
 export interface PessoaMeResponse {

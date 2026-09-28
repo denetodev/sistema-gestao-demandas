@@ -1,0 +1,50 @@
+<app-barra-pagina titulo="Meu perfil" />
+
+<div class="pagina-corpo perfil">
+  <section class="cartao">
+    <h2>Dados</h2>
+    <form [formGroup]="formDados" (ngSubmit)="salvarDados()" class="form">
+      <label for="nome">Nome</label>
+      <input pInputText id="nome" formControlName="nome" />
+
+      <label for="email">E-mail</label>
+      <input pInputText id="email" [value]="auth.emailSessao()" disabled />
+
+      <div class="somente-leitura">
+        <span><strong>E-mail:</strong> {{ auth.emailSessao() }}</span>
+        <span><strong>Diretoria:</strong> {{ auth.pessoa()?.diretoriaNome ?? '—' }}</span>
+        <span><strong>Área:</strong> {{ auth.pessoa()?.areaNome ?? '—' }}</span>
+        <span><strong>Cargo:</strong> {{ auth.pessoa()?.cargoNome ?? '—' }}</span>
+        <span><strong>Perfil:</strong> {{ auth.pessoa()?.perfil }}</span>
+      </div>
+
+      <p-button type="submit" [loading]="salvandoDados()" [disabled]="formDados.invalid"
+        >Salvar</p-button
+      >
+    </form>
+  </section>
+
+  <section class="cartao">
+    <h2>Senha</h2>
+    <form [formGroup]="formSenha" (ngSubmit)="salvarSenha()" class="form">
+      <label for="senha">Nova senha</label>
+      <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" />
+
+      <label for="confirmacao">Confirmar senha</label>
+      <p-password
+        formControlName="confirmacao"
+        inputId="confirmacao"
+        [feedback]="false"
+        [toggleMask]="true"
+      />
+
+      @if (erroSenha()) {
+        <p-message severity="error">{{ erroSenha() }}</p-message>
+      }
+
+      <p-button type="submit" [loading]="salvandoSenha()" [disabled]="formSenha.invalid"
+        >Alterar senha</p-button
+      >
+    </form>
+  </section>
+</div>

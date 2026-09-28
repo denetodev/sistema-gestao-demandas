@@ -3,12 +3,14 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { Button } from 'primeng/button';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme/theme.service';
+import { Menu } from 'primeng/menu';
+import type { MenuItem } from 'primeng/api';
 
 const CHAVE_SIDEBAR = 'sgd-sidebar-recolhida';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button, Menu],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
@@ -28,8 +30,14 @@ export class AppShell {
     return (primeira + ultima).toUpperCase();
   });
 
+  itensUsuario: MenuItem[] = [
+    { label: 'Meu perfil', icon: 'pi pi-user', routerLink: '/meu-perfil' },
+    { separator: true },
+    { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.sair() },
+  ];
+
   alternarSidebar() {
-    this.sidebarRecolhida.update(v => !v);
+    this.sidebarRecolhida.update((v) => !v);
     localStorage.setItem(CHAVE_SIDEBAR, String(this.sidebarRecolhida()));
   }
 
