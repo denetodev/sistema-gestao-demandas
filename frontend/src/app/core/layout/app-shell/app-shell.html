@@ -1,95 +1,83 @@
 @if (auth.me.isLoading()) {
-  <p>Carregando...</p>
+<p>Carregando...</p>
 } @else if (auth.erroAoCarregarPessoa()) {
-  <div class="aguardando">
-    <h1>Não foi possível conectar ao servidor</h1>
-    <p>Verifique se a API está rodando e tente novamente.</p>
-    <p-button (onClick)="auth.me.reload()">Tentar novamente</p-button>
-    <p-button [text]="true" (onClick)="sair()">Sair</p-button>
-  </div>
+<div class="aguardando">
+  <h1>Não foi possível conectar ao servidor</h1>
+  <p>Verifique se a API está rodando e tente novamente.</p>
+  <p-button (onClick)="auth.me.reload()">Tentar novamente</p-button>
+  <p-button [text]="true" (onClick)="sair()">Sair</p-button>
+</div>
 } @else if (!auth.vinculado()) {
-  <div class="aguardando">
-    <h1>Conta aguardando aprovação</h1>
-    <p>Sua conta foi criada, mas ainda precisa ser liberada por um administrador.</p>
-    <p-button [text]="true" (onClick)="sair()">Sair</p-button>
-  </div>
+<div class="aguardando">
+  <h1>Conta aguardando aprovação</h1>
+  <p>Sua conta foi criada, mas ainda precisa ser liberada por um administrador.</p>
+  <p-button [text]="true" (onClick)="sair()">Sair</p-button>
+</div>
 } @else {
-  <div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()">
-    <header class="app-topbar">
-      <div class="app-topbar__inicio">
-        <span class="app-marca">SGD</span>
-      </div>
+<div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()">
+  <header class="app-topbar">
+    <div class="app-topbar__inicio">
+      <span class="app-marca">SGD</span>
+    </div>
 
-      <div class="app-topbar__fim">
-        <p-button
-          [text]="true"
-          [rounded]="true"
-          [icon]="tema.dark() ? 'pi pi-sun' : 'pi pi-moon'"
-          (onClick)="tema.toggle()"
-        />
+    <div class="app-topbar__fim">
+      <p-button [text]="true" [rounded]="true" [icon]="tema.dark() ? 'pi pi-sun' : 'pi pi-moon'"
+        (onClick)="tema.toggle()" />
 
-        <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)">
-          <div class="app-usuario">
-            <span class="app-usuario__nome">{{ auth.pessoa()?.nome }}</span>
-            <span class="app-usuario__perfil">{{ auth.pessoa()?.perfil }}</span>
-          </div>
-          @if (auth.pessoa()?.fotoUrl) {
-            <img class="app-avatar" [src]="auth.pessoa()!.fotoUrl" alt="" />
-          } @else {
-            <div class="app-avatar">{{ iniciais() }}</div>
-          }
-        </button>
-        <p-menu #menuUsuario [model]="itensUsuario" [popup]="true" />
-      </div>
-    </header>
+      <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)">
+        <div class="app-usuario">
+          <span class="app-usuario__nome">{{ auth.pessoa()?.nome }}</span>
+          <span class="app-usuario__perfil">{{ auth.pessoa()?.perfil }}</span>
+        </div>
+        @if (auth.pessoa()?.fotoUrl) {
+        <img class="app-avatar" [src]="auth.pessoa()!.fotoUrl" alt="" />
+        } @else {
+        <div class="app-avatar">{{ iniciais() }}</div>
+        }
+      </button>
+      <p-menu #menuUsuario [model]="itensUsuario" [popup]="true" />
+    </div>
+  </header>
 
-    <aside class="app-sidebar">
-      <nav class="app-nav">
-        <button
-          type="button"
-          class="app-nav__item app-nav__toggle"
-          (click)="alternarSidebar()"
-          [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'Recolher menu'"
-          [attr.aria-expanded]="!sidebarRecolhida()"
-        >
-          <i [class]="sidebarRecolhida() ? 'pi pi-window-maximize' : 'pi pi-sidebar'"></i>
-          <!-- <span>Recolher</span> -->
-        </button>
+  <aside class="app-sidebar">
+    <nav class="app-nav">
+      <button type="button" class="app-nav__item app-nav__toggle" (click)="alternarSidebar()"
+        [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'Recolher menu'"
+        [attr.aria-expanded]="!sidebarRecolhida()">
+        <i [class]="sidebarRecolhida() ? 'pi pi-window-maximize' : 'pi pi-sidebar'"></i>
+        <!-- <span>Recolher</span> -->
+      </button>
 
-        <a routerLink="/demandas" routerLinkActive="ativo" class="app-nav__item" title="Demandas">
-          <i class="pi pi-briefcase"></i><span>Demandas</span>
-        </a>
+      <a routerLink="/demandas" routerLinkActive="ativo" class="app-nav__item" title="Demandas">
+        <i class="pi pi-briefcase"></i><span>Demandas</span>
+      </a>
 
-        <span class="app-nav__secao">Cadastros</span>
+      <span class="app-nav__secao">Cadastros</span>
 
-        <a
-          routerLink="/demandantes"
-          routerLinkActive="ativo"
-          class="app-nav__item"
-          title="Demandantes"
-        >
-          <i class="pi pi-users"></i><span>Demandantes</span>
-        </a>
-        <a routerLink="/projetos" routerLinkActive="ativo" class="app-nav__item" title="Projetos">
-          <i class="pi pi-folder"></i><span>Projetos</span>
-        </a>
-        <a routerLink="/campanhas" routerLinkActive="ativo" class="app-nav__item" title="Campanhas">
-          <i class="pi pi-megaphone"></i><span>Campanhas</span>
-        </a>
-        <span class="app-nav__secao">Produção</span>
-        <a
-          routerLink="/tipos-peca"
-          routerLinkActive="ativo"
-          class="app-nav__item"
-          title="Tipos de peça"
-        >
-          <i class="pi pi-tags"></i><span>Tipos de peça</span>
-        </a>
-      </nav>
-    </aside>
+      <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">
+        <i class="pi pi-users"></i><span>Demandantes</span>
+      </a>
+      <a routerLink="/projetos" routerLinkActive="ativo" class="app-nav__item" title="Projetos">
+        <i class="pi pi-folder"></i><span>Projetos</span>
+      </a>
+      <a routerLink="/campanhas" routerLinkActive="ativo" class="app-nav__item" title="Campanhas">
+        <i class="pi pi-megaphone"></i><span>Campanhas</span>
+      </a>
+      <span class="app-nav__secao">Produção</span>
+      <a routerLink="/tipos-peca" routerLinkActive="ativo" class="app-nav__item" title="Tipos de peça">
+        <i class="pi pi-tags"></i><span>Tipos de peça</span>
+      </a>
+      @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+      <span class="app-nav__secao">Administração</span>
+      <a routerLink="/pessoas" routerLinkActive="ativo" class="app-nav__item" title="Pessoas">
+        <i class="pi pi-id-card"></i><span>Pessoas</span>
+      </a>
+      }
+    </nav>
+  </aside>
 
-    <main class="app-conteudo">
-      <router-outlet />
-    </main>
-  </div>
+  <main class="app-conteudo">
+    <router-outlet />
+  </main>
+</div>
 }

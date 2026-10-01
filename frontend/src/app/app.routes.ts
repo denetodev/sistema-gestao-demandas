@@ -58,6 +58,12 @@ export const routes: Routes = [
             (m) => m.TipoPecaLista,
           ),
       },
+      {
+        path: 'pessoas',
+        canActivate: [perfilGuard('ADMIN', 'GESTOR')],
+        loadComponent: () =>
+          import('./core/pessoas/pessoa-lista/pessoa-lista').then(m => m.PessoaLista),
+      },
     ],
   },
 ];

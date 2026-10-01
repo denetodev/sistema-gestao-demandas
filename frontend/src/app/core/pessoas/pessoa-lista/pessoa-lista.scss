@@ -1,0 +1,37 @@
+.informado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  background: var(--p-surface-100);
+  font-size: 0.8125rem;
+}
+:host-context(.app-dark) .informado {
+  background: var(--p-surface-800);
+}
+.informado h3,
+.dialog-form h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
+  margin: 0 0 0.375rem;
+}
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.ajustado {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+  margin-left: 0.375rem;
+}
+.acoes {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}

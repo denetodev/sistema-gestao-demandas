@@ -16,6 +16,7 @@ import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 import type { TipoPeca } from '../tipo-peca.model';
 import { TipoPecaService } from '../tipo-peca.service';
 import { CurrencyPipe } from '@angular/common';
+import { ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-tipo-peca-lista',
@@ -43,6 +44,7 @@ export class TipoPecaLista {
   auth = inject(AuthService);
   tipos = this.#service.listar;
   areas = inject(AreaService).listar;
+  #confirmationService = inject(ConfirmationService);
 
   tiposOrdenados = computed(() =>
     [...(this.tipos.value() ?? [])].sort(
@@ -74,7 +76,7 @@ export class TipoPecaLista {
     nome: ['', Validators.required],
     descricao: [''],
     areaId: this.#fb.control<string | null>(null, Validators.required),
-    valorReferencia: this.#fb.control<number | null>(null, Validators.required),
+    valorReferencia: this.#fb.control<number | null>(null, [Validators.required, Validators.min(0)]),
   });
 
   abrirNovo() {
@@ -120,6 +122,27 @@ export class TipoPecaLista {
       this.erro.set('Não foi possível salvar o tipo de peça.');
     } finally {
       this.salvando.set(false);
+    }
+  }
+
+  confirmarDesativacao(tipo: TipoPeca) {
+    this.#confirmationService.confirm({
+      header: 'Desativar tipo de peça',
+      message: `Desativar "${tipo.nome}"? Ele deixa de aparecer para novos lançamentos, mas as peças já registradas com ele continuam intactas.`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Desativar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.#desativar(tipo),
+    });
+  }
+
+  async #desativar(tipo: TipoPeca) {
+    try {
+      await firstValueFrom(this.#service.excluir(tipo.id));
+      this.tipos.reload();
+    } catch {
+      // o toast do interceptor já informou
     }
   }
 }
