@@ -1,9 +1,6 @@
 package dev.denetodev.sgd_api.service;
 
-import dev.denetodev.sgd_api.dto.request.AprovarRequest;
-import dev.denetodev.sgd_api.dto.request.AtualizarPerfilRequest;
-import dev.denetodev.sgd_api.dto.request.AutoCadastroRequest;
-import dev.denetodev.sgd_api.dto.request.PessoaRequest;
+import dev.denetodev.sgd_api.dto.request.*;
 import dev.denetodev.sgd_api.dto.response.MeResponse;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.entity.*;
@@ -18,6 +15,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import dev.denetodev.sgd_api.dto.request.RejeitarRequest;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -53,12 +51,20 @@ public class PessoaService {
     }
 
     @Transactional(readOnly = true)
+    public List<PessoaResponse> listarPendentes() {
+        return pessoaRepository.findByAprovadoEmIsNullAndStatus(StatusPessoa.ATIVO).stream()
+                .map(this::paraResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
     public PessoaResponse buscarPorId(UUID id) {
         return paraResponse(buscarEntidade(id));
     }
 
     public PessoaResponse criar(Jwt jwt, PessoaRequest request) {
-        Pessoa admin = currentPessoaResolver.resolver(jwt);
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        PerfilPessoa perfilAlvo = request.perfil() != null ? request.perfil() : PerfilPessoa.PROFISSIONAL;
+        checarPermissaoSobrePerfil(ator, perfilAlvo, null);
 
         Area area = areaRepository.findById(request.areaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + request.areaId()));
@@ -66,21 +72,24 @@ public class PessoaService {
         Pessoa pessoa = new Pessoa(request.nome(), area);
         pessoa.setEmail(request.email());
         pessoa.setCargo(resolverCargo(request.cargoId()));
+        if (request.status() == StatusPessoa.REJEITADO) {
+            throw new EstadoInvalidoException("Use o endpoint de rejeição para recusar um cadastro pendente");
+        }
         if (request.status() != null) {
             pessoa.setStatus(request.status());
         }
-        if (request.perfil() != null) {
-            pessoa.setPerfil(request.perfil());
-        }
-        // criação direta por ADMIN já conta como aprovação
+        pessoa.setPerfil(perfilAlvo);
         pessoa.setAprovadoEm(OffsetDateTime.now());
-        pessoa.setAprovadoPor(admin);
+        pessoa.setAprovadoPor(ator);
 
         return paraResponse(pessoaRepository.save(pessoa));
     }
 
-    public PessoaResponse atualizar(UUID id, PessoaRequest request) {
+    public PessoaResponse atualizar(Jwt jwt, UUID id, PessoaRequest request) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
         Pessoa pessoa = buscarEntidade(id);
+        PerfilPessoa perfilAlvo = request.perfil() != null ? request.perfil() : pessoa.getPerfil();
+        checarPermissaoSobrePerfil(ator, perfilAlvo, pessoa);
 
         Area area = areaRepository.findById(request.areaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + request.areaId()));
@@ -89,18 +98,22 @@ public class PessoaService {
         pessoa.setEmail(request.email());
         pessoa.setArea(area);
         pessoa.setCargo(resolverCargo(request.cargoId()));
+        if (request.status() == StatusPessoa.REJEITADO) {
+            throw new EstadoInvalidoException("Use o endpoint de rejeição para recusar um cadastro pendente");
+        }
         if (request.status() != null) {
             pessoa.setStatus(request.status());
         }
-        if (request.perfil() != null) {
-            pessoa.setPerfil(request.perfil());
-        }
+        pessoa.setPerfil(perfilAlvo);
 
         return paraResponse(pessoa);
     }
 
-    public void desativar(UUID id) {
-        buscarEntidade(id).setStatus(StatusPessoa.INATIVO);
+    public void desativar(Jwt jwt, UUID id) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        Pessoa pessoa = buscarEntidade(id);
+        checarPermissaoSobrePerfil(ator, pessoa.getPerfil(), pessoa);
+        pessoa.setStatus(StatusPessoa.INATIVO);
     }
 
     public PessoaResponse vincularAuth(UUID id, UUID authUserId) {
@@ -130,7 +143,6 @@ public class PessoaService {
         pessoa.setEmail(jwt.getClaimAsString("email"));
         pessoa.setCargo(resolverCargo(request.cargoId()));
         pessoa.setAuthUserId(authUserId);
-        // aprovadoEm/aprovadoPor ficam null de propósito — pendente de aprovação
 
         return paraResponse(pessoaRepository.save(pessoa));
     }
@@ -139,13 +151,7 @@ public class PessoaService {
         Pessoa aprovador = currentPessoaResolver.resolver(jwt);
         Pessoa alvo = buscarEntidade(id);
 
-        boolean gestorTentandoElevarOuMexerEmAdmin =
-                aprovador.getPerfil() == PerfilPessoa.GESTOR
-                        && (request.perfil() == PerfilPessoa.ADMIN || alvo.getPerfil() == PerfilPessoa.ADMIN);
-
-        if (gestorTentandoElevarOuMexerEmAdmin) {
-            throw new AccessDeniedException("Gestor não pode conceder ADMIN nem alterar uma Pessoa ADMIN");
-        }
+        checarPermissaoSobrePerfil(aprovador, request.perfil(), alvo);
 
         if (request.areaId() != null && !request.areaId().equals(alvo.getArea().getId())) {
             Area novaArea = areaRepository.findById(request.areaId())
@@ -177,6 +183,48 @@ public class PessoaService {
         alvo.setAprovadoPor(aprovador);
 
         return paraResponse(alvo);
+    }
+
+    public PessoaResponse rejeitar(UUID id, Jwt jwt, RejeitarRequest request) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        Pessoa alvo = buscarEntidade(id);
+
+        if (alvo.getAprovadoEm() != null) {
+            throw new EstadoInvalidoException("Pessoa já aprovada não pode ser rejeitada — use desativar");
+        }
+
+        checarPermissaoSobrePerfil(ator, alvo.getPerfil(), alvo);
+
+        Auditoria registro = new Auditoria("pessoa", alvo.getId(), "status", alvo.getStatus().name(), StatusPessoa.REJEITADO.name(), ator.getId());
+        registro.setMotivo(request.motivo());
+        auditoriaRepository.save(registro);
+
+        alvo.setStatus(StatusPessoa.REJEITADO);
+
+        return paraResponse(alvo);
+    }
+
+    public PessoaResponse atualizarPerfilProprio(Jwt jwt, AtualizarPerfilRequest request) {
+        Pessoa pessoa = currentPessoaResolver.resolver(jwt);
+        pessoa.setNome(request.nome());
+        pessoa.setFotoUrl(request.fotoUrl());
+        return paraResponse(pessoa);
+    }
+
+    /**
+     * ADMIN pode tudo. GESTOR pode gerenciar qualquer Pessoa, EXCETO:
+     * conceder o perfil ADMIN, ou mexer numa Pessoa que já é ADMIN.
+     * pessoaAlvoExistente é null em criar() (ainda não existe alvo).
+     */
+    private void checarPermissaoSobrePerfil(Pessoa ator, PerfilPessoa perfilAlvo, Pessoa pessoaAlvoExistente) {
+        if (ator.getPerfil() == PerfilPessoa.ADMIN) {
+            return;
+        }
+        boolean elevandoParaAdmin = perfilAlvo == PerfilPessoa.ADMIN;
+        boolean alvoJaEhAdmin = pessoaAlvoExistente != null && pessoaAlvoExistente.getPerfil() == PerfilPessoa.ADMIN;
+        if (elevandoParaAdmin || alvoJaEhAdmin) {
+            throw new AccessDeniedException("Gestor não pode conceder ADMIN nem alterar uma Pessoa ADMIN");
+        }
     }
 
     private void registrarAuditoria(UUID registroId, String campo, String valorAnterior, String valorNovo, UUID alteradoPor) {
@@ -215,12 +263,5 @@ public class PessoaService {
                 pessoa.getAprovadoEm(),
                 pessoa.getCreatedAt(), pessoa.getUpdatedAt()
         );
-    }
-
-    public PessoaResponse atualizarPerfilProprio(Jwt jwt, AtualizarPerfilRequest request) {
-        Pessoa pessoa = currentPessoaResolver.resolver(jwt);
-        pessoa.setNome(request.nome());
-        pessoa.setFotoUrl(request.fotoUrl());
-        return paraResponse(pessoa);
     }
 }

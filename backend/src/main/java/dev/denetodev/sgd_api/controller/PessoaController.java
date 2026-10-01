@@ -27,7 +27,10 @@ public class PessoaController {
     }
 
     @GetMapping
-    public List<PessoaResponse> listar() {
+    public List<PessoaResponse> listar(@RequestParam(required = false) Boolean pendente) {
+        if (Boolean.TRUE.equals(pendente)) {
+            return pessoaService.listarPendentes();
+        }
         return pessoaService.listarTodas();
     }
 
@@ -36,23 +39,34 @@ public class PessoaController {
         return pessoaService.buscarPorId(id);
     }
 
+    @GetMapping("/me")
+    public MeResponse meuPerfil(@AuthenticationPrincipal Jwt jwt) {
+        UUID authUserId = UUID.fromString(jwt.getSubject());
+        return pessoaService.buscarStatusPorAuthUserId(authUserId);
+    }
+
+    @PutMapping("/me")
+    public PessoaResponse atualizarPerfilProprio(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AtualizarPerfilRequest request) {
+        return pessoaService.atualizarPerfilProprio(jwt, request);
+    }
+
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
     public ResponseEntity<PessoaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody PessoaRequest request) {
         PessoaResponse criada = pessoaService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/pessoas/" + criada.id())).body(criada);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public PessoaResponse atualizar(@PathVariable UUID id, @Valid @RequestBody PessoaRequest request) {
-        return pessoaService.atualizar(id, request);
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public PessoaResponse atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody PessoaRequest request) {
+        return pessoaService.atualizar(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> desativar(@PathVariable UUID id) {
-        pessoaService.desativar(id);
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public ResponseEntity<Void> desativar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        pessoaService.desativar(jwt, id);
         return ResponseEntity.noContent().build();
     }
 
@@ -62,33 +76,21 @@ public class PessoaController {
         return pessoaService.vincularAuth(id, request.authUserId());
     }
 
-    @GetMapping("/me")
-    public MeResponse meuPerfil(@AuthenticationPrincipal Jwt jwt) {
-        UUID authUserId = UUID.fromString(jwt.getSubject());
-        return pessoaService.buscarStatusPorAuthUserId(authUserId);
-    }
-
     @PostMapping("/auto-cadastro")
-    public ResponseEntity<PessoaResponse> autoCadastro(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody AutoCadastroRequest request
-    ) {
+    public ResponseEntity<PessoaResponse> autoCadastro(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AutoCadastroRequest request) {
         PessoaResponse criada = pessoaService.autoCadastro(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/pessoas/" + criada.id())).body(criada);
     }
 
     @PatchMapping("/{id}/aprovar")
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
-    public PessoaResponse aprovar(
-            @PathVariable UUID id,
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody AprovarRequest request
-    ) {
+    public PessoaResponse aprovar(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AprovarRequest request) {
         return pessoaService.aprovar(id, jwt, request);
     }
 
-    @PutMapping("/me")
-    public PessoaResponse atualizarPerfilProprio(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AtualizarPerfilRequest request) {
-        return pessoaService.atualizarPerfilProprio(jwt, request);
+    @PatchMapping("/{id}/rejeitar")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public PessoaResponse rejeitar(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody RejeitarRequest request) {
+        return pessoaService.rejeitar(id, jwt, request);
     }
 }
