@@ -62,6 +62,9 @@ public class Demanda {
     @Column(name = "observacoes", columnDefinition = "text")
     private String observacoes;
 
+    @Column(name = "link_externo", length = 500)
+    private String linkExterno;
+
     @Column(name = "source_system", length = 60)
     private String sourceSystem;
 
@@ -206,6 +209,14 @@ public class Demanda {
 
     public void setObservacoes(String observacoes) {
         this.observacoes = observacoes;
+    }
+
+    public String getLinkExterno() {
+        return linkExterno;
+    }
+
+    public void setLinkExterno(String linkExterno) {
+        this.linkExterno = linkExterno;
     }
 
     public String getSourceSystem() {

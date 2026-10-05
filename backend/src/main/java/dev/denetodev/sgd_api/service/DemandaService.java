@@ -75,7 +75,7 @@ public class DemandaService {
         return paraResponse(demanda);
     }
 
-    public DemandaResponse criar(DemandaRequest request) {
+    public DemandaResponse criar(Jwt jwt, DemandaRequest request) {
         Diretoria diretoria = diretoriaRepository.findById(request.diretoriaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Diretoria não encontrada: " + request.diretoriaId()));
 
@@ -84,6 +84,7 @@ public class DemandaService {
         demanda.setCodigo(request.codigo());
         demanda.setDataPrazo(request.dataPrazo());
         demanda.setObservacoes(request.observacoes());
+        demanda.setLinkExterno(normalizarLink(request.linkExterno()));
 
         if (request.prioridade() != null) {
             demanda.setPrioridade(request.prioridade());
@@ -108,6 +109,13 @@ public class DemandaService {
         }
 
         Demanda salva = demandaRepository.save(demanda);
+
+        // quem cria a demanda entra no time como Responsável principal
+        Pessoa criador = currentPessoaResolver.resolver(jwt);
+        PessoaDemanda vinculo = new PessoaDemanda(criador, salva);
+        vinculo.setPapel(PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL);
+        pessoaDemandaRepository.save(vinculo);
+
         return paraResponse(salva);
     }
 
@@ -124,6 +132,7 @@ public class DemandaService {
         demanda.setDiretoria(diretoria);
         demanda.setDataPrazo(request.dataPrazo());
         demanda.setObservacoes(request.observacoes());
+        demanda.setLinkExterno(normalizarLink(request.linkExterno()));
         demanda.setPrioridade(request.prioridade() != null ? request.prioridade() : demanda.getPrioridade());
 
         demanda.setDemandante(resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
@@ -179,10 +188,24 @@ public class DemandaService {
                 demanda.getDataEntregaReal(),
                 demanda.getValor(),
                 demanda.getObservacoes(),
+                demanda.getLinkExterno(),
                 valorCalculado,
                 demanda.getCreatedAt(),
                 demanda.getUpdatedAt()
         );
+    }
+
+    /** Link para Planner/ClickUp: vazio vira nulo; só aceita http(s). */
+    private String normalizarLink(String link) {
+        if (link == null || link.isBlank()) {
+            return null;
+        }
+        String limpo = link.trim();
+        String minusculo = limpo.toLowerCase();
+        if (!minusculo.startsWith("http://") && !minusculo.startsWith("https://")) {
+            throw new IllegalArgumentException("linkExterno deve começar com http:// ou https://");
+        }
+        return limpo;
     }
 
     private <T> T resolverOuNulo(UUID id, org.springframework.data.jpa.repository.JpaRepository<T, UUID> repository, String nomeEntidade) {

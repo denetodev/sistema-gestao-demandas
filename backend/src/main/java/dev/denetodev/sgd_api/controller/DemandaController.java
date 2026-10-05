@@ -45,8 +45,8 @@ public class DemandaController {
     }
 
     @PostMapping
-    public ResponseEntity<DemandaResponse> criar(@Valid @RequestBody DemandaRequest request) {
-        DemandaResponse criada = demandaService.criar(request);
+    public ResponseEntity<DemandaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DemandaRequest request) {
+        DemandaResponse criada = demandaService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .location(URI.create("/demandas/" + criada.id()))
                 .body(criada);
