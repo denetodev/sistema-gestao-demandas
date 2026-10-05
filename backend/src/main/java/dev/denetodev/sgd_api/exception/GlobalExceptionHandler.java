@@ -4,7 +4,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import dev.denetodev.sgd_api.storage.ArmazenamentoIndisponivelException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.OffsetDateTime;
@@ -46,6 +48,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> tratarIntegridade(DataIntegrityViolationException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(corpoErro(HttpStatus.CONFLICT, "Operação viola uma restrição de integridade (nome duplicado ou registro em uso)"));
+    }
+
+    @ExceptionHandler(ArmazenamentoIndisponivelException.class)
+    public ResponseEntity<Map<String, Object>> tratarArmazenamento(ArmazenamentoIndisponivelException ex) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(corpoErro(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> tratarUploadGrande(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
+                .body(corpoErro(HttpStatus.CONTENT_TOO_LARGE, "Arquivo acima do limite de 5 MB"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
