@@ -41,7 +41,6 @@ export interface CriarDemandaPayload {
   campanhaId: string | null;
   prioridade: Prioridade;
   dataPrazo: string | null;
-  valor: number | null;
   observacoes: string | null;
 }
 

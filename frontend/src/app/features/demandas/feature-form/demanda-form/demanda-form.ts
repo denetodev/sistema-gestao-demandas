@@ -5,7 +5,6 @@ import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { DatePicker } from 'primeng/datepicker';
-import { InputNumber } from 'primeng/inputnumber';
 import { Textarea } from 'primeng/textarea';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
@@ -20,7 +19,7 @@ import { formatarData, paraData } from '../../../../core/util/data';
 
 @Component({
   selector: 'app-demanda-form',
-  imports: [ReactiveFormsModule, Dialog, InputText, Select, DatePicker, InputNumber, Textarea, Button, Message],
+  imports: [ReactiveFormsModule, Dialog, InputText, Select, DatePicker, Textarea, Button, Message],
   templateUrl: './demanda-form.html',
   styleUrl: './demanda-form.scss',
 })
@@ -57,7 +56,6 @@ export class DemandaForm {
     campanhaId: this.#fb.control<string | null>(null),
     prioridade: ['NORMAL' as Prioridade, Validators.required],
     dataPrazo: this.#fb.control<Date | null>(null),
-    valor: this.#fb.control<number | null>(null),
     observacoes: [''],
   });
 
@@ -129,7 +127,6 @@ export class DemandaForm {
         campanhaId: d.campanhaId,
         prioridade: d.prioridade,
         dataPrazo: paraData(d.dataPrazo),
-        valor: d.valor,
         observacoes: d.observacoes ?? '',
       });
     } catch {
@@ -154,7 +151,6 @@ export class DemandaForm {
       campanhaId: v.campanhaId,
       prioridade: v.prioridade,
       dataPrazo: formatarData(v.dataPrazo),
-      valor: v.valor,
       observacoes: v.observacoes || null,
     };
     try {
