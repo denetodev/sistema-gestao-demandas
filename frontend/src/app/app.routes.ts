@@ -27,6 +27,13 @@ export const routes: Routes = [
             (m) => m.DemandaLista,
           ),
       },
+      {
+        path: 'demandas/:id',
+        loadComponent: () =>
+          import('./features/demandas/feature-detalhe/demanda-detalhe/demanda-detalhe').then(
+            (m) => m.DemandaDetalhe,
+          ),
+      },
       { path: '', redirectTo: 'demandas', pathMatch: 'full' },
 
       {

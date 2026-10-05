@@ -1,0 +1,38 @@
+<section class="secao">
+  <header class="secao__cab">
+    <h2>Participantes ({{ itens().length }})</h2>
+    @if (editavel()) {
+      <p-button icon="pi pi-plus" label="Adicionar" size="small" [text]="true" (onClick)="abrir()" />
+    }
+  </header>
+  <p-table [value]="itens()" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr><th>Pessoa</th><th>Papel</th><th>Entrada</th><th></th></tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-p>
+      <tr>
+        <td>{{ p.pessoaNome }}</td>
+        <td>{{ rotuloPapel(p.papel) }}</td>
+        <td>{{ p.dataEntrada ?? '—' }}</td>
+        <td class="acoes">
+          @if (editavel()) {
+            <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(p)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="4">Nenhum participante.</td></tr></ng-template>
+  </p-table>
+</section>
+
+<p-dialog [(visible)]="dialogAberto" header="Adicionar participante" [modal]="true" [style]="{ width: '420px' }">
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
+    <label for="pessoa">Pessoa</label>
+    <p-select inputId="pessoa" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nome"
+              optionValue="id" [filter]="true" placeholder="Selecione" appendTo="body" />
+    <label for="papel">Papel</label>
+    <p-select inputId="papel" formControlName="papel" [options]="opcoesPapel" optionLabel="label"
+              optionValue="value" appendTo="body" />
+    <p-button type="submit" label="Adicionar" [loading]="salvando()" [disabled]="form.invalid" />
+  </form>
+</p-dialog>

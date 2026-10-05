@@ -1,0 +1,79 @@
+<app-barra-pagina titulo="Demanda">
+  <ng-container inicio>
+    <a routerLink="/demandas" class="voltar"><i class="pi pi-arrow-left"></i> Voltar para Demandas</a>
+  </ng-container>
+  <ng-container fim>
+    @if (demanda.hasValue() && auth.podeEditar() && !cancelada()) {
+      <p-button icon="pi pi-pencil" label="Editar" severity="secondary" (onClick)="dialogAberto.set(true)" />
+      <p-button icon="pi pi-times-circle" label="Cancelar demanda" severity="danger" [outlined]="true"
+                (onClick)="cancelar()" />
+    }
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo detalhe">
+  @if (demanda.error()) {
+    <p-message severity="error">Não foi possível carregar a demanda.</p-message>
+  } @else if (demanda.value(); as d) {
+    @if (!auth.podeEditar()) {
+      <p-message severity="info">Visualizador: tudo em somente leitura.</p-message>
+    } @else if (cancelada()) {
+      <p-message severity="warn">Demanda cancelada: somente leitura.</p-message>
+    }
+
+    <section class="secao">
+      <div class="titulo-linha">
+        <h1>{{ d.titulo }}</h1>
+        <div class="status">
+          @if (editavel()) {
+            <p-select [ngModel]="d.status" (ngModelChange)="mudarStatus($event)" [options]="opcoesStatus"
+                      optionLabel="label" optionValue="value" />
+          } @else {
+            <p-tag [value]="rotuloStatus[d.status]" />
+          }
+        </div>
+      </div>
+      @if (d.descricao) {
+        <p class="descricao">{{ d.descricao }}</p>
+      }
+      <dl class="dados">
+        <div><dt>Demandante</dt><dd>{{ d.demandanteNome ?? '—' }}</dd></div>
+        <div><dt>Diretoria</dt><dd>{{ d.diretoriaNome }}</dd></div>
+        <div><dt>Projeto</dt><dd>{{ d.projetoNome ?? '—' }}</dd></div>
+        <div><dt>Campanha</dt><dd>{{ d.campanhaNome ?? '—' }}</dd></div>
+        <div><dt>Prioridade</dt><dd><p-tag [value]="d.prioridade" [severity]="severityPrioridade(d.prioridade)" /></dd></div>
+        <div>
+          <dt>Prazo</dt>
+          <dd>
+            {{ d.dataPrazo ? (d.dataPrazo | date: 'dd/MM/yyyy') : '—' }}
+            @if (atrasada()) { <p-tag value="atrasada" severity="danger" /> }
+          </dd>
+        </div>
+        <div>
+          <dt>Valor de referência</dt>
+          <dd><b>{{ d.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</b></dd>
+        </div>
+        <div><dt>Código</dt><dd>{{ d.codigo ?? '—' }}</dd></div>
+      </dl>
+      @if (d.observacoes) {
+        <p class="descricao"><b>Observações:</b> {{ d.observacoes }}</p>
+      }
+    </section>
+
+    <div class="duas-colunas">
+      <app-secao-participantes [demandaId]="d.id" [itens]="participantes.value() ?? []" [editavel]="editavel()"
+                               (alterado)="participantes.reload()" />
+      <app-secao-pecas [demandaId]="d.id" [itens]="pecas.value() ?? []" [editavel]="editavel()"
+                       (alterado)="recarregarTudo()" />
+    </div>
+
+    <app-secao-atividades [demandaId]="d.id" [itens]="atividadesLista()" [editavel]="editavel()"
+                          (alterado)="recarregarTudo()" />
+
+    <app-secao-evidencias [todas]="evidencias.value() ?? []" [atividades]="atividadesLista()"
+                          [pecas]="pecas.value() ?? []" [editavel]="editavel()"
+                          (alterado)="evidencias.reload()" />
+
+    <app-demanda-form [(visivel)]="dialogAberto" [demandaId]="d.id" (salvo)="recarregarTudo()" />
+  }
+</div>

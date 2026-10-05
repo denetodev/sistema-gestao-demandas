@@ -4,6 +4,7 @@ import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import { DemandaService } from '../../data-access/demanda.service';
 import type { StatusDemanda, Prioridade, Demanda } from '../../data-access/demanda.model';
+import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
@@ -13,7 +14,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-demanda-lista',
-  imports: [TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm],
+  imports: [TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm, RouterLink],
   templateUrl: './demanda-lista.html',
   styleUrl: './demanda-lista.scss',
 })

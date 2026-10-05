@@ -34,7 +34,11 @@ export interface Demanda {
 
 export interface CriarDemandaPayload {
   titulo: string;
+  descricao: string | null;
   diretoriaId: string;
+  demandanteId: string | null;
+  projetoId: string | null;
+  campanhaId: string | null;
   prioridade: Prioridade;
   dataPrazo: string | null;
   valor: number | null;

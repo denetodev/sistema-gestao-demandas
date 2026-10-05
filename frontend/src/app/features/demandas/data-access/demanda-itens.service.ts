@@ -1,0 +1,73 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, httpResource } from '@angular/common/http';
+import { Signal } from '@angular/core';
+import { environment } from '../../../../environments/environment';
+import {
+  Atividade,
+  AtividadePayload,
+  Evidencia,
+  EvidenciaPayload,
+  Participante,
+  ParticipantePayload,
+  Peca,
+  PecaPayload,
+} from './demanda-itens.model';
+import type { StatusDemanda } from './demanda.model';
+import type { Pessoa } from '../../../core/pessoas/pessoa.model';
+
+@Injectable({ providedIn: 'root' })
+export class DemandaItensService {
+  #http = inject(HttpClient);
+  #api = environment.apiUrl;
+
+  participantes(demandaId: Signal<string>) {
+    return httpResource<Participante[]>(() => `${this.#api}/demandas/${demandaId()}/participantes`);
+  }
+  pecas(demandaId: Signal<string>) {
+    return httpResource<Peca[]>(() => ({ url: `${this.#api}/pecas`, params: { demandaId: demandaId() } }));
+  }
+  atividades(demandaId: Signal<string>) {
+    return httpResource<{ content: Atividade[] }>(() => ({
+      url: `${this.#api}/atividades`,
+      params: { demandaId: demandaId() },
+    }));
+  }
+  pessoas() {
+    return httpResource<Pessoa[]>(() => `${this.#api}/pessoas`);
+  }
+  evidencias() {
+    return httpResource<Evidencia[]>(() => `${this.#api}/evidencias`);
+  }
+
+  atualizarStatus(demandaId: string, status: StatusDemanda) {
+    return this.#http.patch(`${this.#api}/demandas/${demandaId}/status`, { status });
+  }
+
+  adicionarParticipante(demandaId: string, p: ParticipantePayload) {
+    return this.#http.post<Participante>(`${this.#api}/demandas/${demandaId}/participantes`, p);
+  }
+  removerParticipante(demandaId: string, id: string) {
+    return this.#http.delete<void>(`${this.#api}/demandas/${demandaId}/participantes/${id}`);
+  }
+
+  criarPeca(p: PecaPayload) {
+    return this.#http.post<Peca>(`${this.#api}/pecas`, p);
+  }
+  removerPeca(id: string) {
+    return this.#http.delete<void>(`${this.#api}/pecas/${id}`);
+  }
+
+  criarAtividade(p: AtividadePayload) {
+    return this.#http.post<Atividade>(`${this.#api}/atividades`, p);
+  }
+  removerAtividade(id: string) {
+    return this.#http.delete<void>(`${this.#api}/atividades/${id}`);
+  }
+
+  criarEvidencia(p: EvidenciaPayload) {
+    return this.#http.post<Evidencia>(`${this.#api}/evidencias`, p);
+  }
+  removerEvidencia(id: string) {
+    return this.#http.delete<void>(`${this.#api}/evidencias/${id}`);
+  }
+}

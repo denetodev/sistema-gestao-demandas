@@ -1,0 +1,51 @@
+<section class="secao">
+  <header class="secao__cab">
+    <h2>Evidências ({{ itens().length }})</h2>
+    @if (editavel() && alvos().length) {
+      <p-button icon="pi pi-plus" label="Adicionar" size="small" [text]="true" (onClick)="abrir()" />
+    }
+  </header>
+  <p-table [value]="itens()" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr><th>Vinculada a</th><th>Tipo</th><th>Conteúdo</th><th>Descrição</th><th></th></tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-e>
+      <tr>
+        <td>{{ e.alvo }}</td>
+        <td>{{ e.tipo }}</td>
+        <td>
+          @if (e.tipo === 'LINK' && e.conteudo) {
+            <a [href]="e.conteudo" target="_blank" rel="noopener noreferrer">{{ e.conteudo }}</a>
+          } @else {
+            {{ e.conteudo ?? '—' }}
+          }
+        </td>
+        <td>{{ e.descricao ?? '—' }}</td>
+        <td class="acoes">
+          @if (editavel()) {
+            <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(e)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage">
+      <tr><td colspan="5">Nenhuma evidência. Cadastre atividades ou peças para anexá-las.</td></tr>
+    </ng-template>
+  </p-table>
+</section>
+
+<p-dialog [(visible)]="dialogAberto" header="Nova evidência" [modal]="true" [style]="{ width: '480px' }">
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
+    <label for="alvo">Vincular a</label>
+    <p-select inputId="alvo" formControlName="alvo" [options]="alvos()" optionLabel="label"
+              optionValue="value" placeholder="Atividade ou peça" appendTo="body" />
+    <label for="tipoEv">Tipo</label>
+    <p-select inputId="tipoEv" formControlName="tipo" [options]="opcoesTipo" optionLabel="label"
+              optionValue="value" appendTo="body" />
+    <label for="conteudo">URL, nome do arquivo ou texto</label>
+    <input pInputText id="conteudo" formControlName="conteudo" placeholder="https://… ou print_final.png" />
+    <label for="descEv">Descrição</label>
+    <textarea pTextarea id="descEv" formControlName="descricao" rows="2"></textarea>
+    <p-button type="submit" label="Adicionar evidência" [loading]="salvando()" [disabled]="form.invalid" />
+  </form>
+</p-dialog>

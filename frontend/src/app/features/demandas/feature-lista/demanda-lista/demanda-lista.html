@@ -33,7 +33,7 @@
     </ng-template>
     <ng-template pTemplate="body" let-demanda>
       <tr>
-        <td>{{ demanda.titulo }}</td>
+        <td><a [routerLink]="['/demandas', demanda.id]">{{ demanda.titulo }}</a></td>
         <td><p-tag [value]="demanda.status" [severity]="severityStatus(demanda.status)" /></td>
         <td>
           <p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" />
