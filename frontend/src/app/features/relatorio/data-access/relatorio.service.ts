@@ -43,6 +43,14 @@ export class RelatorioService {
     return this.#http.put<Relatorio>(`${this.#base}/${mes}`, payload);
   }
 
+  /** DOCX do relatório (o que está salvo no servidor). */
+  baixarDocx(mes: string, pessoaId: string | null) {
+    return this.#http.get(`${this.#base}/${mes}/docx`, {
+      params: { ...(pessoaId ? { pessoaId } : {}) },
+      responseType: 'blob',
+    });
+  }
+
   aprovar(mes: string) {
     return this.#http.post<Relatorio>(`${this.#base}/${mes}/aprovar`, {});
   }

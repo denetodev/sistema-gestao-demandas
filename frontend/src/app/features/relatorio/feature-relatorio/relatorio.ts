@@ -36,6 +36,7 @@ export class RelatorioMensal {
   filtro = this.#service.filtro;
 
   salvando = signal(false);
+  baixando = signal(false);
   /** Edição local, ainda não salva. */
   excluidas = signal<Set<string>>(new Set());
   observacoes = signal('');
@@ -202,6 +203,37 @@ export class RelatorioMensal {
     } finally {
       this.salvando.set(false);
     }
+  }
+
+  /** Baixa o DOCX para assinar. Seleção ainda não salva é salva antes, para o arquivo sair igual à tela. */
+  async baixarDocx() {
+    const r = this.relatorio.value();
+    if (!r) return;
+    if (this.editavel() && this.alterado() && !(await this.salvar())) return;
+    this.baixando.set(true);
+    try {
+      const f = this.filtro();
+      const blob = await firstValueFrom(this.#service.baixarDocx(f.mes, f.pessoaId));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-${r.mes}-${this.#slug(r.pessoaNome)}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // toast do interceptor
+    } finally {
+      this.baixando.set(false);
+    }
+  }
+
+  #slug(nome: string): string {
+    return nome
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   }
 
   /** O PDF sai do diálogo de impressão do navegador ("Salvar como PDF"); o título vira o nome do arquivo. */

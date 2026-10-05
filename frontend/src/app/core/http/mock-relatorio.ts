@@ -82,6 +82,11 @@ export function relatorioMock(
 
   if (!acao && m === 'GET') return { status: 200, body: montar() };
 
+  if (acao === 'docx' && m === 'GET') {
+    // exportação simulada: um texto com extensão .docx, só para exercitar o download
+    return { status: 200, body: new Blob([`Exportação simulada do relatório de ${mes} (${dono.nome})`], { type: 'text/plain' }) };
+  }
+
   if (!acao && m === 'PUT') {
     if (dono.id !== eu.id) return erro(403, 'Só a própria pessoa edita o relatório');
     const g = guardados.get(k);

@@ -36,6 +36,8 @@
           <p-button label="Reabrir" icon="pi pi-lock-open" severity="secondary" [outlined]="true"
                     [loading]="salvando()" (onClick)="confirmarReabertura()" />
         }
+        <p-button label="Baixar DOCX" icon="pi pi-download" severity="secondary" [outlined]="true"
+                  [loading]="baixando()" (onClick)="baixarDocx()" />
         <p-button label="Imprimir / Salvar PDF" icon="pi pi-print" (onClick)="imprimir()" />
       </span>
     </div>
