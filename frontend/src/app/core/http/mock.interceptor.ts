@@ -1,5 +1,6 @@
 import { HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { mockDemanda } from './mock-demanda';
 
 // MOCK TEMPORÁRIO (remover): rede do BB bloqueia o Supabase.
 // Intercepta as respostas da API para permitir trabalho visual offline.
@@ -306,6 +307,14 @@ const dados: Record<string, unknown> = {
 
 
 export const mockInterceptor: HttpInterceptorFn = (req, next) => {
+  const detalhe = mockDemanda(req, {
+    demandas: TODAS_DEMANDAS,
+    pessoas: dados['/pessoas'] as any[],
+    pessoaAtual: PESSOA_ATUAL,
+    dados,
+  });
+  if (detalhe) return detalhe;
+
   if (req.method !== 'GET') {
     return next(req);
   }

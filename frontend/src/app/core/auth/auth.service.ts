@@ -3,6 +3,7 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase-client';
 import { environment } from '../../../environments/environment';
+import { MOCK_SESSAO, SESSAO_FALSA } from '../http/mock-sessao';
 import { PessoaMe, PessoaMeResponse, Perfil } from './auth.model';
 
 @Injectable({ providedIn: 'root' })
@@ -47,6 +48,11 @@ export class AuthService {
   }
 
   constructor() {
+    if (MOCK_SESSAO) {
+      this.#session.set(SESSAO_FALSA);
+      this.ready = Promise.resolve();
+      return;
+    }
     this.ready = supabase.auth.getSession().then(({ data }) => {
       this.#session.set(data.session);
     });

@@ -68,14 +68,14 @@ export class DemandaForm {
 
   opcoesDemandante = computed(() =>
     (this.#demandantes.value() ?? []).filter(
-      (d) => d.ativo && (!this.#diretoria() || d.diretoriaId === this.#diretoria()),
+      (d) => d.ativo && (!this.#diretoria() || !d.diretoriaId || d.diretoriaId === this.#diretoria()),
     ),
   );
   opcoesProjeto = computed(() =>
     (this.#projetos.value() ?? []).filter(
       (p) =>
         p.status !== 'ENCERRADO' &&
-        (!this.#diretoria() || p.diretoriaId === this.#diretoria()) &&
+        (!this.#diretoria() || !p.diretoriaId || p.diretoriaId === this.#diretoria()) &&
         (!this.#demandante() || p.demandanteId === this.#demandante()),
     ),
   );
