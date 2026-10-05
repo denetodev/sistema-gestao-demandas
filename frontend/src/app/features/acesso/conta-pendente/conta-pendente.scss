@@ -1,0 +1,52 @@
+.tela {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  background: var(--p-content-background);
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 26rem;
+  padding: 2rem;
+  text-align: center;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 6px);
+
+  h1 {
+    margin: 0.25rem 0;
+    font-size: 1.35rem;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  &__icone {
+    font-size: 2rem;
+    color: var(--p-primary-color);
+
+    &--erro {
+      color: var(--p-red-500, #ef4444);
+    }
+  }
+
+  &__detalhe {
+    font-size: 0.85rem;
+    color: var(--p-text-muted-color);
+  }
+
+  &__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+}

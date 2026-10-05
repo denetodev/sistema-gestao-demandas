@@ -1,18 +1,9 @@
 @if (auth.me.isLoading()) {
 <p>Carregando...</p>
 } @else if (auth.erroAoCarregarPessoa()) {
-<div class="aguardando">
-  <h1>Não foi possível conectar ao servidor</h1>
-  <p>Verifique se a API está rodando e tente novamente.</p>
-  <p-button (onClick)="auth.me.reload()">Tentar novamente</p-button>
-  <p-button [text]="true" (onClick)="sair()">Sair</p-button>
-</div>
+<app-conta-pendente situacao="erro" />
 } @else if (!auth.vinculado()) {
-<div class="aguardando">
-  <h1>Conta aguardando aprovação</h1>
-  <p>Sua conta foi criada, mas ainda precisa ser liberada por um administrador.</p>
-  <p-button [text]="true" (onClick)="sair()">Sair</p-button>
-</div>
+<app-conta-pendente [situacao]="auth.pessoa()?.status === 'REJEITADO' ? 'rejeitada' : 'pendente'" />
 } @else {
 <div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()">
   <header class="app-topbar">

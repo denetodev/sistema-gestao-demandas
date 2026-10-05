@@ -48,7 +48,18 @@ const REFERENCIA_DESIGN = {
   authUserId: 'a2',
 };
 
+// Contas que ainda não entram no app (telas de Aguardando aprovação e Cadastro não aprovado)
+const PENDENTE = { ...ADMIN, id: 'p20', nome: 'Nova Pessoa', perfil: 'PROFISSIONAL', aprovadoEm: null };
+const REJEITADA = { ...PENDENTE, status: 'REJEITADO' };
+// Profissional puro: testa a tela de Acesso negado em /pessoas, /demandantes e /relatorio (Visualizador)
+const PROFISSIONAL = { ...ADMIN, id: 'p21', nome: 'Bruno Alves', perfil: 'PROFISSIONAL' };
+const VISUALIZADOR = { ...ADMIN, id: 'p22', nome: 'Vera Souza', perfil: 'VISUALIZADOR' };
+
 const PESSOA_ATUAL = ADMIN;
+// const PESSOA_ATUAL = PENDENTE;
+// const PESSOA_ATUAL = REJEITADA;
+// const PESSOA_ATUAL = PROFISSIONAL;
+// const PESSOA_ATUAL = VISUALIZADOR;
 // const PESSOA_ATUAL = REFERENCIA_DESIGN;
 
 // ==========================================================================
@@ -208,7 +219,7 @@ function responderDemandas(req: HttpRequest<unknown>) {
 // Demais rotas — resposta fixa
 // ==========================================================================
 const dados: Record<string, unknown> = {
-  '/pessoas/me': { vinculado: true, pessoa: PESSOA_ATUAL },
+  '/pessoas/me': { vinculado: !!PESSOA_ATUAL.aprovadoEm, pessoa: PESSOA_ATUAL },
   '/diretorias': DIRETORIAS,
   '/areas': AREAS,
   '/demandantes': [

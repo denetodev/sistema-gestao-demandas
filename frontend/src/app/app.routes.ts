@@ -17,6 +17,11 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/app-shell/app-shell').then((m) => m.AppShell),
     children: [
       {
+        path: 'acesso-negado',
+        loadComponent: () =>
+          import('./features/acesso/acesso-negado/acesso-negado').then((m) => m.AcessoNegado),
+      },
+      {
         path: 'dashboard',
         loadComponent: () =>
           import('./features/dashboard/feature-dashboard/dashboard').then((m) => m.Dashboard),
