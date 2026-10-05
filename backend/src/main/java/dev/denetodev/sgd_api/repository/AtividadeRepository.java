@@ -16,6 +16,8 @@ public interface AtividadeRepository extends JpaRepository<Atividade, UUID> {
 
     List<Atividade> findByDemandaId(UUID demandaId);
 
+    List<Atividade> findByPessoa_IdAndDataRealizacaoBetweenOrderByDataRealizacaoAsc(UUID pessoaId, LocalDate de, LocalDate ate);
+
     /** Linhas [pessoaId, dataRealizacao, quantidade] das pessoas no período. */
     @Query("""
         select a.pessoa.id, a.dataRealizacao, count(a)
