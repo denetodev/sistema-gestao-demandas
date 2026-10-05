@@ -7,11 +7,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface DemandaRepository extends JpaRepository<Demanda, UUID> {
 
     Page<Demanda> findByDiretoriaId(UUID diretoriaId, Pageable pageable);
+
+    List<Demanda> findByDiretoriaId(UUID diretoriaId);
 
     @Query("""
         select distinct d from Demanda d

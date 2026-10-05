@@ -83,7 +83,6 @@ public class DemandaService {
         demanda.setDescricao(request.descricao());
         demanda.setCodigo(request.codigo());
         demanda.setDataPrazo(request.dataPrazo());
-        demanda.setValor(request.valor());
         demanda.setObservacoes(request.observacoes());
 
         if (request.prioridade() != null) {
@@ -124,7 +123,6 @@ public class DemandaService {
         demanda.setCodigo(request.codigo());
         demanda.setDiretoria(diretoria);
         demanda.setDataPrazo(request.dataPrazo());
-        demanda.setValor(request.valor());
         demanda.setObservacoes(request.observacoes());
         demanda.setPrioridade(request.prioridade() != null ? request.prioridade() : demanda.getPrioridade());
 
@@ -155,9 +153,11 @@ public class DemandaService {
         Campanha campanha = demanda.getCampanha();
 
         List<Peca> pecas = pecaRepository.findByDemandaId(demanda.getId());
-        BigDecimal valorCalculado = pecas.isEmpty()
-                ? null
-                : pecas.stream().map(Peca::getValorTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Valor vem das peças. O campo manual só vale para linhas importadas da planilha
+        // (source_system preenchido) ainda sem peças; a API não grava mais esse campo.
+        BigDecimal valorCalculado = !pecas.isEmpty()
+                ? pecas.stream().map(Peca::getValorTotal).reduce(BigDecimal.ZERO, BigDecimal::add)
+                : (demanda.getSourceSystem() != null ? demanda.getValor() : null);
 
         return new DemandaResponse(
                 demanda.getId(),
