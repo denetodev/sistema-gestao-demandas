@@ -12,6 +12,7 @@ import {
   Peca,
   PecaPayload,
   PapelParticipante,
+  HistoricoStatus,
 } from './demanda-itens.model';
 import type { StatusDemanda } from './demanda.model';
 import type { Pessoa } from '../../../core/pessoas/pessoa.model';
@@ -32,6 +33,9 @@ export class DemandaItensService {
       url: `${this.#api}/atividades`,
       params: { demandaId: demandaId() },
     }));
+  }
+  historico(demandaId: Signal<string>) {
+    return httpResource<HistoricoStatus[]>(() => `${this.#api}/demandas/${demandaId()}/historico`);
   }
   pessoas() {
     return httpResource<Pessoa[]>(() => `${this.#api}/pessoas`);

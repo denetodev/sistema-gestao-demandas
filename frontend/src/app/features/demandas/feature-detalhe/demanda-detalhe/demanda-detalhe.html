@@ -84,6 +84,25 @@
                           [pecas]="pecas.value() ?? []" [editavel]="editavel()"
                           (alterado)="evidencias.reload()" />
 
+    <section class="secao">
+      <header class="secao__cab"><h2>Histórico de status ({{ historico.value()?.length ?? 0 }})</h2></header>
+      <p-table [value]="historico.value() ?? []" [stripedRows]="true">
+        <ng-template pTemplate="header">
+          <tr><th>Quando</th><th>De</th><th>Para</th><th>Quem</th><th>Motivo</th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-h>
+          <tr>
+            <td>{{ h.data | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ rotuloStatus[h.de] || h.de || '—' }}</td>
+            <td>{{ rotuloStatus[h.para] || h.para || '—' }}</td>
+            <td>{{ h.porNome ?? '—' }}</td>
+            <td>{{ h.motivo ?? '—' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage"><tr><td colspan="5">Nenhuma mudança de status registrada.</td></tr></ng-template>
+      </p-table>
+    </section>
+
     <app-demanda-form [(visivel)]="dialogAberto" [demandaId]="d.id" (salvo)="recarregarTudo()" />
   }
 </div>

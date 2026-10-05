@@ -97,6 +97,15 @@ export interface EvidenciaPayload {
   descricao: string | null;
 }
 
+export interface HistoricoStatus {
+  data: string;
+  de: string | null;
+  para: string | null;
+  porId: string | null;
+  porNome: string | null;
+  motivo: string | null;
+}
+
 export const ROTULO_PAPEL: Record<PapelParticipante, string> = {
   RESPONSAVEL_PRINCIPAL: 'Responsável principal',
   RESPONSAVEL: 'Responsável',

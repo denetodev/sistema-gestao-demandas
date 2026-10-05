@@ -2,11 +2,13 @@ package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
+import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.*;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
 import dev.denetodev.sgd_api.service.support.PermissaoService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +16,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -30,6 +35,8 @@ public class DemandaService {
     private final PessoaDemandaRepository pessoaDemandaRepository;
     private final CurrentPessoaResolver currentPessoaResolver;
     private final PermissaoService permissaoService;
+    private final AuditoriaRepository auditoriaRepository;
+    private final PessoaRepository pessoaRepository;
 
     public DemandaService(
             DemandaRepository demandaRepository,
@@ -40,7 +47,9 @@ public class DemandaService {
             PecaRepository pecaRepository,
             PessoaDemandaRepository pessoaDemandaRepository,
             CurrentPessoaResolver currentPessoaResolver,
-            PermissaoService permissaoService
+            PermissaoService permissaoService,
+            AuditoriaRepository auditoriaRepository,
+            PessoaRepository pessoaRepository
     ) {
         this.demandaRepository = demandaRepository;
         this.diretoriaRepository = diretoriaRepository;
@@ -51,6 +60,8 @@ public class DemandaService {
         this.pessoaDemandaRepository = pessoaDemandaRepository;
         this.currentPessoaResolver = currentPessoaResolver;
         this.permissaoService = permissaoService;
+        this.auditoriaRepository = auditoriaRepository;
+        this.pessoaRepository = pessoaRepository;
     }
 
     @Transactional(readOnly = true)
@@ -142,18 +153,66 @@ public class DemandaService {
         return paraResponse(demanda);
     }
 
-    public DemandaResponse atualizarStatus(UUID id, StatusDemanda novoStatus) {
+    public DemandaResponse atualizarStatus(Jwt jwt, UUID id, StatusDemanda novoStatus, String motivo) {
+        return atualizarStatus(currentPessoaResolver.resolver(jwt), id, novoStatus, motivo);
+    }
+
+    /**
+     * Muda o status e registra na auditoria quem mudou, de quê para quê e o motivo.
+     * Visualizador não altera; cancelar a demanda inteira é de Gestor, Admin ou do Responsável principal.
+     */
+    DemandaResponse atualizarStatus(Pessoa usuario, UUID id, StatusDemanda novoStatus, String motivo) {
         Demanda demanda = demandaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + id));
 
-        demanda.setStatus(novoStatus);
-        // TODO(M3): registrar em auditoria (usuário, data, status anterior, motivo)
+        if (usuario.getPerfil() == PerfilPessoa.VISUALIZADOR) {
+            throw new AccessDeniedException("Visualizador não altera demandas");
+        }
+        if (novoStatus == StatusDemanda.CANCELADA && !podeCancelar(usuario, id)) {
+            throw new AccessDeniedException("Só Gestor, Admin ou o Responsável principal cancelam a demanda");
+        }
+
+        StatusDemanda anterior = demanda.getStatus();
+        if (anterior != novoStatus) {
+            demanda.setStatus(novoStatus);
+            Auditoria registro = new Auditoria("demanda", id, "status", anterior.name(), novoStatus.name(), usuario.getId());
+            registro.setMotivo(motivo == null || motivo.isBlank() ? null : motivo.trim());
+            auditoriaRepository.save(registro);
+        }
 
         return paraResponse(demanda);
     }
 
-    public void cancelar(UUID id) {
-        atualizarStatus(id, StatusDemanda.CANCELADA);
+    public void cancelar(Jwt jwt, UUID id) {
+        atualizarStatus(jwt, id, StatusDemanda.CANCELADA, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<HistoricoStatusResponse> historicoDeStatus(UUID id) {
+        if (!demandaRepository.existsById(id)) {
+            throw new RecursoNaoEncontradoException("Demanda não encontrada: " + id);
+        }
+        List<Auditoria> registros = auditoriaRepository
+                .findByTabelaAndRegistroIdAndCampoOrderByCreatedAtDesc("demanda", id, "status");
+        Map<UUID, String> nomes = new HashMap<>();
+        pessoaRepository.findAllById(registros.stream().map(Auditoria::getAlteradoPor).filter(Objects::nonNull).distinct().toList())
+                .forEach(p -> nomes.put(p.getId(), p.getNome()));
+
+        return registros.stream()
+                .map(r -> new HistoricoStatusResponse(
+                        r.getCreatedAt(), r.getValorAnterior(), r.getValorNovo(),
+                        r.getAlteradoPor(), r.getAlteradoPor() != null ? nomes.get(r.getAlteradoPor()) : null,
+                        r.getMotivo()))
+                .toList();
+    }
+
+    private boolean podeCancelar(Pessoa usuario, UUID demandaId) {
+        if (usuario.getPerfil() == PerfilPessoa.ADMIN || usuario.getPerfil() == PerfilPessoa.GESTOR) {
+            return true;
+        }
+        return pessoaDemandaRepository.findByPessoaIdAndDemandaIdAndDataSaidaIsNull(usuario.getId(), demandaId)
+                .map(v -> v.getPapel() == PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL)
+                .orElse(false);
     }
 
     private DemandaResponse paraResponse(Demanda demanda) {

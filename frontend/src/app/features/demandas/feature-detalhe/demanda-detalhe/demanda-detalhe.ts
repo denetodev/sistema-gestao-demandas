@@ -9,6 +9,7 @@ import { Button } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { Select } from 'primeng/select';
 import { Message } from 'primeng/message';
+import { TableModule } from 'primeng/table';
 import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
@@ -25,7 +26,7 @@ import { SecaoEvidencias } from '../secao-evidencias/secao-evidencias';
 @Component({
   selector: 'app-demanda-detalhe',
   imports: [
-    RouterLink, CurrencyPipe, DatePipe, FormsModule, Button, Tag, Select, Message, BarraPagina, DemandaForm,
+    RouterLink, CurrencyPipe, DatePipe, FormsModule, TableModule, Button, Tag, Select, Message, BarraPagina, DemandaForm,
     SecaoParticipantes, SecaoPecas, SecaoAtividades, SecaoEvidencias,
   ],
   templateUrl: './demanda-detalhe.html',
@@ -44,6 +45,7 @@ export class DemandaDetalhe {
   pecas = this.#itens.pecas(this.id);
   atividades = this.#itens.atividades(this.id);
   evidencias = this.#itens.evidencias();
+  historico = this.#itens.historico(this.id);
 
   dialogAberto = signal(false);
 
@@ -55,7 +57,7 @@ export class DemandaDetalhe {
     value: v,
     label: ROTULO_STATUS[v],
   }));
-  rotuloStatus = ROTULO_STATUS;
+  rotuloStatus: Record<string, string> = ROTULO_STATUS;
 
   atrasada = computed(() => {
     const d = this.demanda.value();
@@ -74,12 +76,14 @@ export class DemandaDetalhe {
       // toast do interceptor
     }
     this.demanda.reload();
+    this.historico.reload();
   }
 
   async cancelar() {
     try {
       await firstValueFrom(this.#demandas.excluir(this.id()));
       this.demanda.reload();
+      this.historico.reload();
     } catch {
       // toast do interceptor
     }
@@ -91,5 +95,6 @@ export class DemandaDetalhe {
     this.pecas.reload();
     this.atividades.reload();
     this.evidencias.reload();
+    this.historico.reload();
   }
 }

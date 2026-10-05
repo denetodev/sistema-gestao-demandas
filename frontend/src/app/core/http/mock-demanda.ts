@@ -43,6 +43,7 @@ interface Estado {
   evidencias: any[];
 }
 let estado: Estado | null = null;
+const historicos = new Map<string, any[]>();
 
 function ativas(ctx: MockCtx) {
   return ctx.pessoas.filter((p) => p.status === 'ATIVO' && p.aprovadoEm);
@@ -175,9 +176,11 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
     if (!sub) {
       if (m === 'GET') return resp(200, d);
       if (m === 'PUT') { aplicarPayloadDemanda(ctx, d, b); return resp(200, d); }
-      if (m === 'DELETE') { d.status = 'CANCELADA'; return resp(204, null); }
+      if (m === 'DELETE') { registrarHistorico(ctx, d, 'CANCELADA', null); d.status = 'CANCELADA'; return resp(204, null); }
     }
+    if (sub === 'historico' && m === 'GET') return resp(200, historicos.get(id) ?? []);
     if (sub === 'status' && m === 'PATCH') {
+      registrarHistorico(ctx, d, b.status, b.motivo ?? null);
       d.status = b.status;
       d.dataEntregaReal = b.status === 'CONCLUIDA' ? hoje() : null;
       return resp(200, d);
@@ -308,6 +311,16 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
   }
 
   return null;
+}
+
+function registrarHistorico(ctx: MockCtx, d: any, para: string, motivo: string | null) {
+  if (d.status === para) return;
+  const lista = historicos.get(d.id) ?? [];
+  lista.unshift({
+    data: new Date().toISOString(), de: d.status, para,
+    porId: ctx.pessoaAtual.id, porNome: ctx.pessoaAtual.nome, motivo,
+  });
+  historicos.set(d.id, lista);
 }
 
 function criarDemanda(ctx: MockCtx, b: any) {
