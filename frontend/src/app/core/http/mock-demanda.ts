@@ -44,6 +44,8 @@ interface Estado {
 }
 let estado: Estado | null = null;
 const historicos = new Map<string, any[]>();
+/** Imagens "enviadas" no mock: id da evidência -> URL local do arquivo escolhido. */
+const arquivosMock = new Map<string, string>();
 
 function ativas(ctx: MockCtx) {
   return ctx.pessoas.filter((p) => p.status === 'ATIVO' && p.aprovadoEm);
@@ -295,7 +297,27 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
   }
 
   if (recurso === 'evidencias') {
+    const sub = partes[2];
     if (m === 'GET' && !id) return resp(200, e.evidencias);
+    if (m === 'POST' && id === 'arquivo' && b instanceof FormData) {
+      const arquivo = b.get('arquivo') as File | null;
+      if (!arquivo || !['image/png', 'image/jpeg'].includes(arquivo.type)) {
+        return resp(400, { message: 'Só são aceitas imagens JPEG ou PNG' });
+      }
+      if (arquivo.size > 5 * 1024 * 1024) return resp(400, { message: 'Imagem acima de 5 MB' });
+      const nova = {
+        id: novoId('evid'), atividadeId: (b.get('atividadeId') as string) || null, pecaId: (b.get('pecaId') as string) || null,
+        tipo: 'IMAGEM', conteudo: null, descricao: (b.get('descricao') as string) || null,
+        arquivoMime: arquivo.type, arquivoTamanho: arquivo.size, createdAt: new Date().toISOString(),
+      };
+      arquivosMock.set(nova.id, URL.createObjectURL(arquivo));
+      e.evidencias.push(nova);
+      return resp(201, nova);
+    }
+    if (m === 'GET' && id && sub === 'arquivo') {
+      const url = arquivosMock.get(id);
+      return url ? resp(200, { url, validadeSegundos: 300 }) : resp(404, { message: 'Esta evidência não tem arquivo' });
+    }
     if (m === 'POST') {
       const nova = {
         id: novoId('evid'), atividadeId: b.atividadeId ?? null, pecaId: b.pecaId ?? null, tipo: b.tipo,

@@ -12,9 +12,12 @@
     <ng-template pTemplate="body" let-e>
       <tr>
         <td>{{ e.alvo }}</td>
-        <td>{{ e.tipo }}</td>
+        <td>{{ e.tipo === 'IMAGEM' ? 'Imagem' : e.tipo === 'LINK' ? 'Link' : e.tipo }}</td>
         <td>
-          @if (e.tipo === 'LINK' && e.conteudo) {
+          @if (e.arquivoMime) {
+            <p-button label="Ver imagem" icon="pi pi-image" size="small" [text]="true" (onClick)="verImagem(e)" />
+            <small class="dica">{{ tamanho(e.arquivoTamanho) }}</small>
+          } @else if (e.tipo === 'LINK' && e.conteudo) {
             <a [href]="e.conteudo" target="_blank" rel="noopener noreferrer">{{ e.conteudo }}</a>
           } @else {
             {{ e.conteudo ?? '—' }}
@@ -39,13 +42,28 @@
     <label for="alvo">Vincular a</label>
     <p-select inputId="alvo" formControlName="alvo" [options]="alvos()" optionLabel="label"
               optionValue="value" placeholder="Atividade ou peça" appendTo="body" />
-    <label for="tipoEv">Tipo</label>
-    <p-select inputId="tipoEv" formControlName="tipo" [options]="opcoesTipo" optionLabel="label"
-              optionValue="value" appendTo="body" />
-    <label for="conteudo">URL, nome do arquivo ou texto</label>
-    <input pInputText id="conteudo" formControlName="conteudo" placeholder="https://… ou print_final.png" />
+
+    <label>Tipo</label>
+    <p-selectbutton [options]="opcoesModo" optionLabel="label" optionValue="value" [allowEmpty]="false"
+                    [ngModel]="modo()" (ngModelChange)="modo.set($event)" [ngModelOptions]="{ standalone: true }" />
+
+    @if (modo() === 'IMAGEM') {
+      <label for="arquivo">Imagem (JPEG ou PNG, até 5 MB)</label>
+      <input id="arquivo" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" (change)="escolherArquivo($event)" />
+      @if (erroArquivo()) {
+        <p-message severity="error" size="small">{{ erroArquivo() }}</p-message>
+      }
+    } @else {
+      <label for="link">Link externo</label>
+      <input pInputText id="link" formControlName="link" placeholder="https://…" />
+      @if (form.controls.link.value && !podeSalvar()) {
+        <small class="erro-campo">Informe uma URL começando com http:// ou https://</small>
+      }
+    }
+
     <label for="descEv">Descrição</label>
     <textarea pTextarea id="descEv" formControlName="descricao" rows="2"></textarea>
-    <p-button type="submit" label="Adicionar evidência" [loading]="salvando()" [disabled]="form.invalid" />
+    <p-button type="submit" label="Adicionar evidência" [loading]="salvando()"
+              [disabled]="form.invalid || !podeSalvar()" />
   </form>
 </p-dialog>

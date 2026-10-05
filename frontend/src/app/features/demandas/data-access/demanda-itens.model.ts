@@ -86,7 +86,15 @@ export interface Evidencia {
   tipo: TipoEvidencia;
   conteudo: string | null;
   descricao: string | null;
+  /** Preenchidos só em imagem enviada. */
+  arquivoMime: string | null;
+  arquivoTamanho: number | null;
   createdAt: string;
+}
+
+export interface ArquivoUrl {
+  url: string;
+  validadeSegundos: number;
 }
 
 export interface EvidenciaPayload {

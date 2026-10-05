@@ -13,6 +13,7 @@ import {
   PecaPayload,
   PapelParticipante,
   HistoricoStatus,
+  ArquivoUrl,
 } from './demanda-itens.model';
 import type { StatusDemanda } from './demanda.model';
 import type { Pessoa } from '../../../core/pessoas/pessoa.model';
@@ -80,6 +81,18 @@ export class DemandaItensService {
 
   criarEvidencia(p: EvidenciaPayload) {
     return this.#http.post<Evidencia>(`${this.#api}/evidencias`, p);
+  }
+  /** Upload de imagem (JPEG/PNG até 5 MB). Link externo usa criarEvidencia com tipo LINK. */
+  enviarImagem(arquivo: File, vinculo: { atividadeId: string | null; pecaId: string | null }, descricao: string | null) {
+    const dados = new FormData();
+    dados.append('arquivo', arquivo);
+    if (vinculo.atividadeId) dados.append('atividadeId', vinculo.atividadeId);
+    if (vinculo.pecaId) dados.append('pecaId', vinculo.pecaId);
+    if (descricao) dados.append('descricao', descricao);
+    return this.#http.post<Evidencia>(`${this.#api}/evidencias/arquivo`, dados);
+  }
+  urlDoArquivo(id: string) {
+    return this.#http.get<ArquivoUrl>(`${this.#api}/evidencias/${id}/arquivo`);
   }
   removerEvidencia(id: string) {
     return this.#http.delete<void>(`${this.#api}/evidencias/${id}`);
