@@ -33,7 +33,7 @@ export class Login {
     const { email, senha } = this.form.getRawValue();
     try {
       await this.#auth.login(email, senha);
-      this.#router.navigateByUrl('/demandas');
+      this.#router.navigateByUrl('/dashboard');
     } catch {
       this.erro.set('E-mail ou senha inválidos.');
     } finally {

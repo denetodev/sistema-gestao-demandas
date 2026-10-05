@@ -7,6 +7,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
 import { providePrimeNG } from 'primeng/config';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { AristocrataPreset } from './core/theme/aristocrata-preset';
+import { PRIMENG_PT_BR } from './core/theme/primeng-pt-br';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { erroHttpInterceptor,  } from './core/http/erro-http.interceptor';
 import { mockInterceptor } from './core/http/mock.interceptor';
@@ -21,6 +22,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([mockInterceptor, authInterceptor, erroHttpInterceptor])),
     provideAnimationsAsync(),
     providePrimeNG({
+      translation: PRIMENG_PT_BR,
       theme: {
         preset: AristocrataPreset,
         options: { darkModeSelector: '.app-dark' },

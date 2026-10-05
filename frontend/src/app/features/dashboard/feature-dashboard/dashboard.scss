@@ -1,0 +1,78 @@
+:host {
+  display: block;
+}
+
+.painel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.caixa {
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 6px);
+  padding: 1rem;
+  min-width: 0;
+
+  h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.75rem;
+  }
+}
+
+.detalhar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+
+  &--valor {
+    margin-top: 0.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 6px);
+
+  &__rotulo {
+    font-size: 0.8rem;
+    color: var(--p-text-muted-color);
+  }
+
+  &__valor {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  &--alerta .kpi__valor {
+    color: var(--p-red-500, #ef4444);
+  }
+
+  &--destaque {
+    border-color: var(--p-primary-color);
+  }
+}
+
+.nota {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+}

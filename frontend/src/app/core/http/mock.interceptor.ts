@@ -293,6 +293,22 @@ const dados: Record<string, unknown> = {
       createdAt: '2026-09-27T09:15:00Z', updatedAt: '2026-09-27T09:15:00Z'
     },
 
+    // Profissionais aprovados para o dashboard ter equipe e diretoria com mais de uma pessoa
+    ...[
+      ['p7', 'Bruno Alves', 'd1', 'COE/CRM', 'a1', 'Design'],
+      ['p8', 'Diego Martins', 'd1', 'COE/CRM', 'a1', 'Design'],
+      ['p9', 'Elisa Campos', 'd1', 'COE/CRM', 'a1', 'Design'],
+      ['p10', 'Fabio Lima', 'd1', 'COE/CRM', 'a3', 'HTML'],
+      ['p11', 'Gabriela Reis', 'd2', 'UGR', 'a4', 'Audiovisual'],
+    ].map(([id, nome, diretoriaId, diretoriaNome, areaId, areaNome]) => ({
+      id, nome, email: `${id}@exemplo.com`, diretoriaId, diretoriaNome, areaId, areaNome,
+      cargoId: null, cargoNome: null,
+      referenciaAreaId: null, referenciaAreaNome: null, fotoUrl: null,
+      status: 'ATIVO', perfil: 'PROFISSIONAL', authUserId: `auth-${id}`,
+      aprovadoPorId: 'p1', aprovadoPorNome: 'Deusdete Neto', aprovadoEm: '2026-09-20T10:00:00Z',
+      createdAt: '2026-09-19T09:00:00Z', updatedAt: '2026-09-20T10:00:00Z',
+    })),
+
     {
       id: 'p6', nome: 'Tentativa Indevida', email: 'estranho@exemplo.com',
       diretoriaId: null, diretoriaNome: null, areaId: 'a1', areaNome: 'HTML',

@@ -1,5 +1,6 @@
 import { HttpEvent, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, delay, of } from 'rxjs';
+import { dashboardMock } from './mock-dashboard';
 
 // MOCK TEMPORÁRIO (remover junto com mock.interceptor.ts): rede do BB bloqueia o Supabase.
 // Simula, em memória, o detalhe da demanda e as mutações (criar/editar/cancelar demanda,
@@ -24,6 +25,11 @@ const TIPOS_ATIVIDADE = [
 let contador = 0;
 const novoId = (prefixo: string) => `${prefixo}-${++contador}`;
 const hoje = () => new Date().toISOString().slice(0, 10);
+const diasAtras = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+};
 
 export function tiposAtividadeMock() {
   return TIPOS_ATIVIDADE;
@@ -67,7 +73,7 @@ function semear(ctx: MockCtx): Estado {
           tipoPecaId: t.id, tipoPecaNome: t.nome,
           nome: `${t.nome} v${n + 1}`, descricao: null,
           quantidade, valorUnitario: t.valorReferencia, valorTotal: quantidade * t.valorReferencia,
-          pessoaId: p.id, pessoaNome: p.nome, dataEntrega: d.dataPrazo,
+          pessoaId: p.id, pessoaNome: p.nome, dataEntrega: diasAtras((i * 3 + n * 5) % 70),
         };
         e.pecas.push(peca);
         if (n === 0) {
@@ -88,7 +94,7 @@ function semear(ctx: MockCtx): Estado {
           tipoAtividadeId: ta.id, tipoAtividadeNome: ta.nome,
           pessoaId: p.id, pessoaNome: p.nome,
           descricao: n === 0 ? 'Alinhamento inicial com o demandante' : null,
-          dataRealizacao: d.dataCriacao,
+          dataRealizacao: diasAtras((i * 2 + n * 3) % 45),
         };
         e.atividades.push(atv);
         if (n === 1) {
@@ -142,7 +148,7 @@ function resp(status: number, body: unknown): Observable<HttpEvent<unknown>> {
 /** Devolve a resposta simulada ou null se a rota não é tratada aqui. */
 export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable<HttpEvent<unknown>> | null {
   const caminho = req.url.split('?')[0];
-  const i = caminho.search(/\/(demandas|pecas|atividades|evidencias|tipos-atividade)(\/|$)/);
+  const i = caminho.search(/\/(demandas|pecas|atividades|evidencias|tipos-atividade|dashboard)(\/|$)/);
   if (i < 0) return null;
   const partes = caminho.slice(i + 1).split('/'); // ex.: ['demandas', ':id', 'participantes']
   const [recurso, id, sub, subId] = partes;
@@ -152,6 +158,7 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
   const e = estado;
 
   if (recurso === 'tipos-atividade' && m === 'GET') return resp(200, TIPOS_ATIVIDADE);
+  if (recurso === 'dashboard' && m === 'GET') return resp(200, dashboardMock(req, ctx, e));
 
   if (recurso === 'demandas') {
     // a listagem paginada continua no interceptor principal

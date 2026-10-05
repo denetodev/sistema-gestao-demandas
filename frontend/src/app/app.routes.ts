@@ -17,6 +17,11 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/app-shell/app-shell').then((m) => m.AppShell),
     children: [
       {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/feature-dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
         path: 'meu-perfil',
         loadComponent: () => import('./features/meu-perfil/meu-perfil').then((m) => m.MeuPerfil),
       },
@@ -34,7 +39,7 @@ export const routes: Routes = [
             (m) => m.DemandaDetalhe,
           ),
       },
-      { path: '', redirectTo: 'demandas', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
       {
         path: 'demandantes',
