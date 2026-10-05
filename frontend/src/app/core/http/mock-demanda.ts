@@ -1,6 +1,7 @@
 import { HttpEvent, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, delay, of } from 'rxjs';
 import { dashboardMock } from './mock-dashboard';
+import { relatorioMock } from './mock-relatorio';
 
 // MOCK TEMPORÁRIO (remover junto com mock.interceptor.ts): rede do BB bloqueia o Supabase.
 // Simula, em memória, o detalhe da demanda e as mutações (criar/editar/cancelar demanda,
@@ -94,7 +95,7 @@ function semear(ctx: MockCtx): Estado {
           tipoAtividadeId: ta.id, tipoAtividadeNome: ta.nome,
           pessoaId: p.id, pessoaNome: p.nome,
           descricao: n === 0 ? 'Alinhamento inicial com o demandante' : null,
-          dataRealizacao: diasAtras((i * 2 + n * 3) % 45),
+          dataRealizacao: diasAtras((i * 2 + n * 3) % 120),
         };
         e.atividades.push(atv);
         if (n === 1) {
@@ -148,7 +149,7 @@ function resp(status: number, body: unknown): Observable<HttpEvent<unknown>> {
 /** Devolve a resposta simulada ou null se a rota não é tratada aqui. */
 export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable<HttpEvent<unknown>> | null {
   const caminho = req.url.split('?')[0];
-  const i = caminho.search(/\/(demandas|pecas|atividades|evidencias|tipos-atividade|dashboard)(\/|$)/);
+  const i = caminho.search(/\/(demandas|pecas|atividades|evidencias|tipos-atividade|dashboard|relatorios)(\/|$)/);
   if (i < 0) return null;
   const partes = caminho.slice(i + 1).split('/'); // ex.: ['demandas', ':id', 'participantes']
   const [recurso, id, sub, subId] = partes;
@@ -158,6 +159,10 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
   const e = estado;
 
   if (recurso === 'tipos-atividade' && m === 'GET') return resp(200, TIPOS_ATIVIDADE);
+  if (recurso === 'relatorios') {
+    const r = relatorioMock(req, ctx, e, partes.slice(1));
+    return resp(r.status, r.body);
+  }
   if (recurso === 'dashboard' && m === 'GET') return resp(200, dashboardMock(req, ctx, e));
 
   if (recurso === 'demandas') {

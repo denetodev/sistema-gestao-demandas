@@ -1,0 +1,166 @@
+<app-barra-pagina titulo="Relatório mensal">
+  <ng-container fim>
+    @if (ehGestorOuAdmin()) {
+      <p-select [options]="opcoesPessoa()" optionLabel="nome" optionValue="id" [ngModel]="filtro().pessoaId"
+                (ngModelChange)="mudarPessoa($event)" [filter]="true" [style]="{ minWidth: '16rem' }" />
+    }
+    <p-select [options]="opcoesMes" optionLabel="rotulo" optionValue="valor" [ngModel]="filtro().mes"
+              (ngModelChange)="mudarMes($event)" [style]="{ minWidth: '12rem' }" />
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo painel">
+  @if (relatorio.error()) {
+    <p-message severity="error">Não foi possível carregar o relatório deste mês.</p-message>
+  } @else if (relatorio.value(); as r) {
+    <div class="nao-imprimir faixa">
+      <span>
+        Situação:
+        @if (aprovado()) {
+          <p-tag severity="success" [value]="'Aprovado em ' + (r.aprovadoEm | date: 'dd/MM/yyyy')" />
+        } @else {
+          <p-tag severity="warn" value="Em preparação" />
+        }
+        @if (r.pessoaId !== auth.pessoa()?.id) {
+          <span class="faixa__quem">relatório de {{ r.pessoaNome }}, somente leitura</span>
+        }
+      </span>
+      <span class="faixa__acoes">
+        @if (editavel()) {
+          <p-button label="Salvar seleção" icon="pi pi-save" severity="secondary" [outlined]="true"
+                    [disabled]="!alterado()" [loading]="salvando()" (onClick)="salvar()" />
+          <p-button label="Aprovar relatório" icon="pi pi-check" [loading]="salvando()"
+                    (onClick)="confirmarAprovacao()" />
+        }
+        @if (aprovado() && r.podeReabrir) {
+          <p-button label="Reabrir" icon="pi pi-lock-open" severity="secondary" [outlined]="true"
+                    [loading]="salvando()" (onClick)="confirmarReabertura()" />
+        }
+        <p-button label="Imprimir / Salvar PDF" icon="pi pi-print" (onClick)="imprimir()" />
+      </span>
+    </div>
+
+    @if (editavel()) {
+      <section class="caixa nao-imprimir">
+        <h2>Atividades de {{ nomeMes() }} ({{ r.atividades.length }})</h2>
+        <p class="dica">
+          Pré-carregadas do que você registrou nas demandas. Desmarque o que não deve entrar no relatório.
+        </p>
+        <p-table [value]="r.atividades" dataKey="id" [stripedRows]="true">
+          <ng-template pTemplate="header">
+            <tr><th style="width: 3rem"></th><th>Data</th><th>Demanda</th><th>Tipo</th><th>Descrição</th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-a>
+            <tr>
+              <td>
+                <p-checkbox [binary]="true" [ngModel]="!excluidas().has(a.id)"
+                            (ngModelChange)="alternar(a.id, $event)" />
+              </td>
+              <td>{{ a.data | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ a.demandaTitulo ?? 'avulsa' }}</td>
+              <td>{{ a.tipo }}</td>
+              <td>{{ a.descricao ?? '—' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="5">Nenhuma atividade registrada neste mês.</td></tr>
+          </ng-template>
+        </p-table>
+
+        <h3>Observações gerais</h3>
+        <textarea pTextarea rows="3" class="obs" [ngModel]="observacoes()"
+                  (ngModelChange)="editarObservacoes($event)"
+                  placeholder="Contexto do mês, férias, bloqueios…"></textarea>
+      </section>
+    }
+
+    <article class="doc">
+      <h1>RELATÓRIO MENSAL DE ATIVIDADES</h1>
+      <p class="doc__mes">{{ nomeMes() }}</p>
+
+      <p class="doc__ident">
+        <b>Profissional:</b> {{ r.pessoaNome }}<br />
+        <b>Diretoria:</b> {{ r.diretoria ?? '—' }} &nbsp; <b>Área:</b> {{ r.area ?? '—' }} &nbsp;
+        <b>Cargo:</b> {{ r.cargo ?? '—' }}
+      </p>
+
+      @for (g of grupos(); track g.titulo) {
+        <h3>{{ g.titulo }}</h3>
+        <table>
+          <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr></thead>
+          <tbody>
+            @for (a of g.itens; track a.id) {
+              <tr>
+                <td class="nowrap">{{ a.data | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ a.tipo }}</td>
+                <td>{{ a.descricao ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      } @empty {
+        <p><i>Nenhuma atividade selecionada.</i></p>
+      }
+      <p class="doc__total"><b>Total:</b> {{ incluidas().length }} atividade(s)</p>
+
+      <h3>Peças produzidas no mês</h3>
+      @if (r.pecas.length) {
+        <table>
+          <thead><tr><th>Demanda</th><th>Peça</th><th>Tipo</th><th>Qtd</th><th>Valor</th></tr></thead>
+          <tbody>
+            @for (p of r.pecas; track p.id) {
+              <tr>
+                <td>{{ p.demandaTitulo }}</td>
+                <td>{{ p.nome }}</td>
+                <td>{{ p.tipo }}</td>
+                <td>{{ p.quantidade }}</td>
+                <td class="nowrap">{{ p.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+        <p class="doc__total">
+          <b>Valor de referência gerado:</b>
+          {{ r.valorReferencia | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        </p>
+      } @else {
+        <p><i>Nenhuma peça registrada no mês.</i></p>
+      }
+
+      <h3>Observações gerais</h3>
+      <p class="doc__obs">{{ (aprovado() ? r.observacoes : observacoes()) || 'Sem observações.' }}</p>
+
+      <div class="doc__assinatura">
+        <div class="linha"></div>
+        <div>{{ r.pessoaNome }}</div>
+        @if (aprovado()) {
+          <small>aprovado em {{ r.aprovadoEm | date: 'dd/MM/yyyy' }}</small>
+        }
+      </div>
+    </article>
+
+    @if (ehGestorOuAdmin() && resumo.value()?.length) {
+      <section class="caixa nao-imprimir">
+        <h2>Relatórios de {{ nomeMes() }}</h2>
+        <p-table [value]="resumo.value() ?? []" dataKey="pessoaId" [stripedRows]="true">
+          <ng-template pTemplate="header">
+            <tr><th>Pessoa</th><th>Área</th><th>Atividades</th><th>Situação</th><th></th></tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-l>
+            <tr>
+              <td>{{ l.nome }}</td>
+              <td>{{ l.area ?? '—' }}</td>
+              <td>{{ l.atividadesNoMes }}</td>
+              <td>
+                <p-tag [value]="situacao(l).rotulo" [severity]="situacao(l).severidade" />
+              </td>
+              <td class="acoes">
+                <p-button label="Abrir" [text]="true" size="small" (onClick)="abrirDe(l)" />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    }
+  }
+</div>

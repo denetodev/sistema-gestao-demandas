@@ -55,6 +55,12 @@
         <i class="pi pi-briefcase"></i><span>Demandas</span>
       </a>
 
+      @if (auth.podeEditar()) {
+      <a routerLink="/relatorio" routerLinkActive="ativo" class="app-nav__item" title="Relatório mensal">
+        <i class="pi pi-file-edit"></i><span>Relatório mensal</span>
+      </a>
+      }
+
       <span class="app-nav__secao">Cadastros</span>
 
       <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">

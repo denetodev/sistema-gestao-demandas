@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { perfilGuard } from './core/auth/perfil.guard';
+import { naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
 
 export const routes: Routes = [
   {
@@ -20,6 +20,12 @@ export const routes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./features/dashboard/feature-dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'relatorio',
+        canActivate: [naoVisualizadorGuard],
+        loadComponent: () =>
+          import('./features/relatorio/feature-relatorio/relatorio').then((m) => m.RelatorioMensal),
       },
       {
         path: 'meu-perfil',

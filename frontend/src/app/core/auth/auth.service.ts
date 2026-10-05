@@ -1,5 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom } from 'rxjs';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase-client';
 import { environment } from '../../../environments/environment';
@@ -18,6 +20,13 @@ export class AuthService {
   me = httpResource<PessoaMeResponse>(() =>
     this.#session() ? `${environment.apiUrl}/pessoas/me` : undefined,
   );
+
+  #statusMe$ = toObservable(this.me.status);
+
+  /** Espera /pessoas/me terminar de carregar (guards de perfil precisam do perfil). */
+  aguardarPessoa(): Promise<unknown> {
+    return firstValueFrom(this.#statusMe$.pipe(filter((s) => s === 'resolved' || s === 'local' || s === 'error')));
+  }
 
   vinculado = computed(() => {
     if (this.me.status() === 'error') return false;

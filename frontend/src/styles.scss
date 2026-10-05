@@ -21,3 +21,31 @@ a:hover {
   padding: 1.25rem 1.5rem;
   overflow-x: auto;
 }
+
+/* Impressão (relatório mensal): esconde o casco do app e deixa só o documento. */
+@media print {
+  .app-topbar,
+  .app-sidebar,
+  app-barra-pagina,
+  .nao-imprimir {
+    display: none !important;
+  }
+
+  .app-layout {
+    display: block !important;
+    height: auto !important;
+  }
+
+  .app-conteudo {
+    overflow: visible !important;
+  }
+
+  .pagina-corpo {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  @page {
+    margin: 15mm;
+  }
+}

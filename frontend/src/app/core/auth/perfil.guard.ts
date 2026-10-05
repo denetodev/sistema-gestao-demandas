@@ -8,6 +8,7 @@ export function perfilGuard(...perfisPermitidos: Perfil[]): CanActivateFn {
     const auth = inject(AuthService);
     const router = inject(Router);
     await auth.ready;
+    await auth.aguardarPessoa();
 
     const perfil = auth.pessoa()?.perfil;
     if (perfil && perfisPermitidos.includes(perfil)) return true;
@@ -20,5 +21,6 @@ export const naoVisualizadorGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   await auth.ready;
+  await auth.aguardarPessoa();
   return auth.podeEditar() ? true : router.parseUrl('/demandas');
 };
