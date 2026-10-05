@@ -17,6 +17,7 @@
         <td>{{ a.descricao ?? '—' }}</td>
         <td class="acoes">
           @if (editavel()) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="editar(a)" />
             <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(a)" />
           }
         </td>
@@ -26,7 +27,7 @@
   </p-table>
 </section>
 
-<p-dialog [(visible)]="dialogAberto" header="Nova atividade" [modal]="true" [style]="{ width: '440px' }">
+<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar atividade' : 'Nova atividade'" [modal]="true" [style]="{ width: '440px' }">
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
     <label for="tipoAtv">Tipo de atividade</label>
     <p-select inputId="tipoAtv" formControlName="tipoAtividadeId" [options]="tiposAtivos()" optionLabel="nome"
@@ -38,6 +39,6 @@
     <p-datepicker inputId="dtAtv" formControlName="dataRealizacao" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />
     <label for="descAtv">Descrição</label>
     <textarea pTextarea id="descAtv" formControlName="descricao" rows="3"></textarea>
-    <p-button type="submit" label="Adicionar atividade" [loading]="salvando()" [disabled]="form.invalid" />
+    <p-button type="submit" [label]="editandoId() ? 'Salvar atividade' : 'Adicionar atividade'" [loading]="salvando()" [disabled]="form.invalid" />
   </form>
 </p-dialog>

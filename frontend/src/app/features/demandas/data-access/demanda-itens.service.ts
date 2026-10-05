@@ -11,6 +11,7 @@ import {
   ParticipantePayload,
   Peca,
   PecaPayload,
+  PapelParticipante,
 } from './demanda-itens.model';
 import type { StatusDemanda } from './demanda.model';
 import type { Pessoa } from '../../../core/pessoas/pessoa.model';
@@ -46,6 +47,9 @@ export class DemandaItensService {
   adicionarParticipante(demandaId: string, p: ParticipantePayload) {
     return this.#http.post<Participante>(`${this.#api}/demandas/${demandaId}/participantes`, p);
   }
+  atualizarPapel(demandaId: string, id: string, papel: PapelParticipante) {
+    return this.#http.patch<Participante>(`${this.#api}/demandas/${demandaId}/participantes/${id}`, { papel });
+  }
   removerParticipante(demandaId: string, id: string) {
     return this.#http.delete<void>(`${this.#api}/demandas/${demandaId}/participantes/${id}`);
   }
@@ -53,12 +57,18 @@ export class DemandaItensService {
   criarPeca(p: PecaPayload) {
     return this.#http.post<Peca>(`${this.#api}/pecas`, p);
   }
+  atualizarPeca(id: string, p: PecaPayload) {
+    return this.#http.put<Peca>(`${this.#api}/pecas/${id}`, p);
+  }
   removerPeca(id: string) {
     return this.#http.delete<void>(`${this.#api}/pecas/${id}`);
   }
 
   criarAtividade(p: AtividadePayload) {
     return this.#http.post<Atividade>(`${this.#api}/atividades`, p);
+  }
+  atualizarAtividade(id: string, p: AtividadePayload) {
+    return this.#http.put<Atividade>(`${this.#api}/atividades/${id}`, p);
   }
   removerAtividade(id: string) {
     return this.#http.delete<void>(`${this.#api}/atividades/${id}`);

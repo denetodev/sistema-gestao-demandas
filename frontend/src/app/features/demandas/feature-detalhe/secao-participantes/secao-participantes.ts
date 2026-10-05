@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Button } from 'primeng/button';
@@ -10,7 +10,7 @@ import { Participante, PapelParticipante, ROTULO_PAPEL } from '../../data-access
 
 @Component({
   selector: 'app-secao-participantes',
-  imports: [ReactiveFormsModule, TableModule, Button, Dialog, Select],
+  imports: [FormsModule, ReactiveFormsModule, TableModule, Button, Dialog, Select],
   templateUrl: './secao-participantes.html',
   styleUrl: '../demanda-detalhe/demanda-detalhe.scss',
 })
@@ -65,6 +65,16 @@ export class SecaoParticipantes {
     } finally {
       this.salvando.set(false);
     }
+  }
+
+  async mudarPapel(p: Participante, papel: PapelParticipante) {
+    if (papel === p.papel) return;
+    try {
+      await firstValueFrom(this.#service.atualizarPapel(this.demandaId(), p.id, papel));
+    } catch {
+      // toast do interceptor
+    }
+    this.alterado.emit(); // recarrega: em caso de erro, o seletor volta ao valor do servidor
   }
 
   async remover(p: Participante) {

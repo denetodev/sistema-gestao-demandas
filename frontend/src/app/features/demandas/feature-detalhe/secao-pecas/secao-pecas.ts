@@ -14,7 +14,7 @@ import { DemandaItensService } from '../../data-access/demanda-itens.service';
 import { Peca } from '../../data-access/demanda-itens.model';
 import { TipoPecaService } from '../../../../core/dados-mestres/tipo-peca/tipo-peca.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { formatarData } from '../../../../core/util/data';
+import { formatarData, paraData } from '../../../../core/util/data';
 
 @Component({
   selector: 'app-secao-pecas',
@@ -36,6 +36,7 @@ export class SecaoPecas {
   pessoas = this.#service.pessoas();
   dialogAberto = signal(false);
   salvando = signal(false);
+  editandoId = signal<string | null>(null);
 
   tiposAtivos = computed(() => (this.tipos.value() ?? []).filter((t) => t.ativo));
   opcoesPessoa = computed(() =>
@@ -57,6 +58,8 @@ export class SecaoPecas {
   );
 
   abrir() {
+    this.editandoId.set(null);
+    this.form.controls.tipoPecaId.enable();
     this.form.reset({
       tipoPecaId: '',
       nome: '',
@@ -67,22 +70,36 @@ export class SecaoPecas {
     this.dialogAberto.set(true);
   }
 
+  /** Edição: o tipo fica travado, porque o valor unitário é congelado no lançamento. */
+  editar(p: Peca) {
+    this.editandoId.set(p.id);
+    this.form.reset({
+      tipoPecaId: p.tipoPecaId,
+      nome: p.nome,
+      quantidade: p.quantidade,
+      pessoaId: p.pessoaId,
+      dataEntrega: paraData(p.dataEntrega),
+    });
+    this.form.controls.tipoPecaId.disable();
+    this.dialogAberto.set(true);
+  }
+
   async salvar() {
     if (this.form.invalid) return;
     this.salvando.set(true);
     try {
       const v = this.form.getRawValue();
-      await firstValueFrom(
-        this.#service.criarPeca({
-          demandaId: this.demandaId(),
-          tipoPecaId: v.tipoPecaId!,
-          nome: v.nome!,
-          descricao: null,
-          quantidade: v.quantidade,
-          pessoaId: v.pessoaId,
-          dataEntrega: formatarData(v.dataEntrega),
-        }),
-      );
+      const payload = {
+        demandaId: this.demandaId(),
+        tipoPecaId: v.tipoPecaId!,
+        nome: v.nome!,
+        descricao: this.itens().find((x) => x.id === this.editandoId())?.descricao ?? null,
+        quantidade: v.quantidade,
+        pessoaId: v.pessoaId,
+        dataEntrega: formatarData(v.dataEntrega),
+      };
+      const id = this.editandoId();
+      await firstValueFrom(id ? this.#service.atualizarPeca(id, payload) : this.#service.criarPeca(payload));
       this.dialogAberto.set(false);
       this.alterado.emit();
     } catch {

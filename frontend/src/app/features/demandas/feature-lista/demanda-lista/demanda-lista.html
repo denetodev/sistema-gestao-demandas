@@ -1,4 +1,8 @@
 <app-barra-pagina titulo="Demandas">
+  <ng-container inicio>
+    <p-selectbutton [options]="escopos()" optionLabel="label" optionValue="value" [allowEmpty]="false"
+                    [ngModel]="filtro().escopo" (ngModelChange)="mudarEscopo($event)" />
+  </ng-container>
   <ng-container fim>
     @if (auth.podeEditar()) {
       <p-button icon="pi pi-plus" label="Nova demanda" (onClick)="abrirNovo()" />

@@ -54,6 +54,16 @@
           <dd><b>{{ d.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</b></dd>
         </div>
         <div><dt>Código</dt><dd>{{ d.codigo ?? '—' }}</dd></div>
+        <div>
+          <dt>Link externo</dt>
+          <dd>
+            @if (d.linkExterno) {
+              <a [href]="d.linkExterno" target="_blank" rel="noopener noreferrer">{{ d.linkExterno }}</a>
+            } @else {
+              —
+            }
+          </dd>
+        </div>
       </dl>
       @if (d.observacoes) {
         <p class="descricao"><b>Observações:</b> {{ d.observacoes }}</p>

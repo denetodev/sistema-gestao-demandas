@@ -11,7 +11,7 @@ import { DemandaItensService } from '../../data-access/demanda-itens.service';
 import { Atividade } from '../../data-access/demanda-itens.model';
 import { TipoAtividadeService } from '../../../../core/dados-mestres/tipo-atividade/tipo-atividade.service';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { formatarData } from '../../../../core/util/data';
+import { formatarData, paraData } from '../../../../core/util/data';
 
 @Component({
   selector: 'app-secao-atividades',
@@ -33,6 +33,7 @@ export class SecaoAtividades {
   pessoas = this.#service.pessoas();
   dialogAberto = signal(false);
   salvando = signal(false);
+  editandoId = signal<string | null>(null);
 
   tiposAtivos = computed(() => (this.tipos.value() ?? []).filter((t) => t.ativo));
   opcoesPessoa = computed(() =>
@@ -47,6 +48,7 @@ export class SecaoAtividades {
   });
 
   abrir() {
+    this.editandoId.set(null);
     this.form.reset({
       tipoAtividadeId: '',
       pessoaId: this.#auth.pessoa()?.id ?? null,
@@ -56,20 +58,31 @@ export class SecaoAtividades {
     this.dialogAberto.set(true);
   }
 
+  editar(a: Atividade) {
+    this.editandoId.set(a.id);
+    this.form.reset({
+      tipoAtividadeId: a.tipoAtividadeId,
+      pessoaId: a.pessoaId,
+      dataRealizacao: paraData(a.dataRealizacao),
+      descricao: a.descricao ?? '',
+    });
+    this.dialogAberto.set(true);
+  }
+
   async salvar() {
     if (this.form.invalid) return;
     this.salvando.set(true);
     try {
       const v = this.form.getRawValue();
-      await firstValueFrom(
-        this.#service.criarAtividade({
-          demandaId: this.demandaId(),
-          tipoAtividadeId: v.tipoAtividadeId!,
-          pessoaId: v.pessoaId,
-          descricao: v.descricao || null,
-          dataRealizacao: formatarData(v.dataRealizacao),
-        }),
-      );
+      const payload = {
+        demandaId: this.demandaId(),
+        tipoAtividadeId: v.tipoAtividadeId!,
+        pessoaId: v.pessoaId,
+        descricao: v.descricao || null,
+        dataRealizacao: formatarData(v.dataRealizacao),
+      };
+      const id = this.editandoId();
+      await firstValueFrom(id ? this.#service.atualizarAtividade(id, payload) : this.#service.criarAtividade(payload));
       this.dialogAberto.set(false);
       this.alterado.emit();
     } catch {

@@ -12,7 +12,14 @@
     <ng-template pTemplate="body" let-p>
       <tr>
         <td>{{ p.pessoaNome }}</td>
-        <td>{{ rotuloPapel(p.papel) }}</td>
+        <td>
+          @if (editavel() && !p.dataSaida) {
+            <p-select [ngModel]="p.papel" (ngModelChange)="mudarPapel(p, $event)" [options]="opcoesPapel"
+                      optionLabel="label" optionValue="value" size="small" appendTo="body" />
+          } @else {
+            {{ rotuloPapel(p.papel) }}
+          }
+        </td>
         <td>{{ p.dataEntrada ?? '—' }}</td>
         <td class="acoes">
           @if (editavel()) {

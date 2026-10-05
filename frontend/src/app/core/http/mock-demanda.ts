@@ -139,6 +139,7 @@ function aplicarPayloadDemanda(ctx: MockCtx, d: any, b: any) {
     prioridade: b.prioridade ?? 'NORMAL',
     dataPrazo: b.dataPrazo ?? null,
     observacoes: b.observacoes ?? null,
+    linkExterno: b.linkExterno ?? null,
   });
 }
 
@@ -192,6 +193,12 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
         e.participantes.push(novo);
         return resp(201, novo);
       }
+      if (m === 'PATCH') {
+        const vinculo = e.participantes.find((p) => p.id === subId);
+        if (!vinculo) return resp(404, { message: 'Participante não encontrado' });
+        vinculo.papel = b.papel;
+        return resp(200, vinculo);
+      }
       if (m === 'DELETE') {
         e.participantes = e.participantes.filter((p) => p.id !== subId);
         return resp(204, null);
@@ -219,6 +226,19 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
       e.pecas.push(nova);
       recalcularValor(ctx, b.demandaId);
       return resp(201, nova);
+    }
+    if (m === 'PUT' && id) {
+      const p = e.pecas.find((x) => x.id === id);
+      if (!p) return resp(404, { message: 'Peça não encontrada' });
+      const pessoa = ctx.pessoas.find((x) => x.id === b.pessoaId);
+      // o valor unitário continua congelado, como no backend
+      Object.assign(p, {
+        nome: b.nome, descricao: b.descricao ?? null, quantidade: b.quantidade ?? p.quantidade,
+        pessoaId: b.pessoaId ?? null, pessoaNome: pessoa?.nome ?? null, dataEntrega: b.dataEntrega ?? null,
+      });
+      p.valorTotal = p.quantidade * p.valorUnitario;
+      recalcularValor(ctx, p.demandaId);
+      return resp(200, p);
     }
     if (m === 'DELETE' && id) {
       const p = e.pecas.find((x) => x.id === id);
@@ -251,6 +271,18 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
       };
       e.atividades.push(nova);
       return resp(201, nova);
+    }
+    if (m === 'PUT' && id) {
+      const a = e.atividades.find((x) => x.id === id);
+      if (!a) return resp(404, { message: 'Atividade não encontrada' });
+      const ta = TIPOS_ATIVIDADE.find((t) => t.id === b.tipoAtividadeId);
+      const pessoa = ctx.pessoas.find((x) => x.id === b.pessoaId);
+      Object.assign(a, {
+        tipoAtividadeId: b.tipoAtividadeId, tipoAtividadeNome: ta?.nome ?? a.tipoAtividadeNome,
+        pessoaId: b.pessoaId ?? null, pessoaNome: pessoa?.nome ?? null,
+        descricao: b.descricao ?? null, dataRealizacao: b.dataRealizacao ?? a.dataRealizacao,
+      });
+      return resp(200, a);
     }
     if (m === 'DELETE' && id) {
       e.atividades = e.atividades.filter((a) => a.id !== id);

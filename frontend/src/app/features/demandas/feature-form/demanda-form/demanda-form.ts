@@ -57,6 +57,7 @@ export class DemandaForm {
     prioridade: ['NORMAL' as Prioridade, Validators.required],
     dataPrazo: this.#fb.control<Date | null>(null),
     observacoes: [''],
+    linkExterno: ['', Validators.pattern(/^\s*$|^https?:\/\/\S+$/i)],
   });
 
   // Cascata: diretoria filtra demandante e projeto; demandante filtra projeto; projeto filtra campanha.
@@ -128,6 +129,7 @@ export class DemandaForm {
         prioridade: d.prioridade,
         dataPrazo: paraData(d.dataPrazo),
         observacoes: d.observacoes ?? '',
+        linkExterno: d.linkExterno ?? '',
       });
     } catch {
       this.erro.set('Não foi possível carregar a demanda.');
@@ -152,6 +154,7 @@ export class DemandaForm {
       prioridade: v.prioridade,
       dataPrazo: formatarData(v.dataPrazo),
       observacoes: v.observacoes || null,
+      linkExterno: v.linkExterno.trim() || null,
     };
     try {
       await firstValueFrom(

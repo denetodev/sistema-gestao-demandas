@@ -1,9 +1,11 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { SelectButton } from 'primeng/selectbutton';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import { DemandaService } from '../../data-access/demanda.service';
-import type { StatusDemanda, Prioridade, Demanda } from '../../data-access/demanda.model';
+import type { StatusDemanda, Prioridade, Demanda, EscopoDemanda } from '../../data-access/demanda.model';
 import { RouterLink } from '@angular/router';
 import { Button } from 'primeng/button';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -14,7 +16,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-demanda-lista',
-  imports: [TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm, RouterLink],
+  imports: [FormsModule, SelectButton, TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm, RouterLink],
   templateUrl: './demanda-lista.html',
   styleUrl: './demanda-lista.scss',
 })
@@ -27,8 +29,27 @@ export class DemandaLista implements OnInit {
   demandaEditandoId = signal<string | null>(null);
   #confirmationService = inject(ConfirmationService);
 
+  /** Só aparecem os escopos que o perfil pode pedir (o backend também valida). */
+  escopos = computed(() => {
+    const opcoes: { label: string; value: EscopoDemanda }[] = [];
+    if (!this.auth.temPerfil('VISUALIZADOR')) opcoes.push({ label: 'Minhas', value: 'MINHAS' });
+    if (this.auth.pessoa()?.referenciaAreaId) opcoes.push({ label: 'Minha equipe', value: 'EQUIPE' });
+    opcoes.push({ label: 'Minha diretoria', value: 'DIRETORIA' });
+    if (this.auth.temPerfil('ADMIN', 'GESTOR')) opcoes.push({ label: 'Todas', value: 'TODAS' });
+    return opcoes;
+  });
+
   ngOnInit() {
+    // o escopo guardado pode não valer para este perfil (ex.: Visualizador abre em "Minha diretoria")
+    if (!this.escopos().some((o) => o.value === this.filtro().escopo)) {
+      this.filtro.update((f) => ({ ...f, escopo: this.escopos()[0].value, page: 0 }));
+    }
     this.demandas.reload();
+  }
+
+  mudarEscopo(escopo: EscopoDemanda | null) {
+    if (!escopo) return;
+    this.filtro.update((f) => ({ ...f, escopo, page: 0 }));
   }
 
   severityStatus(status: StatusDemanda) {

@@ -27,6 +27,7 @@ export interface Demanda {
   dataEntregaReal: string | null;
   valor: number | null;
   observacoes: string | null;
+  linkExterno: string | null;
   createdAt: string;
   updatedAt: string;
   valorCalculado: number | null;
@@ -42,6 +43,7 @@ export interface CriarDemandaPayload {
   prioridade: Prioridade;
   dataPrazo: string | null;
   observacoes: string | null;
+  linkExterno: string | null;
 }
 
 export interface DemandaFiltro {

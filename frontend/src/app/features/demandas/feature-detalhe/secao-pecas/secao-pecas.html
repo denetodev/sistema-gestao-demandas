@@ -19,6 +19,7 @@
         <td>{{ p.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
         <td class="acoes">
           @if (editavel()) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="editar(p)" />
             <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(p)" />
           }
         </td>
@@ -36,12 +37,14 @@
   </p-table>
 </section>
 
-<p-dialog [(visible)]="dialogAberto" header="Nova peça" [modal]="true" [style]="{ width: '440px' }">
+<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar peça' : 'Nova peça'" [modal]="true" [style]="{ width: '440px' }">
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
     <label for="tipo">Tipo de peça</label>
     <p-select inputId="tipo" formControlName="tipoPecaId" [options]="tiposAtivos()" optionLabel="nome"
               optionValue="id" [filter]="true" placeholder="Selecione" appendTo="body" />
-    @if (valorReferencia() !== null) {
+    @if (editandoId()) {
+      <small class="dica">O tipo e o valor unitário ficam fixos depois do lançamento.</small>
+    } @else if (valorReferencia() !== null) {
       <small class="dica">
         Valor unitário: {{ valorReferencia() | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
         (fixado no lançamento)
@@ -56,6 +59,6 @@
               optionValue="id" [filter]="true" [showClear]="true" appendTo="body" />
     <label for="dt">Data de entrega</label>
     <p-datepicker inputId="dt" formControlName="dataEntrega" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />
-    <p-button type="submit" label="Adicionar peça" [loading]="salvando()" [disabled]="form.invalid" />
+    <p-button type="submit" [label]="editandoId() ? 'Salvar peça' : 'Adicionar peça'" [loading]="salvando()" [disabled]="form.invalid" />
   </form>
 </p-dialog>
