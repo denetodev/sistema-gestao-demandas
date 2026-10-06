@@ -6,11 +6,14 @@
  *
  * Saída (pasta database/importacao/saida/, ignorada pelo git porque tem dados reais de pessoas):
  *   00-limpar-dados-de-teste.sql   uso único: apaga os dados de teste (preserva contas com login)
- *   01-importar-planilha-2026.sql  reprocessável: apaga só o que ele mesmo importou e reimporta
+ *   01-carga-NN.sql                carrega as tabelas de apoio imp_hc_* (arquivos pequenos, em ordem)
+ *   02-importar.sql                reprocessável: apaga só o que importou antes e reimporta
+ *   03-ensaio-completo-com-rollback.sql  limpeza + importação inteiras, terminando em ROLLBACK
  *   relatorio-conferencia.md       totais, mapeamentos e anomalias para conferir ANTES de rodar
  *
  * Regras de mapeamento (ver relatorio-conferencia.md):
- *   - uma linha da planilha = uma demanda (source_row = número da linha)
+ *   - linhas com o mesmo código BC são a mesma demanda lançada por pessoas diferentes: viram UMA demanda
+ *     (linhas sem código ficam uma demanda cada; canceladas não se misturam às ativas)
  *   - a coluna "Projeto" lista tipos de peça separados por vírgula; vira uma peça por tipo, e
  *     Valor = QTD x soma dos preços unitários dos tipos (os preços saem das linhas de um tipo só)
  *   - cada responsável vira participante e ganha uma atividade "Produção"; a peça é do primeiro
@@ -44,6 +47,13 @@ const PESSOAS_PENDENTES = [
   { nome: 'Erick Gabriel de Araujo Guedes', exibicao: 'Erick' },
   { nome: 'Gabriel Rodrigues Rocha', exibicao: 'Gabriel' },
 ];
+// Ajustes de demandantes confirmados pelo Neto (a planilha traz só o primeiro nome em alguns casos)
+const DEMANDANTES = {
+  Adriana: { nome: 'Adriana Monteiro da Silva' },
+  'Adriana dos Santos': { nome: 'Adriana dos Santos Lima', diretoria: 'TESOU/GEASE/MERCADO' },
+  Anderson: { nome: 'Anderson Bezerra', observacao: 'Conhecido como Parcinha' },
+  Fernanda: { nome: 'Fernanda Parizi' },
+};
 const AREA_POR_TAG = { Designers: 'Design', Desenvolvedores: 'HTML' };
 const STATUS = { Concluído: 'CONCLUIDA', 'Em Andamento': 'EM_ANDAMENTO', Aprovação: 'EM_APROVACAO', Cancelado: 'CANCELADA' };
 const DIRETORIA = 'COE/CRM'; // "CRM" na planilha
@@ -72,7 +82,7 @@ function lerAba(arquivo, nomeAba) {
 
   const compartilhadas = [];
   for (const m of ler('xl/sharedStrings.xml').matchAll(/<si>([\s\S]*?)<\/si>/g)) {
-    compartilhadas.push(dec([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join('')));
+    compartilhadas.push(dec([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join('')).normalize('NFC'));
   }
   const wb = ler('xl/workbook.xml');
   const rels = ler('xl/_rels/workbook.xml.rels');
@@ -118,7 +128,7 @@ const anomalias = [];
 const linhas = lerAba(ARQUIVO, ABA)
   .filter((r) => r.E && r.C)
   .map((r) => {
-    const descricao = r.E.replace(/\s+/g, ' ').trim();
+    const descricao = r.E.normalize('NFC').replace(/\s+/g, ' ').trim();
     const codigo = (descricao.match(/(?<![A-Z0-9])BC\d{4}[A-Z]{2}/) || [null])[0];
     const responsaveis = (r.Q || '').split(',').map((x) => x.trim()).filter(Boolean);
     return {
@@ -141,6 +151,7 @@ const linhas = lerAba(ARQUIVO, ABA)
   });
 
 for (const l of linhas) {
+  if (l.cliente && DEMANDANTES[l.cliente]) l.cliente = DEMANDANTES[l.cliente].nome;
   if (!STATUS[l.status]) anomalias.push(`Linha ${l.n}: status desconhecido "${l.status}"`);
   if (!l.responsaveis.length) anomalias.push(`Linha ${l.n}: sem responsável`);
   for (const r of l.responsaveis) if (!PESSOAS[r]) anomalias.push(`Linha ${l.n}: responsável sem mapeamento "${r}"`);
@@ -255,22 +266,83 @@ for (const l of linhas) for (const p of l.pecas) {
   tipos.set(k, { nome: nomesPorChave.get(k) ?? p.tipo, area: AREA_POR_TAG[tag] ?? 'Design', preco: p.pacote ? 0.01 : preco.get(k), ativo: !p.pacote });
 }
 
+// ---------------------------------------------------------------- demandas (agrupadas por código BC)
+/**
+ * Na planilha cada profissional lança a demanda do seu jeito e a mesma demanda aparece várias vezes.
+ * Todas as linhas com o mesmo código BC viram UMA demanda. Linhas sem código ficam uma demanda cada.
+ * Linhas canceladas não se misturam às ativas do mesmo código (o valor cancelado fica fora do total).
+ */
+const chaveGrupo = (l) => {
+  if (!l.codigo) return `linha-${l.n}`;
+  return l.status === 'Cancelado' ? `${l.codigo}#cancelada` : l.codigo;
+};
+const PRECEDENCIA_STATUS = ['EM_ANDAMENTO', 'EM_APROVACAO', 'CONCLUIDA', 'CANCELADA'];
+
+const gruposPorChave = new Map();
+for (const l of linhas) {
+  const k = chaveGrupo(l);
+  if (!gruposPorChave.has(k)) gruposPorChave.set(k, []);
+  gruposPorChave.get(k).push(l);
+}
+const conflitosCliente = [];
+const gruposMistos = [];
+const grupos = [...gruposPorChave.entries()]
+  .map(([chave, ls]) => {
+    ls.sort((a, b) => a.dia.localeCompare(b.dia) || a.n - b.n);
+    const primeira = ls[0];
+    const status = PRECEDENCIA_STATUS.find((s) => ls.some((l) => STATUS[l.status] === s));
+    const contagemClientes = new Map();
+    ls.forEach((l) => l.cliente && contagemClientes.set(l.cliente, (contagemClientes.get(l.cliente) ?? 0) + 1));
+    const clientes = [...contagemClientes.entries()].sort((a, b) => b[1] - a[1]);
+    if (clientes.length > 1) conflitosCliente.push(`${primeira.codigo ?? 'linha ' + primeira.n}: ${clientes.map(([c, n]) => `${c} (${n})`).join(' / ')}`);
+    const statusDistintos = new Set(ls.map((l) => STATUS[l.status]));
+    if (statusDistintos.size > 1) gruposMistos.push(`${primeira.codigo}: ${[...statusDistintos].join(' + ')} -> ${status}`);
+
+    // participantes: o responsável da linha mais antiga é o principal
+    const participantes = new Map();
+    for (const l of ls) for (const r of l.responsaveis) if (!participantes.has(r)) participantes.set(r, { chave: r, entrada: l.dia, principal: participantes.size === 0 });
+    return {
+      chave,
+      refRow: Math.min(...ls.map((l) => l.n)),
+      codigo: primeira.codigo,
+      titulo: primeira.descricao,
+      cliente: clientes[0]?.[0] ?? null,
+      outrosClientes: clientes.slice(1).map(([c]) => c),
+      status,
+      criacao: ls[0].dia,
+      prazo: ls.map((l) => l.prevista ?? l.dia).sort().at(-1),
+      entrega: ls.map((l) => l.final ?? l.dia).sort().at(-1),
+      valor: arred(ls.reduce((s, l) => s + l.valor, 0)),
+      linhas: ls.map((l) => l.n).sort((a, b) => a - b),
+      equipe: [...new Set(ls.map((l) => l.tag))].join(', '),
+      participantes: [...participantes.values()],
+      ls,
+    };
+  })
+  .sort((a, b) => a.refRow - b.refRow);
+grupos.forEach((g, i) => {
+  g.id = i + 1;
+  g.ls.forEach((l) => (l.grp = g.id));
+});
+
 // ---------------------------------------------------------------- demandantes
-const demandantes = [...new Set(linhas.map((l) => l.cliente).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+const demandantes = new Map(); // nome -> { diretoria, observacao }
+for (const l of linhas) {
+  if (!l.cliente || demandantes.has(l.cliente)) continue;
+  const ajuste = Object.values(DEMANDANTES).find((d) => d.nome === l.cliente) ?? {};
+  demandantes.set(l.cliente, { diretoria: ajuste.diretoria ?? DIRETORIA, observacao: ajuste.observacao ?? null });
+}
 const primeiros = new Map();
-for (const d of demandantes) {
+for (const d of demandantes.keys()) {
   const k = d.split(' ')[0];
   primeiros.set(k, [...(primeiros.get(k) ?? []), d]);
 }
 const possiveisDuplicados = [...primeiros.values()].filter((v) => v.length > 1);
 
 // ---------------------------------------------------------------- SQL: limpeza (uso único)
-const limpeza = `-- 00-limpar-dados-de-teste.sql  (USO ÚNICO; gerado por gerar-importacao.cjs)
+const corpoLimpeza = `-- 00-limpar-dados-de-teste.sql  (USO ÚNICO; gerado por gerar-importacao.cjs)
 -- Apaga os dados de teste do Supabase antes da importação real.
 -- PRESERVA: contas com login (auth_user_id), diretorias, áreas reais, cargos e tipos de atividade.
--- Roda numa transação: se algo estranho aparecer, dê ROLLBACK em vez de COMMIT.
-begin;
-
 delete from relatorio_mensal;
 delete from evidencia;
 delete from atividade;
@@ -293,64 +365,85 @@ delete from area a
  where a.nome = 'Área de Teste'
    and not exists (select 1 from pessoa p where p.area_id = a.id)
    and not exists (select 1 from pessoa p where p.referencia_area_id = a.id);
-
--- conferência
+`;
+const limpeza = `begin;\n${corpoLimpeza}
 select (select count(*) from demanda) as demandas, (select count(*) from pessoa) as pessoas,
        (select count(*) from pessoa where auth_user_id is not null) as pessoas_com_login,
        (select count(*) from tipo_peca) as tipos_peca;
-
 commit;
 `;
 
-// ---------------------------------------------------------------- SQL: importação (reprocessável)
-function montarImportacao(ls) {
-const valoresLinha = ls.map((l) =>
-  `(${l.n}, ${sql(l.dia)}::date, ${sql(l.prevista)}::date, ${sql(l.final)}::date, ${l.qtd}, ${sql(l.descricao)}, ${sql(l.codigo)}, ${sql(l.cliente)}, ${sql(l.responsaveis.join('|'))}, ${sql(l.tag)}, ${sql(STATUS[l.status])}, ${l.valor}, ${sql(l.horaIn)}, ${sql(l.horaOut)})`);
-const valoresPeca = ls.flatMap((l) => l.pecas.map((p, i) => `(${l.n}, ${i + 1}, ${sql(p.tipo)}, ${p.qtd}, ${p.unit})`));
-const usados = new Set(ls.flatMap((l) => l.pecas.map((p) => chaveTipo(p.tipo))));
-const valoresTipo = [...tipos.entries()].filter(([k]) => usados.has(k)).map(([, t]) => `(${sql(t.nome)}, ${sql(t.area)}, ${t.preco}, ${t.ativo})`);
+// ---------------------------------------------------------------- SQL: carga em tabelas de apoio (imp_hc_*)
+const tiposLista = [...tipos.values()];
+tiposLista.forEach((t, i) => (t.id = i + 1));
+const idTipo = new Map(tiposLista.map((t) => [chaveTipo(t.nome), t.id]));
+
+const dataCurta = (v) => sql(v);
+const instrucoes = []; // cada item é um INSERT completo
+const lote = (cabecalho, valores, tamanho = 120) => {
+  for (let i = 0; i < valores.length; i += tamanho) instrucoes.push(`${cabecalho}\n${valores.slice(i, i + tamanho).join(',\n')};`);
+};
 const pessoasNovas = Object.values(PESSOAS).filter((p) => !p.existente);
-const valoresPessoa = pessoasNovas.map((p) => `(${sql(p.nome)}, ${sql(p.exibicao)}, ${sql(p.area)}, ${sql(p.cargo)})`);
-const mapaResp = Object.entries(PESSOAS).map(([chave, p]) => `(${sql(chave)}, ${sql(p.nome)})`);
 
-return `-- 01-importar-planilha-2026.sql  (REPROCESSÁVEL; gerado por gerar-importacao.cjs)
--- Aba "${ABA}" da planilha DEMANDAS HOUSE CRM: ${ls.length} linhas -> ${ls.length} demandas.
--- Reprocessar apaga só o que este script importou antes (source_system = '${SOURCE_SYSTEM}').
--- Pré-requisito: migration V12 (pessoa.nome_exibicao). Roda numa transação (COMMIT no fim).
-begin;
+lote('insert into imp_hc_tipo values', tiposLista.map((t) => `(${t.id}, ${sql(t.nome)}, ${sql(t.area)}, ${t.preco}, ${t.ativo})`));
+lote('insert into imp_hc_demandante values', [...demandantes.entries()].map(([nome, d]) => `(${sql(nome)}, ${sql(d.diretoria)}, ${sql(d.observacao)})`));
+lote('insert into imp_hc_pessoa values', pessoasNovas.map((p) => `(${sql(p.nome)}, ${sql(p.exibicao)}, ${sql(p.area)}, ${sql(p.cargo)})`));
+lote('insert into imp_hc_resp values', Object.entries(PESSOAS).map(([c, p]) => `(${sql(c)}, ${sql(p.nome)})`));
+lote('insert into imp_hc_grupo values', grupos.map((g) =>
+  `(${g.id}, ${g.refRow}, ${sql(g.codigo)}, ${sql(g.cliente)}, ${sql(g.status)}, ${sql(g.criacao)}, ${sql(g.prazo)}, ${sql(g.entrega)}, ${g.valor}, ${sql(g.linhas.join(', '))}, ${sql(g.equipe)}, ${sql(g.outrosClientes.length ? g.outrosClientes.join('; ') : null)})`), 150);
+lote('insert into imp_hc_part values', grupos.flatMap((g) => g.participantes.map((p) => `(${g.id}, ${sql(p.chave)}, ${p.principal}, ${sql(p.entrada)})`)), 250);
+lote('insert into imp_hc_linha values', linhas.map((l) =>
+  `(${l.n}, ${l.grp}, ${sql(l.dia)}, ${sql(l.prevista && l.prevista !== l.dia ? l.prevista : null)}, ${sql(l.final && l.final !== l.dia ? l.final : null)}, ${sql(l.descricao)}, ${sql(l.responsaveis.join('|'))}, ${sql(STATUS[l.status])})`), 100);
+lote('insert into imp_hc_peca values', linhas.flatMap((l) => l.pecas.map((p, i) => `(${l.n}, ${i + 1}, ${idTipo.get(chaveTipo(p.tipo))}, ${p.qtd}, ${p.unit})`)), 200);
 
--- 1. dados da planilha em tabelas temporárias
-create temp table imp_linha (
-  src_row int primary key, dia date not null, prevista date, final date, qtd int not null,
-  descricao text not null, codigo text, cliente text, responsaveis text not null, tag text not null,
-  status text not null, valor numeric(14,2) not null, hora_in text, hora_out text
-) on commit drop;
-insert into imp_linha values
-${valoresLinha.join(',\n')};
+const DDL_APOIO = `-- Tabelas de apoio da importação (apagadas no fim do 02-importar.sql)
+drop table if exists imp_hc_linha, imp_hc_peca, imp_hc_part, imp_hc_grupo, imp_hc_tipo, imp_hc_demandante, imp_hc_pessoa, imp_hc_resp;
+create table imp_hc_tipo (id int primary key, nome text not null, area text not null, preco numeric(14,2) not null, ativo boolean not null);
+create table imp_hc_demandante (nome text primary key, diretoria text not null, observacao text);
+create table imp_hc_pessoa (nome text primary key, exibicao text not null, area text not null, cargo text not null);
+create table imp_hc_resp (chave text primary key, nome text not null);
+create table imp_hc_grupo (grp int primary key, ref_row int not null unique, codigo text, cliente text, status text not null,
+  criacao text not null, prazo text not null, entrega text not null, valor numeric(14,2) not null, linhas text not null, equipe text not null, outros_clientes text);
+create table imp_hc_part (grp int not null, resp text not null, principal boolean not null, entrada text not null);
+create table imp_hc_linha (src_row int primary key, grp int not null, dia text not null, prevista text, final text,
+  descricao text not null, responsaveis text not null, status text not null);
+create table imp_hc_peca (src_row int not null, ordem int not null, tipo int not null, qtd int not null, unit numeric(14,2) not null);
+-- RLS ligado (sem policies): estas tabelas têm dados reais e não podem ficar expostas pela anon key
+${['linha', 'peca', 'part', 'grupo', 'tipo', 'demandante', 'pessoa', 'resp'].map((t) => `alter table imp_hc_${t} enable row level security;`).join('\n')}
+`;
 
-create temp table imp_peca (src_row int, ordem int, tipo text not null, qtd int not null, unit numeric(14,2) not null) on commit drop;
-insert into imp_peca values
-${valoresPeca.join(',\n')};
+// empacota as instruções em arquivos de até ~45 KB (o primeiro leva o DDL)
+const LIMITE = 45 * 1024;
+const arquivosCarga = [];
+let atual = DDL_APOIO;
+for (const ins of instrucoes) {
+  if (atual.length + ins.length > LIMITE && atual.length > 0) {
+    arquivosCarga.push(atual);
+    atual = '';
+  }
+  atual += (atual ? '\n' : '') + ins + '\n';
+}
+if (atual.trim()) arquivosCarga.push(atual);
 
-create temp table imp_tipo (nome text primary key, area text not null, preco numeric(14,2) not null, ativo boolean not null) on commit drop;
-insert into imp_tipo values
-${valoresTipo.join(',\n')};
+// ---------------------------------------------------------------- SQL: importação a partir das tabelas de apoio
+const SS = SOURCE_SYSTEM;
+const corpoImportacao = `-- 02-importar.sql  (REPROCESSÁVEL; gerado por gerar-importacao.cjs)
+-- Aba "${ABA}": ${linhas.length} linhas da planilha -> ${grupos.length} demandas (linhas com o mesmo código BC viram uma só).
+-- Reprocessar apaga só o que este script importou antes (source_system = '${SS}').
+-- Pré-requisito: migration V12 e as tabelas imp_hc_* carregadas pelos arquivos 01-carga-*.sql.
 
-create temp table imp_pessoa (nome text primary key, exibicao text not null, area text not null, cargo text not null) on commit drop;
-insert into imp_pessoa values
-${valoresPessoa.join(',\n')};
+-- 1. remove importação anterior
+delete from evidencia where atividade_id in (select a.id from atividade a join demanda d on d.id = a.demanda_id where d.source_system = '${SS}')
+                         or peca_id in (select p.id from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}');
+delete from atividade where demanda_id in (select id from demanda where source_system = '${SS}');
+delete from peca where demanda_id in (select id from demanda where source_system = '${SS}');
+delete from pessoa_demanda where demanda_id in (select id from demanda where source_system = '${SS}');
+delete from demanda where source_system = '${SS}';
 
-create temp table imp_resp (chave text primary key, nome text not null) on commit drop;
-insert into imp_resp values
-${mapaResp.join(',\n')};
-
--- 2. remove importação anterior (reprocessamento)
-delete from evidencia where atividade_id in (select a.id from atividade a join demanda d on d.id = a.demanda_id where d.source_system = '${SOURCE_SYSTEM}')
-                         or peca_id in (select p.id from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SOURCE_SYSTEM}');
-delete from atividade where demanda_id in (select id from demanda where source_system = '${SOURCE_SYSTEM}');
-delete from peca where demanda_id in (select id from demanda where source_system = '${SOURCE_SYSTEM}');
-delete from pessoa_demanda where demanda_id in (select id from demanda where source_system = '${SOURCE_SYSTEM}');
-delete from demanda where source_system = '${SOURCE_SYSTEM}';
+-- 2. diretorias dos demandantes que não são do CRM
+insert into diretoria (nome)
+select distinct d.diretoria from imp_hc_demandante d
+ where d.diretoria <> '${DIRETORIA}' and not exists (select 1 from diretoria x where x.nome = d.diretoria);
 
 -- 3. pessoas: Neto já existe (conta com login); os demais entram sem login e sem e-mail
 update pessoa set nome = ${sql(PESSOAS.Deusdete.nome)}, nome_exibicao = ${sql(PESSOAS.Deusdete.exibicao)}
@@ -358,116 +451,89 @@ update pessoa set nome = ${sql(PESSOAS.Deusdete.nome)}, nome_exibicao = ${sql(PE
 
 insert into pessoa (nome, nome_exibicao, area_id, cargo_id, status, perfil, aprovado_em)
 select i.nome, i.exibicao, a.id, c.id, 'ATIVO', 'PROFISSIONAL', now()
-  from imp_pessoa i
+  from imp_hc_pessoa i
   join area a on a.nome = i.area
   join cargo c on c.nome = i.cargo
  where not exists (select 1 from pessoa p where p.nome = i.nome);
 
--- 4. demandantes (todos são pessoas do CRM)
-insert into demandante (nome, tipo, diretoria_id, ativo)
-select distinct l.cliente, 'PESSOA', (select id from diretoria where nome = '${DIRETORIA}'), true
-  from imp_linha l
- where l.cliente is not null
-   and not exists (select 1 from demandante d where d.nome = l.cliente);
+-- 4. demandantes (todos são pessoas)
+insert into demandante (nome, tipo, diretoria_id, observacao, ativo)
+select d.nome, 'PESSOA', (select id from diretoria where nome = d.diretoria), d.observacao, true
+  from imp_hc_demandante d
+ where not exists (select 1 from demandante x where x.nome = d.nome);
 
--- 5. tipos de peça: preço unitário de referência derivado da própria planilha
+-- 5. tipos de peça (preço de referência derivado da própria planilha) e tipo de atividade
 insert into tipo_peca (nome, area_id, valor_referencia, ativo)
 select t.nome, a.id, t.preco, t.ativo
-  from imp_tipo t join area a on a.nome = t.area
+  from imp_hc_tipo t join area a on a.nome = t.area
  where not exists (select 1 from tipo_peca x where x.area_id = a.id and x.nome = t.nome);
 
 insert into tipo_atividade (nome, ativo)
-select '${TIPO_ATIVIDADE}', true
- where not exists (select 1 from tipo_atividade where nome = '${TIPO_ATIVIDADE}');
+select '${TIPO_ATIVIDADE}', true where not exists (select 1 from tipo_atividade where nome = '${TIPO_ATIVIDADE}');
 
--- 6. demandas
+-- 6. demandas: o título é a descrição da linha mais antiga do código
 insert into demanda (titulo, codigo, diretoria_id, demandante_id, prioridade, status, data_criacao, data_prazo,
                      data_entrega_real, valor, observacoes, source_system, source_sheet, source_row, imported_at)
-select left(l.descricao, 220), l.codigo, (select id from diretoria where nome = '${DIRETORIA}'),
-       (select id from demandante d where d.nome = l.cliente limit 1), 'NORMAL', l.status, l.dia, l.prevista,
-       case when l.status = 'CONCLUIDA' then coalesce(l.final, l.dia) end, l.valor,
-       'Importada da planilha (aba ${ABA}, linha ' || l.src_row || ').'
-         || coalesce(' Horário: ' || l.hora_in || ' às ' || l.hora_out || '.', '') || ' Equipe: ' || l.tag || '.',
-       '${SOURCE_SYSTEM}', '${ABA}', l.src_row, now()
-  from imp_linha l;
+select left(l.descricao, 220), g.codigo, (select id from diretoria where nome = '${DIRETORIA}'),
+       (select id from demandante x where x.nome = g.cliente limit 1), 'NORMAL', g.status,
+       g.criacao::date, g.prazo::date, case when g.status = 'CONCLUIDA' then g.entrega::date end, g.valor,
+       'Importada da planilha (aba ${ABA}, linha(s) ' || g.linhas || '). Equipe: ' || g.equipe || '.'
+         || coalesce(' Outros demandantes citados nas linhas: ' || g.outros_clientes || '.', ''),
+       '${SS}', '${ABA}', g.ref_row, now()
+  from imp_hc_grupo g join imp_hc_linha l on l.src_row = g.ref_row;
 
--- 7. participantes: o primeiro responsável é o principal
+-- 7. participantes: o responsável da linha mais antiga é o principal
 insert into pessoa_demanda (pessoa_id, demanda_id, papel, data_entrada)
-select p.id, d.id, case when r.ord = 1 then 'RESPONSAVEL_PRINCIPAL' else 'PARTICIPANTE' end, l.dia
-  from imp_linha l
-  join demanda d on d.source_system = '${SOURCE_SYSTEM}' and d.source_row = l.src_row
-  cross join lateral unnest(string_to_array(l.responsaveis, '|')) with ordinality as r(chave, ord)
-  join imp_resp m on m.chave = r.chave
+select p.id, d.id, case when pt.principal then 'RESPONSAVEL_PRINCIPAL' else 'PARTICIPANTE' end, pt.entrada::date
+  from imp_hc_part pt
+  join imp_hc_grupo g on g.grp = pt.grp
+  join demanda d on d.source_system = '${SS}' and d.source_row = g.ref_row
+  join imp_hc_resp m on m.chave = pt.resp
   join pessoa p on p.nome = m.nome;
 
--- 8. peças: uma por tipo; o valor unitário fica congelado como na planilha; a peça é do primeiro responsável
-insert into peca (demanda_id, tipo_peca_id, nome, quantidade, valor_unitario, pessoa_id, data_entrega)
-select d.id, tp.id, left(i.tipo, 180), i.qtd, i.unit,
-       (select p.id from pessoa p join imp_resp m on m.nome = p.nome
-         where m.chave = split_part(l.responsaveis, '|', 1)),
-       l.dia
-  from imp_peca i
-  join imp_linha l on l.src_row = i.src_row
-  join demanda d on d.source_system = '${SOURCE_SYSTEM}' and d.source_row = l.src_row
-  join imp_tipo t on t.nome = i.tipo
+-- 8. peças: uma por tipo de cada linha, com o valor unitário congelado; a peça é do primeiro responsável da linha
+insert into peca (demanda_id, tipo_peca_id, nome, descricao, quantidade, valor_unitario, pessoa_id, data_entrega)
+select d.id, tp.id, left(t.nome, 180), left(l.descricao, 500), i.qtd, i.unit,
+       (select p.id from pessoa p join imp_hc_resp m on m.nome = p.nome where m.chave = split_part(l.responsaveis, '|', 1)),
+       l.dia::date
+  from imp_hc_peca i
+  join imp_hc_linha l on l.src_row = i.src_row
+  join imp_hc_grupo g on g.grp = l.grp
+  join demanda d on d.source_system = '${SS}' and d.source_row = g.ref_row
+  join imp_hc_tipo t on t.id = i.tipo
   join area a on a.nome = t.area
   join tipo_peca tp on tp.area_id = a.id and tp.nome = t.nome;
 
--- 9. atividades: uma "${TIPO_ATIVIDADE}" por responsável, no dia da linha
+-- 9. atividades: uma "${TIPO_ATIVIDADE}" por responsável de cada linha, no dia da linha
 insert into atividade (demanda_id, tipo_atividade_id, pessoa_id, descricao, data_realizacao)
-select d.id, (select id from tipo_atividade where nome = '${TIPO_ATIVIDADE}'), p.id, left(l.descricao, 500), l.dia
-  from imp_linha l
-  join demanda d on d.source_system = '${SOURCE_SYSTEM}' and d.source_row = l.src_row
+select d.id, (select id from tipo_atividade where nome = '${TIPO_ATIVIDADE}'), p.id, left(l.descricao, 500), l.dia::date
+  from imp_hc_linha l
+  join imp_hc_grupo g on g.grp = l.grp
+  join demanda d on d.source_system = '${SS}' and d.source_row = g.ref_row
   cross join lateral unnest(string_to_array(l.responsaveis, '|')) as r(chave)
-  join imp_resp m on m.chave = r.chave
+  join imp_hc_resp m on m.chave = r.chave
   join pessoa p on p.nome = m.nome;
-
--- 10. conferência (compare com relatorio-conferencia.md antes do COMMIT)
-select (select count(*) from demanda where source_system = '${SOURCE_SYSTEM}') as demandas,
-       (select count(*) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SOURCE_SYSTEM}') as pecas,
-       (select count(*) from atividade a join demanda d on d.id = a.demanda_id where d.source_system = '${SOURCE_SYSTEM}') as atividades,
-       (select count(*) from pessoa_demanda pd join demanda d on d.id = pd.demanda_id where d.source_system = '${SOURCE_SYSTEM}') as participantes,
-       (select round(sum(p.quantidade * p.valor_unitario), 2) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SOURCE_SYSTEM}') as soma_pecas,
-       (select round(sum(valor), 2) from demanda where source_system = '${SOURCE_SYSTEM}') as soma_valor_demandas,
-       (select count(*) from demandante) as demandantes,
-       (select count(*) from tipo_peca) as tipos_peca;
-
-commit;
-
--- Novos integrantes do CRM ainda sem área/cargo definidos (pessoa.area_id é obrigatório). Quando souber a área:
-${PESSOAS_PENDENTES.map((p) => `-- insert into pessoa (nome, nome_exibicao, area_id, status, perfil, aprovado_em) select ${sql(p.nome)}, ${sql(p.exibicao)}, id, 'ATIVO', 'PROFISSIONAL', now() from area where nome = '<ÁREA>';`).join('\n')}
 `;
-}
-const importacao = montarImportacao(linhas);
-
-// Ensaio: V12 + limpeza + importação das amostra de linhas numa transação que termina em ROLLBACK
-// amostra do ensaio: as 8 primeiras linhas + um exemplo de cada caso de borda
-const amostra = [];
-const vistos = new Set();
-for (const l of linhas) {
-  const casos = [l.responsaveis.length > 1 && 'varios-responsaveis', l.pecas.some((p) => p.pacote) && 'pacote', !l.cliente && 'sem-cliente', !l.final && 'sem-final', l.tipos.length > 3 && 'muitos-tipos', `status-${l.status}`];
-  const novo = casos.filter((c) => c && !vistos.has(c));
-  if (amostra.length < 8 || novo.length) {
-    amostra.push(l);
-    novo.forEach((c) => vistos.add(c));
-  }
-}
-const semTransacao = (t) => t.replace(/^begin;$/m, '').replace(/^commit;$/gm, '');
-const v12 = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'V12__pessoa-nome-exibicao-cpf.sql'), 'utf8');
-const ensaio = `begin;
-${v12}
-${semTransacao(limpeza)}
-${semTransacao(montarImportacao(amostra))}
-rollback;
-`;
+const CONFERENCIA = `select (select count(*) from demanda where source_system = '${SS}') as demandas,
+       (select count(*) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}') as pecas,
+       (select count(*) from atividade a join demanda d on d.id = a.demanda_id where d.source_system = '${SS}') as atividades,
+       (select count(*) from pessoa_demanda pd join demanda d on d.id = pd.demanda_id where d.source_system = '${SS}') as participantes,
+       (select round(sum(p.quantidade * p.valor_unitario), 2) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}') as soma_pecas,
+       (select round(sum(valor), 2) from demanda where source_system = '${SS}') as soma_valor_demandas,
+       (select round(sum(p.quantidade * p.valor_unitario), 2) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}' and d.status <> 'CANCELADA') as soma_sem_canceladas,
+       (select count(*) from demandante) as demandantes, (select count(*) from tipo_peca) as tipos_peca,
+       (select count(*) from pessoa) as pessoas, (select count(*) from pessoa where auth_user_id is not null) as pessoas_com_login;`;
+const importacao = `begin;\n${corpoImportacao}\ndrop table imp_hc_linha, imp_hc_peca, imp_hc_part, imp_hc_grupo, imp_hc_tipo, imp_hc_demandante, imp_hc_pessoa, imp_hc_resp;\n\n-- conferência: compare com relatorio-conferencia.md antes do COMMIT\n${CONFERENCIA}\n\ncommit;\n\n-- Novos integrantes do CRM sem área/cargo definidos (pessoa.area_id é obrigatório). Quando souber a área:\n${PESSOAS_PENDENTES.map((p) => `-- insert into pessoa (nome, nome_exibicao, area_id, status, perfil, aprovado_em) select ${sql(p.nome)}, ${sql(p.exibicao)}, id, 'ATIVO', 'PROFISSIONAL', now() from area where nome = '<ÁREA>';`).join('\n')}\n`;
+// ensaio: limpeza + importação completas numa transação que termina em ROLLBACK
+const ensaio = `begin;\n${corpoLimpeza}\n${corpoImportacao}\n${CONFERENCIA}\n\nrollback;\n`;
 
 // ---------------------------------------------------------------- relatório de conferência
 const fmt = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const porMes = {};
 for (const l of linhas) {
   const m = l.dia.slice(0, 7);
-  porMes[m] = porMes[m] ?? { demandas: 0, valor: 0 };
-  porMes[m].demandas++;
+  porMes[m] = porMes[m] ?? { linhas: 0, valor: 0 };
+  porMes[m].linhas++;
   porMes[m].valor += l.valor;
 }
 const porPessoa = {};
@@ -479,32 +545,36 @@ for (const l of linhas) {
 }
 const totalPecas = linhas.reduce((s, l) => s + l.totalPecas, 0);
 const totalValor = linhas.reduce((s, l) => s + l.valor, 0);
-const codigosDistintos = new Set(linhas.map((l) => l.codigo).filter(Boolean)).size;
-const comDiferenca = linhas.filter((l) => Math.abs(l.totalPecas - l.valor) > 0.001);
+const totalCancelado = linhas.filter((l) => l.status === 'Cancelado').reduce((s, l) => s + l.valor, 0);
+const comCodigo = grupos.filter((g) => g.codigo && !g.chave.endsWith('#cancelada')).length;
+const maiores = [...grupos].sort((a, b) => b.linhas.length - a.linhas.length).slice(0, 5);
 
 const relatorio = `# Conferência da importação: planilha DEMANDAS HOUSE CRM, aba ${ABA}
 
-Gerado por \`gerar-importacao.cjs\` a partir de \`${path.basename(ARQUIVO)}\`. **Nada foi executado no banco.**
+Gerado por \`gerar-importacao.cjs\` a partir de \`${path.basename(ARQUIVO)}\`.
 
 ## Totais
 | Item | Valor |
 |---|---|
-| Linhas lidas (viram demandas) | ${linhas.length} |
-| Peças geradas (uma por tipo de cada linha) | ${linhas.reduce((s, l) => s + l.pecas.length, 0)} |
-| Atividades geradas (uma por responsável) | ${linhas.reduce((s, l) => s + l.responsaveis.length, 0)} |
-| Demandantes (clientes distintos) | ${demandantes.length} |
-| Tipos de peça distintos | ${tipos.size} |
-| Códigos BC distintos / linhas com código | ${codigosDistintos} / ${linhas.filter((l) => l.codigo).length} |
+| Linhas da planilha | ${linhas.length} |
+| **Demandas geradas** (linhas com o mesmo código BC viram uma só) | **${grupos.length}** (${comCodigo} por código, ${grupos.filter((g) => !g.codigo).length} sem código, ${grupos.filter((g) => g.chave.endsWith('#cancelada')).length} canceladas separadas) |
+| Peças (uma por tipo de cada linha) | ${linhas.reduce((s, l) => s + l.pecas.length, 0)} |
+| Atividades (uma por responsável de cada linha) | ${linhas.reduce((s, l) => s + l.responsaveis.length, 0)} |
+| Participantes (pessoa x demanda) | ${grupos.reduce((s, g) => s + g.participantes.length, 0)} |
+| Demandantes | ${demandantes.size} |
+| Tipos de peça | ${tipos.size} |
 | Soma do Valor na planilha | R$ ${fmt(totalValor)} |
 | Soma das peças geradas (deve ser igual) | R$ ${fmt(totalPecas)} |
-| Linhas em que a soma das peças difere do Valor | ${comDiferenca.length} |
+| Do total, em linhas canceladas (fora do valor gerado) | R$ ${fmt(totalCancelado)} |
+
+Demandas com mais linhas repetidas: ${maiores.map((g) => `${g.codigo ?? 'linha ' + g.refRow} (${g.linhas.length} linhas)`).join('; ')}.
 
 ## Por mês (data da coluna Dia)
-| Mês | Demandas | Valor |
+| Mês | Linhas | Valor |
 |---|---|---|
-${Object.entries(porMes).sort().map(([m, v]) => `| ${m} | ${v.demandas} | R$ ${fmt(v.valor)} |`).join('\n')}
+${Object.entries(porMes).sort().map(([m, v]) => `| ${m} | ${v.linhas} | R$ ${fmt(v.valor)} |`).join('\n')}
 
-## Por responsável principal
+## Por responsável da linha
 | Responsável (planilha) | Pessoa no sistema | Linhas | Valor |
 |---|---|---|---|
 ${Object.entries(porPessoa).sort((a, b) => b[1].valor - a[1].valor).map(([k, v]) => `| ${k} | ${PESSOAS[k]?.nome ?? '?'} (${PESSOAS[k]?.exibicao ?? ''}) | ${v.linhas} | R$ ${fmt(v.valor)} |`).join('\n')}
@@ -512,30 +582,65 @@ ${Object.entries(porPessoa).sort((a, b) => b[1].valor - a[1].valor).map(([k, v])
 ## Tipos de peça e preço unitário (derivado da planilha)
 | Tipo | Área | Preço unitário |
 |---|---|---|
-${[...tipos.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map((t) => `| ${t.nome}${t.ativo ? '' : ' (inativo; só para linha que não reconcilia)'} | ${t.area} | R$ ${fmt(t.preco)} |`).join('\n')}
+${tiposLista.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map((t) => `| ${t.nome}${t.ativo ? '' : ' (inativo; só para linha que não reconcilia)'} | ${t.area} | R$ ${fmt(t.preco)} |`).join('\n')}
+
+## Demandantes
+${[...demandantes.entries()].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')).map(([n, d]) => `- ${n}${d.diretoria !== DIRETORIA ? ` (diretoria ${d.diretoria})` : ''}${d.observacao ? ` — ${d.observacao}` : ''}`).join('\n')}
 
 ## Pontos de atenção
-- **Linhas que não reconciliam** (tipo sem preço deduzível ou soma diferente do Valor): ${naoBatem.length}${naoBatem.length ? '\n' + naoBatem.map((x) => `  - ${x}`).join('\n') : ''}
+- **Linhas que não reconciliam** (soma dos tipos x Valor): ${naoBatem.length}${naoBatem.length ? '\n' + naoBatem.map((x) => `  - ${x}`).join('\n') : ''}
 - **Tipos sem preço deduzível**: ${semPreco.length ? semPreco.map((k) => nomesPorChave.get(k)).join('; ') : 'nenhum'}
-- **Conflitos de preço** (o mesmo tipo com preços diferentes em linhas de um tipo só): ${conflitos.length ? conflitos.join('; ') : 'nenhum'}
+- **Conflitos de preço**: ${conflitos.length ? conflitos.join('; ') : 'nenhum'}
 - **Anomalias de dados**: ${anomalias.length}${anomalias.length ? '\n' + anomalias.map((x) => `  - ${x}`).join('\n') : ''}
-- **Possíveis demandantes duplicados** (mesmo primeiro nome, grafias diferentes; importados separados, decidir se unifica):
-${possiveisDuplicados.map((v) => `  - ${v.join(' / ')}`).join('\n') || '  - nenhum'}
-- **Linhas com a data final diferente do dia**: ${linhas.filter((l) => l.final && l.final !== l.dia).length}. O mês de cada peça e atividade segue a coluna **Dia** (o mesmo critério da coluna Mês da planilha).
-- **Códigos BC repetidos em várias linhas**: ${linhas.filter((l) => l.codigo).length - codigosDistintos}. O código fica na demanda, sem unicidade; agrupar por campanha fica para depois.
+- **Mesmo código com clientes diferentes** (vale o cliente mais frequente): ${conflitosCliente.length}${conflitosCliente.length ? '\n' + conflitosCliente.slice(0, 15).map((x) => `  - ${x}`).join('\n') : ''}${conflitosCliente.length > 15 ? `\n  - … e mais ${conflitosCliente.length - 15}` : ''}
+- **Mesmo código com status diferentes** (vale o mais "aberto": em andamento, em aprovação, concluída): ${gruposMistos.length}${gruposMistos.length ? '\n' + gruposMistos.slice(0, 15).map((x) => `  - ${x}`).join('\n') : ''}${gruposMistos.length > 15 ? `\n  - … e mais ${gruposMistos.length - 15}` : ''}
+- **Demandantes com o mesmo primeiro nome ainda separados** (decida se unifica): ${possiveisDuplicados.length ? possiveisDuplicados.map((v) => v.join(' / ')).join('; ') : 'nenhum'}
+- **Horários** (Hora In/Out) não são importados: atividade só guarda a data.
+- **Pessoas pendentes** (falta a área): ${PESSOAS_PENDENTES.map((p) => `${p.nome} (${p.exibicao})`).join(', ')}.
 
-## O que o script faz no banco
-1. \`00-limpar-dados-de-teste.sql\` (uma vez): apaga demandas, peças, atividades, evidências, relatórios, campanhas, projetos, demandantes, tipos de peça e as 6 pessoas de teste sem login. **Preserva as 3 contas com login** (Deusdete Neto, Pessoa Teste Vinculo e Pessoa Teste Permissao), diretorias, áreas, cargos e tipos de atividade.
-2. \`01-importar-planilha-2026.sql\` (reprocessável): cria pessoas, demandantes, tipos de peça e atividade "${TIPO_ATIVIDADE}", e importa as demandas com participantes, peças e atividades. Reprocessar apaga só o que ele importou.
-3. Pessoas novas entram **sem login e sem e-mail**. Quando cada pessoa se cadastrar, um Admin vincula a conta à pessoa existente (\`PATCH\` de vínculo de auth) para não duplicar.
-4. Pendentes: ${PESSOAS_PENDENTES.map((p) => `${p.nome} (${p.exibicao})`).join(', ')} (falta a área de cada um; há um bloco comentado no fim do script).
+## Arquivos gerados e ordem de execução
+1. \`00-limpar-dados-de-teste.sql\`: uso único; apaga dados de teste e **preserva as contas com login**.
+2. \`01-carga-NN.sql\` (${arquivosCarga.length} arquivos, em ordem): carregam as tabelas de apoio \`imp_hc_*\`.
+3. \`02-importar.sql\`: importa a partir das tabelas de apoio e as apaga no fim. Reprocessável.
+4. \`03-ensaio-completo-com-rollback.sql\`: limpeza + importação completas terminando em ROLLBACK (não deixa nada no banco).
+`;
+
+// ---------------------------------------------------------------- conferência da carga (checksums)
+// Compara o que está nas tabelas imp_hc_* com o que o gerador montou: pega erro de digitação/truncamento.
+const crypto = require('crypto');
+const md5 = (linhasTxt) => crypto.createHash('md5').update(linhasTxt.join(','), 'utf8').digest('hex');
+const d2 = (n) => Number(n).toFixed(2);
+const ck = {
+  grupo: md5(grupos.map((g) => [g.id, g.refRow, d2(g.valor), g.status, g.codigo ?? '', g.cliente ?? '', g.criacao, g.linhas.join(', ')].join(':'))),
+  linha: md5(linhas.map((l) => [l.n, l.grp, l.dia, l.prevista && l.prevista !== l.dia ? l.prevista : '', l.final && l.final !== l.dia ? l.final : '', l.descricao, l.responsaveis.join('|'), STATUS[l.status]].join(':'))),
+  peca: md5(linhas.flatMap((l) => l.pecas.map((p, i) => [l.n, i + 1, idTipo.get(chaveTipo(p.tipo)), p.qtd, d2(p.unit)].join(':')))),
+  part: md5(grupos.flatMap((g) => g.participantes.map((p) => ({ g: g.id, e: p.entrada, pr: p.principal, r: p.chave })))
+    .sort((a, b) => a.g - b.g || a.e.localeCompare(b.e) || Number(b.pr) - Number(a.pr) || (a.r < b.r ? -1 : a.r > b.r ? 1 : 0))
+    .map((p) => [p.g, p.r, p.pr ? 't' : 'f', p.e].join(':'))),
+};
+const conferirCarga = `-- 01-conferir-carga.sql: rode depois dos 01-carga-NN.sql. Todas as colunas devem ser "true".
+select
+  (select count(*) from imp_hc_grupo) = ${grupos.length} as grupos_qtd,
+  (select count(*) from imp_hc_linha) = ${linhas.length} as linhas_qtd,
+  (select count(*) from imp_hc_peca) = ${linhas.reduce((t, l) => t + l.pecas.length, 0)} as pecas_qtd,
+  (select count(*) from imp_hc_part) = ${grupos.reduce((t, g) => t + g.participantes.length, 0)} as part_qtd,
+  (select count(*) from imp_hc_tipo) = ${tiposLista.length} as tipos_qtd,
+  (select count(*) from imp_hc_demandante) = ${demandantes.size} as demandantes_qtd,
+  (select md5(string_agg(grp || ':' || ref_row || ':' || valor::text || ':' || status || ':' || coalesce(codigo, '') || ':' || coalesce(cliente, '') || ':' || criacao || ':' || linhas, ',' order by grp)) from imp_hc_grupo) = '${ck.grupo}' as grupos_md5,
+  (select md5(string_agg(src_row || ':' || grp || ':' || dia || ':' || coalesce(prevista, '') || ':' || coalesce(final, '') || ':' || descricao || ':' || responsaveis || ':' || status, ',' order by src_row)) from imp_hc_linha) = '${ck.linha}' as linhas_md5,
+  (select md5(string_agg(src_row || ':' || ordem || ':' || tipo || ':' || qtd || ':' || unit::text, ',' order by src_row, ordem)) from imp_hc_peca) = '${ck.peca}' as pecas_md5,
+  (select md5(string_agg(grp || ':' || resp || ':' || case when principal then 't' else 'f' end || ':' || entrada, ',' order by grp, entrada, principal desc, resp collate "C")) from imp_hc_part) = '${ck.part}' as part_md5;
 `;
 
 const saida = path.join(__dirname, 'saida');
+fs.rmSync(saida, { recursive: true, force: true });
 fs.mkdirSync(saida, { recursive: true });
 fs.writeFileSync(path.join(saida, '00-limpar-dados-de-teste.sql'), limpeza);
-fs.writeFileSync(path.join(saida, '01-importar-planilha-2026.sql'), importacao);
+arquivosCarga.forEach((c, i) => fs.writeFileSync(path.join(saida, `01-carga-${String(i + 1).padStart(2, '0')}.sql`), c));
+fs.writeFileSync(path.join(saida, '01-conferir-carga.sql'), conferirCarga);
+fs.writeFileSync(path.join(saida, '02-importar.sql'), importacao);
+fs.writeFileSync(path.join(saida, '03-ensaio-completo-com-rollback.sql'), ensaio);
 fs.writeFileSync(path.join(saida, 'relatorio-conferencia.md'), relatorio);
-fs.writeFileSync(path.join(saida, '99-ensaio-amostra-com-rollback.sql'), ensaio);
-console.log(`Linhas ${linhas.length} | tipos ${tipos.size} | demandantes ${demandantes.length} | não reconciliam ${naoBatem.length} | anomalias ${anomalias.length}`);
-console.log(`Soma planilha ${fmt(totalValor)} x peças ${fmt(totalPecas)} | tamanho do SQL ${(importacao.length / 1024).toFixed(0)} KB`);
+console.log(`Linhas ${linhas.length} -> demandas ${grupos.length} | peças ${linhas.reduce((s, l) => s + l.pecas.length, 0)} | tipos ${tipos.size} | demandantes ${demandantes.size}`);
+console.log(`Soma planilha ${fmt(totalValor)} x peças ${fmt(totalPecas)} | cargas ${arquivosCarga.length} (${arquivosCarga.map((c) => (c.length / 1024).toFixed(0) + ' KB').join(', ')}) | 02: ${(importacao.length / 1024).toFixed(0)} KB`);
+console.log(`Conflitos de cliente ${conflitosCliente.length} | status mistos ${gruposMistos.length} | anomalias ${anomalias.length}`);
