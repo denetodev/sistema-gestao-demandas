@@ -20,6 +20,7 @@ export function pessoaDeTeste(opcoes: OpcoesTeste = {}): PessoaMe {
   return {
     id: 'p-teste',
     nome: 'Pessoa de Teste',
+    nomeExibicao: null,
     email: 'teste@exemplo.com',
     diretoriaId: 'd1',
     diretoriaNome: 'COE/CRM',

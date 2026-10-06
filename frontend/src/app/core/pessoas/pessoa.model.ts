@@ -5,6 +5,7 @@ export type StatusPessoa = 'ATIVO' | 'INATIVO' | 'AFASTADO' | 'REJEITADO';
 export interface Pessoa {
   id: string;
   nome: string;
+  nomeExibicao: string | null;
   email: string | null;
   diretoriaId: string | null;
   diretoriaNome: string | null;

@@ -22,8 +22,11 @@ export class AppShell {
 
   sidebarRecolhida = signal(localStorage.getItem(CHAVE_SIDEBAR) === 'true');
 
+  /** O nome que a pessoa escolheu ou, sem ele, o nome completo. */
+  nomeExibido = computed(() => this.auth.pessoa()?.nomeExibicao || this.auth.pessoa()?.nome || '');
+
   iniciais = computed(() => {
-    const nome = this.auth.pessoa()?.nome ?? '';
+    const nome = this.nomeExibido();
     const partes = nome.trim().split(/\s+/);
     if (partes.length === 0 || !partes[0]) return '?';
     const primeira = partes[0][0];

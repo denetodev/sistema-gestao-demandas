@@ -25,7 +25,7 @@ export class MeuPerfil {
   erroSenha = signal<string | null>(null);
 
   formDados = this.#fb.nonNullable.group({
-    nome: [this.auth.pessoa()?.nome ?? '', Validators.required],
+    nomeExibicao: [this.auth.pessoa()?.nomeExibicao ?? '', Validators.maxLength(80)],
   });
 
   formSenha = this.#fb.nonNullable.group({
@@ -39,7 +39,7 @@ export class MeuPerfil {
     try {
       await firstValueFrom(
         this.auth.atualizarPerfil({
-          nome: this.formDados.getRawValue().nome,
+          nomeExibicao: this.formDados.getRawValue().nomeExibicao.trim() || null,
           fotoUrl: this.auth.pessoa()?.fotoUrl ?? null,
         }),
       );

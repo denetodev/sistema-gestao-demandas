@@ -89,7 +89,7 @@ export class AuthService {
     return this.#session()?.access_token ?? null;
   }
 
-  atualizarPerfil(payload: { nome: string; fotoUrl: string | null }) {
+  atualizarPerfil(payload: { nomeExibicao: string | null; fotoUrl: string | null }) {
     return this.#http.put<PessoaMe>(`${environment.apiUrl}/pessoas/me`, payload);
   }
 

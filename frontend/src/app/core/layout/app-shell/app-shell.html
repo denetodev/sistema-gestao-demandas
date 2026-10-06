@@ -17,7 +17,7 @@
 
       <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)">
         <div class="app-usuario">
-          <span class="app-usuario__nome">{{ auth.pessoa()?.nome }}</span>
+          <span class="app-usuario__nome">{{ nomeExibido() }}</span>
           <span class="app-usuario__perfil">{{ auth.pessoa()?.perfil }}</span>
         </div>
         @if (auth.pessoa()?.fotoUrl) {

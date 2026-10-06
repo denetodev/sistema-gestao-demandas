@@ -3,6 +3,8 @@ export type Perfil = 'ADMIN' | 'GESTOR' | 'PROFISSIONAL' | 'VISUALIZADOR';
 export interface PessoaMe {
   id: string;
   nome: string;
+  /** Como a pessoa quer ser chamada; nulo = usa o nome completo. */
+  nomeExibicao: string | null;
   email: string | null;
   diretoriaId: string | null;
   diretoriaNome: string | null;

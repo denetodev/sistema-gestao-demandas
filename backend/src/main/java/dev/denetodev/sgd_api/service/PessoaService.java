@@ -206,7 +206,9 @@ public class PessoaService {
 
     public PessoaResponse atualizarPerfilProprio(Jwt jwt, AtualizarPerfilRequest request) {
         Pessoa pessoa = currentPessoaResolver.resolver(jwt);
-        pessoa.setNome(request.nome());
+        // o nome completo é do cadastro da empresa: quem muda é Gestor/Admin. A própria pessoa escolhe como ser chamada.
+        String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
+        pessoa.setNomeExibicao(exibicao.isEmpty() ? null : exibicao);
         pessoa.setFotoUrl(request.fotoUrl());
         return paraResponse(pessoa);
     }
@@ -249,7 +251,7 @@ public class PessoaService {
         Pessoa aprovadoPor = pessoa.getAprovadoPor();
         Area referenciaArea = pessoa.getReferenciaArea();
         return new PessoaResponse(
-                pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getFotoUrl(),
+                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
                 pessoa.getArea().getId(), pessoa.getArea().getNome(),
                 cargo != null ? cargo.getId() : null,
