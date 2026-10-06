@@ -5,13 +5,14 @@ import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme/theme.service';
 import { Menu } from 'primeng/menu';
 import { ContaPendente } from '../../../features/acesso/conta-pendente/conta-pendente';
+import { CompletarCadastro } from '../../../features/acesso/completar-cadastro/completar-cadastro';
 import type { MenuItem } from 'primeng/api';
 
 const CHAVE_SIDEBAR = 'sgd-sidebar-recolhida';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button, Menu, ContaPendente],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button, Menu, ContaPendente, CompletarCadastro],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })

@@ -93,6 +93,11 @@ export class AuthService {
     return this.#http.put<PessoaMe>(`${environment.apiUrl}/pessoas/me`, payload);
   }
 
+  /** Cria o cadastro de pessoa da conta logada; fica aguardando aprovação de Gestor/Admin. */
+  completarCadastro(payload: { nome: string; cpf: string; nomeExibicao: string | null; areaId: string; cargoId: string | null }) {
+    return this.#http.post<PessoaMe>(`${environment.apiUrl}/pessoas/auto-cadastro`, payload);
+  }
+
   async trocarSenha(novaSenha: string) {
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
     if (error) throw error;

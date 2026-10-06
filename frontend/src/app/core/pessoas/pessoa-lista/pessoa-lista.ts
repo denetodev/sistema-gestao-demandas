@@ -18,6 +18,7 @@ import { AreaService } from '../../../core/dados-mestres/area/area.service';
 import { CargoService } from '../../../core/dados-mestres/cargo/cargo.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
+import { cpfValidator, formatarCpf } from '../../../core/util/cpf';
 import type { Pessoa, StatusPessoa } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
 
@@ -99,6 +100,7 @@ export class PessoaLista {
       this.formEdicao.setValue({
         nome: pessoa.nome,
         email: pessoa.email ?? '',
+        cpf: '',
         areaId: pessoa.areaId,
         cargoId: pessoa.cargoId,
         status: pessoa.status,
@@ -118,6 +120,7 @@ export class PessoaLista {
       await firstValueFrom(this.#service.atualizar(pessoa.id, {
         nome: v.nome,
         email: v.email || null,
+        cpf: v.cpf || null,
         areaId: v.areaId!,
         cargoId: v.cargoId,
         status: v.status,
@@ -201,11 +204,18 @@ export class PessoaLista {
   formEdicao = this.#fb.nonNullable.group({
     nome: ['', Validators.required],
     email: [''],
+    cpf: ['', cpfValidator],
     areaId: this.#fb.control<string | null>(null, Validators.required),
     cargoId: this.#fb.control<string | null>(null),
     status: this.#fb.control<StatusPessoa | null>(null),
     perfil: this.#fb.control<Perfil | null>(null),
   });
+
+  mascararCpf() {
+    const c = this.formEdicao.controls.cpf;
+    const formatado = formatarCpf(c.value);
+    if (formatado !== c.value) c.setValue(formatado);
+  }
 
   opcoesStatus = [
     { label: 'Ativo', value: 'ATIVO' },

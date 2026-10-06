@@ -2,6 +2,8 @@
 <p>Carregando...</p>
 } @else if (auth.erroAoCarregarPessoa()) {
 <app-conta-pendente situacao="erro" />
+} @else if (!auth.pessoa()) {
+<app-completar-cadastro />
 } @else if (!auth.vinculado()) {
 <app-conta-pendente [situacao]="auth.pessoa()?.status === 'REJEITADO' ? 'rejeitada' : 'pendente'" />
 } @else {

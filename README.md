@@ -17,12 +17,12 @@ Feito (backend + frontend + testes):
 - Atividade, Peça (valor unitário congelado), Evidência (upload de imagem JPEG/PNG no Supabase Storage, ou link externo)
 - Dashboard e Relatório mensal (snapshot ao aprovar, exportação em DOCX)
 - Telas de "Acesso negado" e "Conta aguardando aprovação"
-- Nome de exibição da pessoa (`nome_exibicao`) e coluna `cpf` (V12)
+- Nome de exibição da pessoa (`nome_exibicao`) e CPF (V12): cadastro da conta pede nome completo + CPF validado (único, nunca devolvido por inteiro); Gestor/Admin edita o CPF na tela de Pessoas
 - Importação da planilha 2026: **472 demandas, 992 peças, 855 atividades, 673 participantes** já carregados no Supabase
 - CI no GitHub Actions (build + testes de backend e frontend)
 
 Pendente:
-- Vincular conta nova à pessoa já importada pelo CPF (backend/telas de cadastro)
+- Gestor/Admin cadastrar o CPF de quem foi importado da planilha (tela de Pessoas); depois, ao se cadastrar, a pessoa usa o mesmo CPF e o Gestor vincula a conta ao cadastro existente
 - Pessoas ainda sem área definida: Caio, Erick, Gabriel
 - Publicar backend (Render) e frontend (Vercel), testar com a API real e remover os mocks
 

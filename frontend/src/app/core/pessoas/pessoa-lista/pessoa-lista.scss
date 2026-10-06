@@ -35,3 +35,11 @@
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
+.dica {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+
+  &--erro {
+    color: var(--p-red-500, #ef4444);
+  }
+}
