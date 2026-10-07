@@ -37,6 +37,8 @@ export interface PessoaPayload {
   cargoId: string | null;
   status: StatusPessoa | null;
   perfil: Perfil | null;
+  /** Referência de equipe dessa área; nulo remove. */
+  referenciaAreaId: string | null;
 }
 
 export interface AprovarPayload {

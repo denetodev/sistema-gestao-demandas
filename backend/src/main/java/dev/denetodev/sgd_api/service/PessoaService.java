@@ -81,6 +81,7 @@ public class PessoaService {
             pessoa.setStatus(request.status());
         }
         pessoa.setPerfil(perfilAlvo);
+        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId()));
         pessoa.setAprovadoEm(OffsetDateTime.now());
         pessoa.setAprovadoPor(ator);
 
@@ -108,6 +109,7 @@ public class PessoaService {
             pessoa.setStatus(request.status());
         }
         pessoa.setPerfil(perfilAlvo);
+        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId()));
 
         return paraResponse(pessoa);
     }
@@ -249,6 +251,14 @@ public class PessoaService {
     }
 
     /** Vazio/nulo mantém o CPF atual; informado, precisa ser válido e não pode pertencer a outra pessoa. */
+    private Area resolverReferenciaArea(UUID areaId) {
+        if (areaId == null) {
+            return null;
+        }
+        return areaRepository.findById(areaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + areaId));
+    }
+
     private void aplicarCpf(Pessoa pessoa, String informado) {
         String cpf = Cpf.normalizar(informado);
         if (cpf == null) {
