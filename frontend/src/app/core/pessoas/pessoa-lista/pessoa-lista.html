@@ -78,6 +78,10 @@
         <p-select inputId="ed-perfil" formControlName="perfil" [options]="perfisDisponiveis()" optionLabel="label"
             optionValue="value" />
 
+        <label for="ed-referencia">Referência de equipe da área</label>
+        <p-select inputId="ed-referencia" formControlName="referenciaAreaId" [options]="areas.value() ?? []"
+            optionLabel="nome" optionValue="id" placeholder="Nenhuma" [showClear]="true" />
+
         <label for="ed-status">Situação</label>
         <p-select inputId="ed-status" formControlName="status" [options]="opcoesStatus" />
 

@@ -105,6 +105,7 @@ export class PessoaLista {
         cargoId: pessoa.cargoId,
         status: pessoa.status,
         perfil: pessoa.perfil,
+        referenciaAreaId: pessoa.referenciaAreaId,
       });
       this.dialogEdicao.set(true);
     }
@@ -125,6 +126,7 @@ export class PessoaLista {
         cargoId: v.cargoId,
         status: v.status,
         perfil: v.perfil,
+        referenciaAreaId: v.referenciaAreaId,
       }));
       this.dialogEdicao.set(false);
       this.pessoas.reload();
@@ -209,6 +211,7 @@ export class PessoaLista {
     cargoId: this.#fb.control<string | null>(null),
     status: this.#fb.control<StatusPessoa | null>(null),
     perfil: this.#fb.control<Perfil | null>(null),
+    referenciaAreaId: this.#fb.control<string | null>(null),
   });
 
   mascararCpf() {
