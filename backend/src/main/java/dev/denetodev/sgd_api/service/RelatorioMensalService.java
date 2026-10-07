@@ -32,7 +32,7 @@ import java.util.*;
  * Quem pode o quê:
  * - ver: a própria pessoa e Gestor/Admin (de qualquer profissional);
  * - editar a seleção, escrever observações e aprovar: só a própria pessoa (a assinatura é pessoal);
- * - reabrir um relatório aprovado: a própria pessoa e Gestor/Admin;
+ * - reabrir um relatório aprovado: só Gestor/Admin (depois de aprovado o relatório fica travado para a pessoa);
  * - Visualizador não tem relatório.
  *
  * Ao aprovar, o conteúdo é congelado em JSON: o relatório assinado não muda se atividades
@@ -120,7 +120,7 @@ public class RelatorioMensalService {
         relatorio.setStatus(StatusRelatorio.APROVADO);
         relatorio.setAprovadoEm(agora);
         relatorioRepository.save(relatorio);
-        return congelado.comPermissoes(false, true);
+        return congelado.comPermissoes(false, ehAdminOuGestor(usuario));
     }
 
     public RelatorioResponse reabrir(Jwt jwt, YearMonth mes, UUID pessoaId) {
@@ -130,6 +130,9 @@ public class RelatorioMensalService {
 
     RelatorioResponse reabrir(Pessoa usuario, YearMonth mes, UUID pessoaId, YearMonth atual) {
         validarMes(mes, atual);
+        if (!ehAdminOuGestor(usuario)) {
+            throw new AccessDeniedException("Só Gestor/Admin reabrem um relatório aprovado");
+        }
         Pessoa dono = resolverDono(usuario, pessoaId);
         RelatorioMensal relatorio = relatorioRepository.findByPessoaIdAndMes(dono.getId(), mes.atDay(1))
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Relatório não encontrado para " + mes));
@@ -192,7 +195,7 @@ public class RelatorioMensalService {
 
         if (existente.isPresent() && existente.get().getStatus() == StatusRelatorio.APROVADO) {
             RelatorioResponse congelado = jsonMapper.readValue(existente.get().getSnapshotJson(), RelatorioResponse.class);
-            return congelado.comPermissoes(false, propria || gestor);
+            return congelado.comPermissoes(false, gestor);
         }
         RelatorioMensal relatorio = existente.orElse(new RelatorioMensal(dono, mes.atDay(1)));
         return conteudoAoVivo(dono, relatorio, mes).comPermissoes(propria, false);

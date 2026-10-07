@@ -109,22 +109,25 @@ class RelatorioMensalServiceTest {
         assertEquals(StatusRelatorio.APROVADO, lido.status());
         assertEquals(1, lido.atividades().size());
         assertFalse(lido.podeEditar());
-        assertTrue(lido.podeReabrir());
+        assertFalse(lido.podeReabrir());
     }
 
     @Test
-    void relatorioAprovadoNaoAceitaEdicaoMasReabreEVoltaAoVivo() {
+    void relatorioAprovadoNaoAceitaEdicaoEGestorReabreEVoltaAoVivo() {
+        when(pessoaRepository.findById(ana.getId())).thenReturn(Optional.of(ana));
         service.aprovar(ana, MARCO, ATUAL);
 
         assertThrows(EstadoInvalidoException.class,
                 () -> service.salvar(ana, MARCO, new SalvarRelatorioRequest(null, List.of()), ATUAL));
 
-        RelatorioResponse reaberto = service.reabrir(ana, MARCO, null, ATUAL);
+        assertThrows(AccessDeniedException.class, () -> service.reabrir(ana, MARCO, null, ATUAL));
+
+        RelatorioResponse reaberto = service.reabrir(gestor, MARCO, ana.getId(), ATUAL);
 
         assertEquals(StatusRelatorio.ABERTO, reaberto.status());
         assertNull(guardado[0].getSnapshotJson());
         assertEquals(2, reaberto.atividades().size());
-        assertThrows(EstadoInvalidoException.class, () -> service.reabrir(ana, MARCO, null, ATUAL));
+        assertThrows(EstadoInvalidoException.class, () -> service.reabrir(gestor, MARCO, ana.getId(), ATUAL));
     }
 
     @Test
