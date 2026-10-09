@@ -26,7 +26,7 @@ Pendente:
 - Projeto e Campanha estão vazios (as planilhas não os trazem): definir como popular
 - Especialidade, PessoaEspecialidade e PessoaCargoHistorico existem como tabelas sem entidade JPA
 - Cadastrar o CPF de quem foi importado (tela de Pessoas) para vincular com a conta de login
-- Publicar backend (Railway) e frontend (Vercel) e ajustar `environment.ts` e `CORS_ALLOWED_ORIGINS`
+- Publicar backend (Railway) e frontend (Vercel) — passo a passo em [`docs/deploy.md`](docs/deploy.md)
 - Testes ponta a ponta de GESTOR, VISUALIZADOR e Referência de Equipe com a API real
 
 ## Como rodar

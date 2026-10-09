@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pessoas/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/pessoas/auto-cadastro").authenticated()
                         // listas usadas na tela de completar cadastro, antes de a conta ser vinculada (só leitura)
