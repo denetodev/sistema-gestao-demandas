@@ -15,6 +15,14 @@ public class Pessoa {
     @Column(name = "nome", nullable = false, length = 180)
     private String nome;
 
+    /** Como a pessoa quer ser chamada (ex.: "Carol"). O nome completo continua em {@code nome}. */
+    @Column(name = "nome_exibicao", length = 80)
+    private String nomeExibicao;
+
+    /** Só dígitos, único. Nunca devolvido por inteiro pela API (ver Cpf.mascarar). */
+    @Column(name = "cpf", length = 11)
+    private String cpf;
+
     @Column(name = "email", length = 180)
     private String email;
 
@@ -69,6 +77,11 @@ public class Pessoa {
 
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
+    public String getNomeExibicao() { return nomeExibicao; }
+    public void setNomeExibicao(String nomeExibicao) { this.nomeExibicao = nomeExibicao; }
+
+    public String getCpf() { return cpf; }
+    public void setCpf(String cpf) { this.cpf = cpf; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

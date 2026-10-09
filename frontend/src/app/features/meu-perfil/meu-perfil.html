@@ -4,8 +4,12 @@
   <section class="cartao">
     <h2>Dados</h2>
     <form [formGroup]="formDados" (ngSubmit)="salvarDados()" class="form">
-      <label for="nome">Nome</label>
-      <input pInputText id="nome" formControlName="nome" />
+      <label for="nome">Nome completo</label>
+      <input pInputText id="nome" [value]="auth.pessoa()?.nome ?? ''" disabled />
+
+      <label for="nomeExibicao">Como você quer ser chamado(a)</label>
+      <input pInputText id="nomeExibicao" formControlName="nomeExibicao" [placeholder]="auth.pessoa()?.nome ?? ''" />
+      <small class="dica">Aparece no menu e nas telas. O nome completo só muda pelo Gestor ou Admin.</small>
 
       <label for="email">E-mail</label>
       <input pInputText id="email" [value]="auth.emailSessao()" disabled />

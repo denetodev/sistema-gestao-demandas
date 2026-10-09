@@ -1,18 +1,11 @@
 @if (auth.me.isLoading()) {
 <p>Carregando...</p>
 } @else if (auth.erroAoCarregarPessoa()) {
-<div class="aguardando">
-  <h1>Não foi possível conectar ao servidor</h1>
-  <p>Verifique se a API está rodando e tente novamente.</p>
-  <p-button (onClick)="auth.me.reload()">Tentar novamente</p-button>
-  <p-button [text]="true" (onClick)="sair()">Sair</p-button>
-</div>
+<app-conta-pendente situacao="erro" />
+} @else if (!auth.pessoa()) {
+<app-completar-cadastro />
 } @else if (!auth.vinculado()) {
-<div class="aguardando">
-  <h1>Conta aguardando aprovação</h1>
-  <p>Sua conta foi criada, mas ainda precisa ser liberada por um administrador.</p>
-  <p-button [text]="true" (onClick)="sair()">Sair</p-button>
-</div>
+<app-conta-pendente [situacao]="auth.pessoa()?.status === 'REJEITADO' ? 'rejeitada' : 'pendente'" />
 } @else {
 <div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()">
   <header class="app-topbar">
@@ -26,7 +19,7 @@
 
       <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)">
         <div class="app-usuario">
-          <span class="app-usuario__nome">{{ auth.pessoa()?.nome }}</span>
+          <span class="app-usuario__nome">{{ nomeExibido() }}</span>
           <span class="app-usuario__perfil">{{ auth.pessoa()?.perfil }}</span>
         </div>
         @if (auth.pessoa()?.fotoUrl) {
@@ -48,9 +41,18 @@
         <!-- <span>Recolher</span> -->
       </button>
 
+      <a routerLink="/dashboard" routerLinkActive="ativo" class="app-nav__item" title="Dashboard">
+        <i class="pi pi-chart-bar"></i><span>Dashboard</span>
+      </a>
       <a routerLink="/demandas" routerLinkActive="ativo" class="app-nav__item" title="Demandas">
         <i class="pi pi-briefcase"></i><span>Demandas</span>
       </a>
+
+      @if (auth.podeEditar()) {
+      <a routerLink="/relatorio" routerLinkActive="ativo" class="app-nav__item" title="Relatório mensal">
+        <i class="pi pi-file-edit"></i><span>Relatório mensal</span>
+      </a>
+      }
 
       <span class="app-nav__secao">Cadastros</span>
 

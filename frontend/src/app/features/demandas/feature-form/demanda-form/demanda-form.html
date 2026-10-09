@@ -8,9 +8,25 @@
     <label for="titulo">Título</label>
     <input pInputText id="titulo" formControlName="titulo" />
 
+    <label for="descricao">Descrição</label>
+    <textarea pTextarea id="descricao" formControlName="descricao" rows="2"></textarea>
+
     <label for="diretoria">Diretoria</label>
     <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
               optionLabel="nome" optionValue="id" placeholder="Selecione" />
+
+    <label for="demandante">Demandante</label>
+    <p-select inputId="demandante" formControlName="demandanteId" [options]="opcoesDemandante()"
+              optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Selecione" />
+
+    <label for="projeto">Projeto</label>
+    <p-select inputId="projeto" formControlName="projetoId" [options]="opcoesProjeto()"
+              optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Nenhum" />
+
+    <label for="campanha">Campanha</label>
+    <p-select inputId="campanha" formControlName="campanhaId" [options]="opcoesCampanha()"
+              optionLabel="nome" optionValue="id" [showClear]="true"
+              [placeholder]="form.controls.projetoId.value ? 'Nenhuma' : 'Escolha um projeto antes'" />
 
     <label for="prioridade">Prioridade</label>
     <p-select inputId="prioridade" formControlName="prioridade" [options]="opcoesPrioridade" />
@@ -18,8 +34,11 @@
     <label for="prazo">Prazo</label>
     <p-datepicker inputId="prazo" formControlName="dataPrazo" dateFormat="dd/mm/yy" [showIcon]="true" />
 
-    <label for="valor">Valor</label>
-    <p-inputnumber inputId="valor" formControlName="valor" mode="currency" currency="BRL" locale="pt-BR" />
+    <label for="linkExterno">Link externo (opcional)</label>
+    <input pInputText id="linkExterno" formControlName="linkExterno" placeholder="URL do Planner ou ClickUp" />
+    @if (form.controls.linkExterno.invalid) {
+      <small class="erro-campo">Informe uma URL começando com http:// ou https://</small>
+    }
 
     <label for="observacoes">Observações</label>
     <textarea pTextarea id="observacoes" formControlName="observacoes" rows="3"></textarea>

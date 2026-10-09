@@ -1,0 +1,18 @@
+<div class="mapa" #mapa [style.--colunas]="grade().colunas">
+  <div class="mapa__meses">
+    @for (m of grade().meses; track m.coluna) {
+      <span [style.grid-column]="m.coluna">{{ m.rotulo }}</span>
+    }
+  </div>
+  <div class="mapa__grade" role="img" [attr.aria-label]="grade().total + ' atividades nos últimos 12 meses'">
+    @for (c of grade().celulas; track c.data) {
+      <i [class]="'nivel-' + c.nivel" [style.grid-column]="c.coluna" [style.grid-row]="c.linha" [title]="titulo(c)"></i>
+    }
+  </div>
+</div>
+<div class="legenda">
+  <span>{{ grade().total }} atividades registradas nos últimos 12 meses</span>
+  <span class="legenda__escala">
+    menos <i class="nivel-0"></i><i class="nivel-1"></i><i class="nivel-2"></i><i class="nivel-3"></i><i class="nivel-4"></i> mais
+  </span>
+</div>

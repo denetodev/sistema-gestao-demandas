@@ -1,5 +1,6 @@
 import { HttpInterceptorFn, HttpRequest, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { mockDemanda } from './mock-demanda';
 
 // MOCK TEMPORÁRIO (remover): rede do BB bloqueia o Supabase.
 // Intercepta as respostas da API para permitir trabalho visual offline.
@@ -47,7 +48,18 @@ const REFERENCIA_DESIGN = {
   authUserId: 'a2',
 };
 
+// Contas que ainda não entram no app (telas de Aguardando aprovação e Cadastro não aprovado)
+const PENDENTE = { ...ADMIN, id: 'p20', nome: 'Nova Pessoa', perfil: 'PROFISSIONAL', aprovadoEm: null };
+const REJEITADA = { ...PENDENTE, status: 'REJEITADO' };
+// Profissional puro: testa a tela de Acesso negado em /pessoas, /demandantes e /relatorio (Visualizador)
+const PROFISSIONAL = { ...ADMIN, id: 'p21', nome: 'Bruno Alves', perfil: 'PROFISSIONAL' };
+const VISUALIZADOR = { ...ADMIN, id: 'p22', nome: 'Vera Souza', perfil: 'VISUALIZADOR' };
+
 const PESSOA_ATUAL = ADMIN;
+// const PESSOA_ATUAL = PENDENTE;
+// const PESSOA_ATUAL = REJEITADA;
+// const PESSOA_ATUAL = PROFISSIONAL;
+// const PESSOA_ATUAL = VISUALIZADOR;
 // const PESSOA_ATUAL = REFERENCIA_DESIGN;
 
 // ==========================================================================
@@ -207,7 +219,7 @@ function responderDemandas(req: HttpRequest<unknown>) {
 // Demais rotas — resposta fixa
 // ==========================================================================
 const dados: Record<string, unknown> = {
-  '/pessoas/me': { vinculado: true, pessoa: PESSOA_ATUAL },
+  '/pessoas/me': { vinculado: !!PESSOA_ATUAL.aprovadoEm, pessoa: PESSOA_ATUAL },
   '/diretorias': DIRETORIAS,
   '/areas': AREAS,
   '/demandantes': [
@@ -292,6 +304,22 @@ const dados: Record<string, unknown> = {
       createdAt: '2026-09-27T09:15:00Z', updatedAt: '2026-09-27T09:15:00Z'
     },
 
+    // Profissionais aprovados para o dashboard ter equipe e diretoria com mais de uma pessoa
+    ...[
+      ['p7', 'Bruno Alves', 'd1', 'COE/CRM', 'a1', 'Design'],
+      ['p8', 'Diego Martins', 'd1', 'COE/CRM', 'a1', 'Design'],
+      ['p9', 'Elisa Campos', 'd1', 'COE/CRM', 'a1', 'Design'],
+      ['p10', 'Fabio Lima', 'd1', 'COE/CRM', 'a3', 'HTML'],
+      ['p11', 'Gabriela Reis', 'd2', 'UGR', 'a4', 'Audiovisual'],
+    ].map(([id, nome, diretoriaId, diretoriaNome, areaId, areaNome]) => ({
+      id, nome, email: `${id}@exemplo.com`, diretoriaId, diretoriaNome, areaId, areaNome,
+      cargoId: null, cargoNome: null,
+      referenciaAreaId: null, referenciaAreaNome: null, fotoUrl: null,
+      status: 'ATIVO', perfil: 'PROFISSIONAL', authUserId: `auth-${id}`,
+      aprovadoPorId: 'p1', aprovadoPorNome: 'Deusdete Neto', aprovadoEm: '2026-09-20T10:00:00Z',
+      createdAt: '2026-09-19T09:00:00Z', updatedAt: '2026-09-20T10:00:00Z',
+    })),
+
     {
       id: 'p6', nome: 'Tentativa Indevida', email: 'estranho@exemplo.com',
       diretoriaId: null, diretoriaNome: null, areaId: 'a1', areaNome: 'HTML',
@@ -306,6 +334,14 @@ const dados: Record<string, unknown> = {
 
 
 export const mockInterceptor: HttpInterceptorFn = (req, next) => {
+  const detalhe = mockDemanda(req, {
+    demandas: TODAS_DEMANDAS,
+    pessoas: dados['/pessoas'] as any[],
+    pessoaAtual: PESSOA_ATUAL,
+    dados,
+  });
+  if (detalhe) return detalhe;
+
   if (req.method !== 'GET') {
     return next(req);
   }

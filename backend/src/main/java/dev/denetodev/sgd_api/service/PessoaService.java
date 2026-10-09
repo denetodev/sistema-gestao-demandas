@@ -11,6 +11,7 @@ import dev.denetodev.sgd_api.repository.AuditoriaRepository;
 import dev.denetodev.sgd_api.repository.CargoRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.util.Cpf;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,7 @@ public class PessoaService {
 
         Pessoa pessoa = new Pessoa(request.nome(), area);
         pessoa.setEmail(request.email());
+        aplicarCpf(pessoa, request.cpf());
         pessoa.setCargo(resolverCargo(request.cargoId()));
         if (request.status() == StatusPessoa.REJEITADO) {
             throw new EstadoInvalidoException("Use o endpoint de rejeição para recusar um cadastro pendente");
@@ -79,6 +81,7 @@ public class PessoaService {
             pessoa.setStatus(request.status());
         }
         pessoa.setPerfil(perfilAlvo);
+        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId()));
         pessoa.setAprovadoEm(OffsetDateTime.now());
         pessoa.setAprovadoPor(ator);
 
@@ -96,6 +99,7 @@ public class PessoaService {
 
         pessoa.setNome(request.nome());
         pessoa.setEmail(request.email());
+        aplicarCpf(pessoa, request.cpf());
         pessoa.setArea(area);
         pessoa.setCargo(resolverCargo(request.cargoId()));
         if (request.status() == StatusPessoa.REJEITADO) {
@@ -105,6 +109,7 @@ public class PessoaService {
             pessoa.setStatus(request.status());
         }
         pessoa.setPerfil(perfilAlvo);
+        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId()));
 
         return paraResponse(pessoa);
     }
@@ -136,10 +141,22 @@ public class PessoaService {
             throw new EstadoInvalidoException("Já existe um cadastro vinculado a este usuário");
         }
 
+        String cpf = Cpf.normalizar(request.cpf());
+        if (!Cpf.valido(cpf)) {
+            throw new IllegalArgumentException("CPF inválido");
+        }
+        if (pessoaRepository.findByCpf(cpf).isPresent()) {
+            // a pessoa pode já existir (ex.: importada da planilha). Quem liga a conta ao registro é Gestor/Admin.
+            throw new EstadoInvalidoException("Este CPF já está cadastrado. Peça a um Gestor ou Administrador para vincular sua conta ao cadastro existente.");
+        }
+
         Area area = areaRepository.findById(request.areaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + request.areaId()));
 
-        Pessoa pessoa = new Pessoa(request.nome(), area);
+        Pessoa pessoa = new Pessoa(request.nome().trim(), area);
+        pessoa.setCpf(cpf);
+        String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
+        pessoa.setNomeExibicao(exibicao.isEmpty() ? null : exibicao);
         pessoa.setEmail(jwt.getClaimAsString("email"));
         pessoa.setCargo(resolverCargo(request.cargoId()));
         pessoa.setAuthUserId(authUserId);
@@ -206,7 +223,9 @@ public class PessoaService {
 
     public PessoaResponse atualizarPerfilProprio(Jwt jwt, AtualizarPerfilRequest request) {
         Pessoa pessoa = currentPessoaResolver.resolver(jwt);
-        pessoa.setNome(request.nome());
+        // o nome completo é do cadastro da empresa: quem muda é Gestor/Admin. A própria pessoa escolhe como ser chamada.
+        String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
+        pessoa.setNomeExibicao(exibicao.isEmpty() ? null : exibicao);
         pessoa.setFotoUrl(request.fotoUrl());
         return paraResponse(pessoa);
     }
@@ -231,6 +250,31 @@ public class PessoaService {
         auditoriaRepository.save(new Auditoria("pessoa", registroId, campo, valorAnterior, valorNovo, alteradoPor));
     }
 
+    /** Vazio/nulo mantém o CPF atual; informado, precisa ser válido e não pode pertencer a outra pessoa. */
+    private Area resolverReferenciaArea(UUID areaId) {
+        if (areaId == null) {
+            return null;
+        }
+        return areaRepository.findById(areaId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + areaId));
+    }
+
+    private void aplicarCpf(Pessoa pessoa, String informado) {
+        String cpf = Cpf.normalizar(informado);
+        if (cpf == null) {
+            return;
+        }
+        if (!Cpf.valido(cpf)) {
+            throw new IllegalArgumentException("CPF inválido");
+        }
+        pessoaRepository.findByCpf(cpf)
+                .filter(outra -> !outra.equals(pessoa))
+                .ifPresent(outra -> {
+                    throw new EstadoInvalidoException("Este CPF já pertence a outra pessoa cadastrada");
+                });
+        pessoa.setCpf(cpf);
+    }
+
     private Cargo resolverCargo(UUID cargoId) {
         if (cargoId == null) {
             return null;
@@ -249,7 +293,7 @@ public class PessoaService {
         Pessoa aprovadoPor = pessoa.getAprovadoPor();
         Area referenciaArea = pessoa.getReferenciaArea();
         return new PessoaResponse(
-                pessoa.getId(), pessoa.getNome(), pessoa.getEmail(), pessoa.getFotoUrl(),
+                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), Cpf.mascarar(pessoa.getCpf()), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
                 pessoa.getArea().getId(), pessoa.getArea().getNome(),
                 cargo != null ? cargo.getId() : null,

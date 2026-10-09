@@ -1,0 +1,128 @@
+<app-barra-pagina titulo="Dashboard">
+  <ng-container fim>
+    @if (ehReferencia()) {
+      <p-select [options]="opcoesEquipe()" optionLabel="nome" optionValue="id" [ngModel]="filtro().pessoaId"
+                (ngModelChange)="mudarPessoa($event)" [style]="{ minWidth: '14rem' }" />
+    }
+    @if (ehGestorOuAdmin()) {
+      <p-select [options]="opcoesDiretoria()" optionLabel="nome" optionValue="id" [ngModel]="filtro().diretoriaId"
+                (ngModelChange)="mudarDiretoria($event)" [style]="{ minWidth: '14rem' }" />
+      <label class="detalhar">
+        <p-checkbox [binary]="true" [ngModel]="filtro().porPessoa" (ngModelChange)="mudarPorPessoa($event)" />
+        Detalhar por pessoa
+      </label>
+    }
+    <p-datepicker [ngModel]="mes()" (ngModelChange)="mudarMes($event)" view="month" dateFormat="MM/yy"
+                  [showIcon]="true" [style]="{ width: '9rem' }" />
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo painel">
+  @if (dashboard.error()) {
+    <p-message severity="error">Não foi possível carregar o dashboard.</p-message>
+  } @else if (dashboard.value(); as d) {
+    <section class="caixa">
+      <h2>Atalhos</h2>
+      <div class="atalhos">
+        @if (ehVisualizador()) {
+          <p-button label="Ver demandas da diretoria" severity="secondary" (onClick)="irParaDemandas('DIRETORIA')" />
+        } @else {
+          <p-button label="Minhas demandas" severity="secondary" (onClick)="irParaDemandas('MINHAS')" />
+        }
+        @if (ehReferencia()) {
+          <p-button label="Demandas da minha equipe" severity="secondary" (onClick)="irParaDemandas('EQUIPE')" />
+        }
+        @if (ehGestorOuAdmin()) {
+          <p-button label="Aprovar cadastros" severity="secondary" (onClick)="irParaPessoas()" />
+        }
+      </div>
+    </section>
+
+    <section class="caixa">
+      <h2>Atividade diária: {{ d.titulo }}</h2>
+      <app-mapa-calor [dias]="d.calendario" />
+    </section>
+
+    <section class="caixa">
+      <h2>Resumo: {{ d.titulo }}</h2>
+      <div class="kpis">
+        @for (s of status; track s) {
+          <div class="kpi">
+            <span class="kpi__rotulo">{{ rotuloStatus[s] }}</span>
+            <span class="kpi__valor">{{ d.resumo.demandasPorStatus[s] }}</span>
+          </div>
+        }
+        <div class="kpi">
+          <span class="kpi__rotulo">Atividades em {{ nomeMes() }}</span>
+          <span class="kpi__valor">{{ d.resumo.atividadesNoMes }}</span>
+        </div>
+        <div class="kpi kpi--alerta">
+          <span class="kpi__rotulo">Demandas atrasadas</span>
+          <span class="kpi__valor">{{ d.resumo.demandasAtrasadas }}</span>
+        </div>
+      </div>
+      <div class="kpis kpis--valor">
+        <div class="kpi kpi--destaque">
+          <span class="kpi__rotulo">Valor gerado em {{ nomeMes() }} (referência de mercado)</span>
+          <span class="kpi__valor">{{ d.resumo.valorNoMes | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi__rotulo">Valor gerado em {{ ano() }}</span>
+          <span class="kpi__valor">{{ d.resumo.valorNoAno | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</span>
+        </div>
+      </div>
+      <p class="nota">
+        Valor gerado = soma de quantidade × valor unitário das peças produzidas (valor congelado no lançamento).
+        Demandas canceladas ficam fora.
+      </p>
+    </section>
+
+    @if (d.porArea.length) {
+      <section class="caixa">
+        <h2>Por área</h2>
+        <p-table [value]="d.porArea" dataKey="areaId" [stripedRows]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Área</th><th>Pessoas</th><th>Demandas ativas</th><th>Atividades no mês</th>
+              <th>Atrasadas</th><th>Valor no mês</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-a>
+            <tr>
+              <td>{{ a.area }}</td>
+              <td>{{ a.pessoas }}</td>
+              <td>{{ a.demandasAtivas }}</td>
+              <td>{{ a.atividadesNoMes }}</td>
+              <td>{{ a.demandasAtrasadas }}</td>
+              <td>{{ a.valorNoMes | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    }
+
+    @if (d.porPessoa.length) {
+      <section class="caixa">
+        <h2>Por pessoa</h2>
+        <p-table [value]="d.porPessoa" dataKey="pessoaId" [stripedRows]="true">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Pessoa</th><th>Área</th><th>Diretoria</th><th>Demandas ativas</th>
+              <th>Atividades no mês</th><th>Valor no mês</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-p>
+            <tr>
+              <td>{{ p.nome }}</td>
+              <td>{{ p.area ?? '—' }}</td>
+              <td>{{ p.diretoria ?? '—' }}</td>
+              <td>{{ p.demandasAtivas }}</td>
+              <td>{{ p.atividadesNoMes }}</td>
+              <td>{{ p.valorNoMes | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    }
+  }
+</div>

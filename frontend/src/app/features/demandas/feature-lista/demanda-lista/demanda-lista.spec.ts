@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideTesteApp } from '../../../../../testing/providers';
 
 import { DemandaLista } from './demanda-lista';
 
@@ -8,7 +9,8 @@ describe('DemandaLista', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [DemandaLista]
+      imports: [DemandaLista],
+      providers: provideTesteApp(),
     })
     .compileComponents();
 

@@ -18,3 +18,5 @@ npm-debug.log*
 .vscode/
 .DS_Store
 *.log
+# Importação da planilha: contém dados reais de pessoas e demandas, não vai para o git
+database/importacao/saida/

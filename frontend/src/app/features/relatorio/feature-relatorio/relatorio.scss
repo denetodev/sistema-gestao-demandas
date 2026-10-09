@@ -1,0 +1,142 @@
+:host {
+  display: block;
+}
+
+.painel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.faixa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  &__quem {
+    margin-left: 0.75rem;
+    color: var(--p-text-muted-color);
+    font-size: 0.85rem;
+  }
+
+  &__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+.caixa {
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 6px);
+  padding: 1rem;
+  min-width: 0;
+
+  h2 {
+    font-size: 1.05rem;
+    margin: 0 0 0.5rem;
+  }
+
+  h3 {
+    font-size: 0.95rem;
+    margin: 1rem 0 0.5rem;
+  }
+}
+
+.dica {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+}
+
+.obs {
+  width: 100%;
+}
+
+.acoes {
+  text-align: right;
+}
+
+/* Documento: sempre claro, com cara de papel, para sair igual na tela e no PDF. */
+.doc {
+  background: #fff;
+  color: #111;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-md, 6px);
+  padding: 2rem 2.5rem;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  font-size: 0.9rem;
+
+  h1 {
+    font-size: 1.15rem;
+    text-align: center;
+    margin: 0;
+  }
+
+  h3 {
+    font-size: 0.95rem;
+    margin: 1.25rem 0 0.4rem;
+  }
+
+  p {
+    margin: 0.4rem 0;
+  }
+
+  &__mes {
+    text-align: center;
+    margin-bottom: 1.25rem !important;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  &__total {
+    margin-top: 0.75rem !important;
+  }
+
+  &__obs {
+    white-space: pre-wrap;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  th,
+  td {
+    border: 1px solid #bbb;
+    padding: 0.3rem 0.5rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    background: #f1f1f1;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  .nowrap {
+    white-space: nowrap;
+  }
+
+  &__assinatura {
+    margin-top: 3rem;
+    width: 18rem;
+    break-inside: avoid;
+
+    .linha {
+      border-top: 1px solid #111;
+      margin-bottom: 0.25rem;
+    }
+  }
+}

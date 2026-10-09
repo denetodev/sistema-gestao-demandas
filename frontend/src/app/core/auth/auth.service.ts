@@ -1,5 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom } from 'rxjs';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase-client';
 import { environment } from '../../../environments/environment';
@@ -17,6 +19,13 @@ export class AuthService {
   me = httpResource<PessoaMeResponse>(() =>
     this.#session() ? `${environment.apiUrl}/pessoas/me` : undefined,
   );
+
+  #statusMe$ = toObservable(this.me.status);
+
+  /** Espera /pessoas/me terminar de carregar (guards de perfil precisam do perfil). */
+  aguardarPessoa(): Promise<unknown> {
+    return firstValueFrom(this.#statusMe$.pipe(filter((s) => s === 'resolved' || s === 'local' || s === 'error')));
+  }
 
   vinculado = computed(() => {
     if (this.me.status() === 'error') return false;
@@ -47,6 +56,13 @@ export class AuthService {
   }
 
   constructor() {
+    if (environment.usarMock) {
+      // import dinâmico: o mock não entra no caminho de execução do build normal
+      this.ready = import('../http/mock-sessao').then(({ SESSAO_FALSA }) => {
+        this.#session.set(SESSAO_FALSA);
+      });
+      return;
+    }
     this.ready = supabase.auth.getSession().then(({ data }) => {
       this.#session.set(data.session);
     });
@@ -74,8 +90,13 @@ export class AuthService {
     return this.#session()?.access_token ?? null;
   }
 
-  atualizarPerfil(payload: { nome: string; fotoUrl: string | null }) {
+  atualizarPerfil(payload: { nomeExibicao: string | null; fotoUrl: string | null }) {
     return this.#http.put<PessoaMe>(`${environment.apiUrl}/pessoas/me`, payload);
+  }
+
+  /** Cria o cadastro de pessoa da conta logada; fica aguardando aprovação de Gestor/Admin. */
+  completarCadastro(payload: { nome: string; cpf: string; nomeExibicao: string | null; areaId: string; cargoId: string | null }) {
+    return this.#http.post<PessoaMe>(`${environment.apiUrl}/pessoas/auto-cadastro`, payload);
   }
 
   async trocarSenha(novaSenha: string) {

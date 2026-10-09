@@ -3,6 +3,7 @@ package dev.denetodev.sgd_api.controller;
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.request.StatusUpdateRequest;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
+import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
 import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.service.DemandaService;
 import jakarta.validation.Valid;
@@ -45,8 +46,8 @@ public class DemandaController {
     }
 
     @PostMapping
-    public ResponseEntity<DemandaResponse> criar(@Valid @RequestBody DemandaRequest request) {
-        DemandaResponse criada = demandaService.criar(request);
+    public ResponseEntity<DemandaResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DemandaRequest request) {
+        DemandaResponse criada = demandaService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .location(URI.create("/demandas/" + criada.id()))
                 .body(criada);
@@ -58,13 +59,23 @@ public class DemandaController {
     }
 
     @PatchMapping("/{id}/status")
-    public DemandaResponse atualizarStatus(@PathVariable UUID id, @Valid @RequestBody StatusUpdateRequest request) {
-        return demandaService.atualizarStatus(id, request.status());
+    public DemandaResponse atualizarStatus(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID id,
+            @Valid @RequestBody StatusUpdateRequest request
+    ) {
+        return demandaService.atualizarStatus(jwt, id, request.status(), request.motivo());
+    }
+
+    /** Histórico de mudanças de status, da mais recente para a mais antiga. */
+    @GetMapping("/{id}/historico")
+    public List<HistoricoStatusResponse> historico(@PathVariable UUID id) {
+        return demandaService.historicoDeStatus(id);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> cancelar(@PathVariable UUID id) {
-        demandaService.cancelar(id);
+    public ResponseEntity<Void> cancelar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        demandaService.cancelar(jwt, id);
         return ResponseEntity.noContent().build();
     }
 }

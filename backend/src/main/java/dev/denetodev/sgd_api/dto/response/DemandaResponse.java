@@ -28,6 +28,7 @@ public record DemandaResponse(
         LocalDate dataEntregaReal,
         BigDecimal valor,
         String observacoes,
+        String linkExterno,
         BigDecimal valorCalculado,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt

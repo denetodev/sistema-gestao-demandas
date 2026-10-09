@@ -1,0 +1,61 @@
+:host {
+  display: block;
+}
+
+.mapa {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.mapa__meses,
+.mapa__grade {
+  display: grid;
+  grid-template-columns: repeat(var(--colunas), 12px);
+  gap: 3px;
+  width: max-content;
+}
+
+.mapa__meses {
+  font-size: 0.7rem;
+  color: var(--p-text-muted-color);
+  margin-bottom: 4px;
+  height: 1rem;
+}
+
+.mapa__grade {
+  grid-template-rows: repeat(7, 12px);
+}
+
+i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--p-surface-200);
+
+  &.nivel-1 { background: color-mix(in srgb, var(--p-primary-color) 25%, var(--p-surface-200)); }
+  &.nivel-2 { background: color-mix(in srgb, var(--p-primary-color) 50%, var(--p-surface-200)); }
+  &.nivel-3 { background: color-mix(in srgb, var(--p-primary-color) 75%, var(--p-surface-200)); }
+  &.nivel-4 { background: var(--p-primary-color); }
+}
+
+:host-context(.app-dark) i.nivel-0 {
+  background: var(--p-surface-800);
+}
+
+.legenda {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+}
+
+.legenda__escala {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}

@@ -36,7 +36,7 @@ export class Cadastro {
     try {
       const { confirmado } = await this.#auth.cadastrar(email, senha);
       if (confirmado) {
-        this.#router.navigateByUrl('/demandas');
+        this.#router.navigateByUrl('/dashboard');
       } else {
         this.sucesso.set('Conta criada. Verifique seu e-mail para confirmar antes de entrar.');
       }

@@ -1,6 +1,15 @@
 spring:
+  devtools:
+    # o DevTools força include-stacktrace=always em desenvolvimento; desligado para valer o que está aqui
+    add-properties: false
+
   application:
     name: sgd-api
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
 
   datasource:
     url: ${DATABASE_URL}
@@ -26,3 +35,13 @@ spring:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+# Supabase Storage (evidências em imagem). A service role key só existe no backend.
+  supabase:
+    url: ${SUPABASE_URL:}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+
+server:
+  error:
+    # o DevTools liga "always" em desenvolvimento; aqui fica explícito para nunca devolver stack trace
+    include-stacktrace: never
+    include-message: always

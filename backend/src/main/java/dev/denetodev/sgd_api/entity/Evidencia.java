@@ -30,6 +30,16 @@ public class Evidencia {
     @Column(name = "descricao", columnDefinition = "text")
     private String descricao;
 
+    /** Caminho no bucket "evidencias" (só quando a evidência é uma imagem enviada). */
+    @Column(name = "arquivo_path", columnDefinition = "text")
+    private String arquivoPath;
+
+    @Column(name = "arquivo_mime", length = 40)
+    private String arquivoMime;
+
+    @Column(name = "arquivo_tamanho")
+    private Integer arquivoTamanho;
+
     @Column(name = "created_by")
     private UUID createdBy;
 
@@ -54,6 +64,12 @@ public class Evidencia {
     public void setConteudo(String conteudo) { this.conteudo = conteudo; }
     public String getDescricao() { return descricao; }
     public void setDescricao(String descricao) { this.descricao = descricao; }
+    public String getArquivoPath() { return arquivoPath; }
+    public void setArquivoPath(String arquivoPath) { this.arquivoPath = arquivoPath; }
+    public String getArquivoMime() { return arquivoMime; }
+    public void setArquivoMime(String arquivoMime) { this.arquivoMime = arquivoMime; }
+    public Integer getArquivoTamanho() { return arquivoTamanho; }
+    public void setArquivoTamanho(Integer arquivoTamanho) { this.arquivoTamanho = arquivoTamanho; }
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
     public OffsetDateTime getCreatedAt() { return createdAt; }

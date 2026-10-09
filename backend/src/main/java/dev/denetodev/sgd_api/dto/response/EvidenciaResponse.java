@@ -8,6 +8,8 @@ import java.util.UUID;
 public record EvidenciaResponse(
         UUID id, UUID atividadeId, UUID pecaId,
         TipoEvidencia tipo, String conteudo, String descricao,
+        /** Preenchidos só quando a evidência é uma imagem enviada. */
+        String arquivoMime, Integer arquivoTamanho,
         OffsetDateTime createdAt
 ) {
 }

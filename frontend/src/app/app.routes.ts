@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { perfilGuard } from './core/auth/perfil.guard';
+import { naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
 
 export const routes: Routes = [
   {
@@ -17,6 +17,22 @@ export const routes: Routes = [
     loadComponent: () => import('./core/layout/app-shell/app-shell').then((m) => m.AppShell),
     children: [
       {
+        path: 'acesso-negado',
+        loadComponent: () =>
+          import('./features/acesso/acesso-negado/acesso-negado').then((m) => m.AcessoNegado),
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/dashboard/feature-dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'relatorio',
+        canActivate: [naoVisualizadorGuard],
+        loadComponent: () =>
+          import('./features/relatorio/feature-relatorio/relatorio').then((m) => m.RelatorioMensal),
+      },
+      {
         path: 'meu-perfil',
         loadComponent: () => import('./features/meu-perfil/meu-perfil').then((m) => m.MeuPerfil),
       },
@@ -27,7 +43,14 @@ export const routes: Routes = [
             (m) => m.DemandaLista,
           ),
       },
-      { path: '', redirectTo: 'demandas', pathMatch: 'full' },
+      {
+        path: 'demandas/:id',
+        loadComponent: () =>
+          import('./features/demandas/feature-detalhe/demanda-detalhe/demanda-detalhe').then(
+            (m) => m.DemandaDetalhe,
+          ),
+      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
       {
         path: 'demandantes',

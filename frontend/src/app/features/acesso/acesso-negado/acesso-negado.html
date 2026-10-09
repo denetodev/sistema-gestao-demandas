@@ -1,0 +1,20 @@
+<div class="pagina-corpo cartao-centro">
+  <div class="cartao" role="alert">
+    <i class="pi pi-lock cartao__icone"></i>
+    <h1>Acesso negado</h1>
+    <p>
+      Seu perfil
+      @if (auth.pessoa()?.perfil; as perfil) {
+        (<b>{{ perfil }}</b>)
+      }
+      não tem permissão para acessar esta página.
+    </p>
+    @if (de()) {
+      <p class="cartao__detalhe">Endereço: {{ de() }}</p>
+    }
+    <p class="cartao__detalhe">
+      Se você acredita que deveria ter acesso, peça a um Gestor ou Admin para revisar o seu perfil.
+    </p>
+    <p-button label="Voltar ao Dashboard" icon="pi pi-arrow-left" routerLink="/dashboard" />
+  </div>
+</div>

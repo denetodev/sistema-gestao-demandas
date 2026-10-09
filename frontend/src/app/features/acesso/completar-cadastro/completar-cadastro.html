@@ -1,0 +1,38 @@
+<div class="tela">
+  <form [formGroup]="form" (ngSubmit)="enviar()" class="cartao">
+    <h1>Complete seu cadastro</h1>
+    <p class="cartao__detalhe">
+      Sua conta{{ email() ? ' (' + email() + ')' : '' }} foi criada. Informe seus dados para um Gestor ou Admin liberar o acesso.
+    </p>
+
+    <label for="cc-nome">Nome completo</label>
+    <input pInputText id="cc-nome" formControlName="nome" autocomplete="name" />
+
+    <label for="cc-cpf">CPF</label>
+    <input pInputText id="cc-cpf" formControlName="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"
+      (input)="mascararCpf()" />
+    @if (form.controls.cpf.touched && form.controls.cpf.errors?.['cpfInvalido']) {
+      <small class="cartao__erro">CPF inválido.</small>
+    }
+
+    <label for="cc-exibicao">Como quer ser chamado(a) <span class="cartao__opcional">(opcional)</span></label>
+    <input pInputText id="cc-exibicao" formControlName="nomeExibicao" maxlength="80" placeholder="Ex.: Carol" />
+
+    <label for="cc-area">Área</label>
+    <p-select inputId="cc-area" formControlName="areaId" [options]="areas.value() ?? []" optionLabel="nome"
+      optionValue="id" placeholder="Selecione" />
+
+    <label for="cc-cargo">Cargo <span class="cartao__opcional">(opcional)</span></label>
+    <p-select inputId="cc-cargo" formControlName="cargoId" [options]="cargos()" optionLabel="nome" optionValue="id"
+      placeholder="Nenhum" [showClear]="true" />
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+
+    <div class="cartao__acoes">
+      <p-button type="submit" label="Enviar cadastro" [loading]="enviando()" [disabled]="form.invalid" />
+      <p-button type="button" label="Sair" severity="secondary" [outlined]="true" (onClick)="sair()" />
+    </div>
+  </form>
+</div>

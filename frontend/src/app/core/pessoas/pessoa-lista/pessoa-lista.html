@@ -58,6 +58,14 @@
         <label for="ed-email">E-mail</label>
         <input pInputText id="ed-email" formControlName="email" />
 
+        <label for="ed-cpf">CPF</label>
+        <input pInputText id="ed-cpf" formControlName="cpf" inputmode="numeric" maxlength="14"
+            [placeholder]="pessoaSelecionada()?.cpfMascarado ?? '000.000.000-00'" (input)="mascararCpf()" />
+        <small class="dica">{{ pessoaSelecionada()?.cpfMascarado ? 'Cadastrado: ' + pessoaSelecionada()?.cpfMascarado + '. Deixe vazio para manter.' : 'Sem CPF cadastrado.' }}</small>
+        @if (formEdicao.controls.cpf.errors?.['cpfInvalido']) {
+        <small class="dica dica--erro">CPF inválido.</small>
+        }
+
         <label for="ed-area">Área</label>
         <p-select inputId="ed-area" formControlName="areaId" [options]="areas.value() ?? []" optionLabel="nome"
             optionValue="id" placeholder="Selecione" />
@@ -69,6 +77,10 @@
         <label for="ed-perfil">Perfil</label>
         <p-select inputId="ed-perfil" formControlName="perfil" [options]="perfisDisponiveis()" optionLabel="label"
             optionValue="value" />
+
+        <label for="ed-referencia">Referência de equipe da área</label>
+        <p-select inputId="ed-referencia" formControlName="referenciaAreaId" [options]="areas.value() ?? []"
+            optionLabel="nome" optionValue="id" placeholder="Nenhuma" [showClear]="true" />
 
         <label for="ed-status">Situação</label>
         <p-select inputId="ed-status" formControlName="status" [options]="opcoesStatus" />
@@ -86,6 +98,7 @@
         <h3>Informado pela pessoa</h3>
         <span><strong>Nome:</strong> {{ pessoa.nome }}</span>
         <span><strong>E-mail:</strong> {{ pessoa.email ?? '—' }}</span>
+        <span><strong>CPF:</strong> {{ pessoa.cpfMascarado ?? '—' }}</span>
         <span><strong>Área:</strong> {{ pessoa.areaNome ?? '—' }}</span>
         <span><strong>Cargo:</strong> {{ pessoa.cargoNome ?? '—' }}</span>
         <span><strong>Cadastrado em:</strong> {{ pessoa.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>

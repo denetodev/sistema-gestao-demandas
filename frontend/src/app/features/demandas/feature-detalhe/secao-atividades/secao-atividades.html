@@ -1,0 +1,44 @@
+<section class="secao">
+  <header class="secao__cab">
+    <h2>Atividades ({{ itens().length }})</h2>
+    @if (editavel()) {
+      <p-button icon="pi pi-plus" label="Adicionar" size="small" [text]="true" (onClick)="abrir()" />
+    }
+  </header>
+  <p-table [value]="itens()" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr><th>Pessoa</th><th>Tipo</th><th>Data</th><th>Descrição</th><th></th></tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-a>
+      <tr>
+        <td>{{ a.pessoaNome ?? '—' }}</td>
+        <td>{{ a.tipoAtividadeNome }}</td>
+        <td>{{ a.dataRealizacao ?? '—' }}</td>
+        <td>{{ a.descricao ?? '—' }}</td>
+        <td class="acoes">
+          @if (editavel()) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="editar(a)" />
+            <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(a)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="5">Nenhuma atividade.</td></tr></ng-template>
+  </p-table>
+</section>
+
+<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar atividade' : 'Nova atividade'" [modal]="true" [style]="{ width: '440px' }">
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
+    <label for="tipoAtv">Tipo de atividade</label>
+    <p-select inputId="tipoAtv" formControlName="tipoAtividadeId" [options]="tiposAtivos()" optionLabel="nome"
+              optionValue="id" placeholder="Selecione" appendTo="body" />
+    <label for="pessoaAtv">Pessoa</label>
+    <p-select inputId="pessoaAtv" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nome"
+              optionValue="id" [filter]="true" [showClear]="true" appendTo="body" />
+    <label for="dtAtv">Data de realização</label>
+    <p-datepicker inputId="dtAtv" formControlName="dataRealizacao" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />
+    <label for="descAtv">Descrição</label>
+    <textarea pTextarea id="descAtv" formControlName="descricao" rows="3"></textarea>
+    <p-button type="submit" [label]="editandoId() ? 'Salvar atividade' : 'Adicionar atividade'" [loading]="salvando()" [disabled]="form.invalid" />
+  </form>
+</p-dialog>

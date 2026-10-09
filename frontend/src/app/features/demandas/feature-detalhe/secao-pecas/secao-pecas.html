@@ -1,0 +1,64 @@
+<section class="secao">
+  <header class="secao__cab">
+    <h2>Peças ({{ itens().length }})</h2>
+    @if (editavel()) {
+      <p-button icon="pi pi-plus" label="Adicionar" size="small" [text]="true" (onClick)="abrir()" />
+    }
+  </header>
+  <p-table [value]="itens()" dataKey="id" [stripedRows]="true">
+    <ng-template pTemplate="header">
+      <tr><th>Tipo</th><th>Nome</th><th>Por</th><th>Qtd</th><th>Valor unit.</th><th>Total</th><th></th></tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-p>
+      <tr>
+        <td>{{ p.tipoPecaNome }}</td>
+        <td>{{ p.nome }}</td>
+        <td>{{ p.pessoaNome ?? '—' }}</td>
+        <td>{{ p.quantidade }}</td>
+        <td>{{ p.valorUnitario | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+        <td>{{ p.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+        <td class="acoes">
+          @if (editavel()) {
+            <p-button [text]="true" icon="pi pi-pencil" (onClick)="editar(p)" />
+            <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(p)" />
+          }
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="7">Nenhuma peça.</td></tr></ng-template>
+    <ng-template pTemplate="footer">
+      @if (itens().length) {
+        <tr>
+          <td colspan="5" class="total-rotulo">Valor de referência</td>
+          <td colspan="2"><b>{{ total() | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</b></td>
+        </tr>
+      }
+    </ng-template>
+  </p-table>
+</section>
+
+<p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar peça' : 'Nova peça'" [modal]="true" [style]="{ width: '440px' }">
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
+    <label for="tipo">Tipo de peça</label>
+    <p-select inputId="tipo" formControlName="tipoPecaId" [options]="tiposAtivos()" optionLabel="nome"
+              optionValue="id" [filter]="true" placeholder="Selecione" appendTo="body" />
+    @if (editandoId()) {
+      <small class="dica">O tipo e o valor unitário ficam fixos depois do lançamento.</small>
+    } @else if (valorReferencia() !== null) {
+      <small class="dica">
+        Valor unitário: {{ valorReferencia() | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+        (fixado no lançamento)
+      </small>
+    }
+    <label for="nome">Nome</label>
+    <input pInputText id="nome" formControlName="nome" placeholder="ex.: E-mail Black Friday v2" />
+    <label for="qtd">Quantidade</label>
+    <p-inputnumber inputId="qtd" formControlName="quantidade" [min]="1" />
+    <label for="por">Produzida por</label>
+    <p-select inputId="por" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nome"
+              optionValue="id" [filter]="true" [showClear]="true" appendTo="body" />
+    <label for="dt">Data de entrega</label>
+    <p-datepicker inputId="dt" formControlName="dataEntrega" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />
+    <p-button type="submit" [label]="editandoId() ? 'Salvar peça' : 'Adicionar peça'" [loading]="salvando()" [disabled]="form.invalid" />
+  </form>
+</p-dialog>
