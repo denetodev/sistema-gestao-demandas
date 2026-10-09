@@ -34,6 +34,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/pessoas/me").authenticated()
                         .requestMatchers(HttpMethod.POST, "/pessoas/auto-cadastro").authenticated()
+                        // listas usadas na tela de completar cadastro, antes de a conta ser vinculada (só leitura)
+                        .requestMatchers(HttpMethod.GET, "/areas", "/cargos").authenticated()
                         .anyRequest().hasAuthority("VINCULADO")
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

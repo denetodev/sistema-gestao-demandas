@@ -5,7 +5,6 @@ import { filter, firstValueFrom } from 'rxjs';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase-client';
 import { environment } from '../../../environments/environment';
-import { MOCK_SESSAO, SESSAO_FALSA } from '../http/mock-sessao';
 import { PessoaMe, PessoaMeResponse, Perfil } from './auth.model';
 
 @Injectable({ providedIn: 'root' })
@@ -57,9 +56,11 @@ export class AuthService {
   }
 
   constructor() {
-    if (MOCK_SESSAO) {
-      this.#session.set(SESSAO_FALSA);
-      this.ready = Promise.resolve();
+    if (environment.usarMock) {
+      // import dinâmico: o mock não entra no caminho de execução do build normal
+      this.ready = import('../http/mock-sessao').then(({ SESSAO_FALSA }) => {
+        this.#session.set(SESSAO_FALSA);
+      });
       return;
     }
     this.ready = supabase.auth.getSession().then(({ data }) => {

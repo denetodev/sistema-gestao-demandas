@@ -5,6 +5,7 @@ import dev.denetodev.sgd_api.dto.request.PessoaRequest;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.EstadoInvalidoException;
+import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.AuditoriaRepository;
 import dev.denetodev.sgd_api.repository.CargoRepository;
@@ -96,7 +97,7 @@ class PessoaServiceCpfTest {
         when(pessoaRepository.findByCpf(CPF)).thenReturn(Optional.of(outra));
 
         assertThrows(EstadoInvalidoException.class, () -> service.criar(jwt(),
-                new PessoaRequest("Nova", null, CPF, areaId, null, null, null)));
+                new PessoaRequest("Nova", null, CPF, areaId, null, null, null, null)));
     }
 
     @Test
@@ -109,9 +110,38 @@ class PessoaServiceCpfTest {
         UUID id = UUID.randomUUID();
         when(pessoaRepository.findById(id)).thenReturn(Optional.of(alvo));
 
-        PessoaResponse r = service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, "", areaId, null, null, null));
+        PessoaResponse r = service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, "", areaId, null, null, null, null));
 
         assertEquals(CPF, alvo.getCpf());
         assertEquals("***.982.247-**", r.cpfMascarado());
+    }
+
+    @Test
+    void gestorDefineEDepoisRemoveAReferenciaDeEquipeNaEdicao() {
+        Pessoa gestor = new Pessoa("Gestor", area);
+        gestor.setPerfil(PerfilPessoa.ADMIN);
+        when(resolver.resolver(any())).thenReturn(gestor);
+        Pessoa alvo = new Pessoa("Alvo", area);
+        UUID id = UUID.randomUUID();
+        when(pessoaRepository.findById(id)).thenReturn(Optional.of(alvo));
+
+        service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, null, areaId, null, null, null, areaId));
+        assertEquals(area, alvo.getReferenciaArea());
+
+        service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, null, areaId, null, null, null, null));
+        assertEquals(null, alvo.getReferenciaArea());
+    }
+
+    @Test
+    void referenciaDeEquipeComAreaInexistenteDa404() {
+        Pessoa gestor = new Pessoa("Gestor", area);
+        gestor.setPerfil(PerfilPessoa.ADMIN);
+        when(resolver.resolver(any())).thenReturn(gestor);
+        Pessoa alvo = new Pessoa("Alvo", area);
+        UUID id = UUID.randomUUID();
+        when(pessoaRepository.findById(id)).thenReturn(Optional.of(alvo));
+
+        assertThrows(RecursoNaoEncontradoException.class, () -> service.atualizar(jwt(), id,
+                new PessoaRequest("Alvo", null, null, areaId, null, null, null, UUID.randomUUID())));
     }
 }

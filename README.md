@@ -4,7 +4,7 @@ Plataforma para centralizar a gestão da produção criativa da Aristocrata
 (COE/CRM + UGR) no Banco do Brasil, substituindo a planilha
 `DEMANDAS HOUSE CRM 2026` por um sistema estruturado e auditável.
 
-- `backend/` — Java 21 + Spring Boot 4 (hospedagem prevista: Render)
+- `backend/` — Java 21 + Spring Boot 4 (hospedagem prevista: Railway)
 - `frontend/` — Angular 20 + PrimeNG (hospedagem prevista: Vercel)
 - `database/` — migrations `V{n}`, importação da planilha e decisões de modelagem (Supabase/PostgreSQL)
 - `docs/` — arquitetura, requisitos (inclui `wireframe-sgd.html`), API, relatórios
@@ -12,19 +12,22 @@ Plataforma para centralizar a gestão da produção criativa da Aristocrata
 ## Estado atual
 
 Feito (backend + frontend + testes):
-- Dados mestres, Pessoa (perfis ADMIN/GESTOR/PROFISSIONAL/VISUALIZADOR, aprovação de conta, referência de equipe)
-- Demanda (ciclo de vida, auditoria de status, escopo "minhas/equipe/todas"), Participantes com papéis
-- Atividade, Peça (valor unitário congelado), Evidência (upload de imagem JPEG/PNG no Supabase Storage, ou link externo)
-- Dashboard e Relatório mensal (snapshot ao aprovar, exportação em DOCX)
+- Dados mestres, Pessoa (perfis ADMIN/GESTOR/PROFISSIONAL/VISUALIZADOR, aprovação e rejeição de conta, Referência de Equipe definida na aprovação ou na edição)
+- Demanda (ciclo de vida, auditoria de status, escopos Minhas, Minha equipe, Minha diretoria e Todas), Participantes com papéis
+- Atividade, Peça (valor unitário congelado), Evidência (upload JPEG/PNG até 5 MB no bucket privado do Supabase Storage, URL assinada de 5 min, ou link externo)
+- Dashboard (mapa de calor, resumo e valor gerado por escopo, sem demandas canceladas) e Relatório mensal (snapshot ao aprovar, exportação em DOCX; só Gestor/Admin reabrem)
 - Telas de "Acesso negado" e "Conta aguardando aprovação"
-- Nome de exibição da pessoa (`nome_exibicao`) e CPF (V12): cadastro da conta pede nome completo + CPF validado (único, nunca devolvido por inteiro); Gestor/Admin edita o CPF na tela de Pessoas
-- Importação da planilha 2026: **472 demandas, 992 peças, 855 atividades, 673 participantes** já carregados no Supabase
+- Nome de exibição da pessoa (`nome_exibicao`) e CPF (V12): cadastro da conta pede nome completo + CPF validado (único, nunca devolvido por inteiro); Gestor/Admin edita o CPF e vincula a conta a uma pessoa importada
+- Importação das planilhas House CRM (472 demandas) e Multimídia UGR (607 demandas): o banco tem hoje 36 pessoas, 1.079 demandas, 1.985 atividades e 1.682 peças
 - CI no GitHub Actions (build + testes de backend e frontend)
+- Mock do frontend isolado atrás de `environment.usarMock` (só com `ng serve -c mock`)
 
 Pendente:
-- Gestor/Admin cadastrar o CPF de quem foi importado da planilha (tela de Pessoas); depois, ao se cadastrar, a pessoa usa o mesmo CPF e o Gestor vincula a conta ao cadastro existente
-- Pessoas ainda sem área definida: Caio, Erick, Gabriel
-- Publicar backend (Render) e frontend (Vercel), testar com a API real e remover os mocks
+- Projeto e Campanha estão vazios (as planilhas não os trazem): definir como popular
+- Especialidade, PessoaEspecialidade e PessoaCargoHistorico existem como tabelas sem entidade JPA
+- Cadastrar o CPF de quem foi importado (tela de Pessoas) para vincular com a conta de login
+- Publicar backend (Railway) e frontend (Vercel) e ajustar `environment.ts` e `CORS_ALLOWED_ORIGINS`
+- Testes ponta a ponta de GESTOR, VISUALIZADOR e Referência de Equipe com a API real
 
 ## Como rodar
 
@@ -40,8 +43,12 @@ cd frontend && npm ci && npm start
 npm test -- --watch=false --browsers=ChromeHeadless
 ```
 
-**Mocks no frontend:** na máquina do trabalho a rede do BB bloqueia o Supabase, então existem mocks temporários
-(`MOCK_SESSAO` e arquivos de mock) para ver as telas sem API. Devem ser removidos quando o sistema rodar com a API real.
+**Mocks no frontend:** na máquina do trabalho a rede do BB bloqueia o Supabase. Lá use `npx ng serve -c mock`
+(sessão falsa e dados de mentira, ligados por `environment.usarMock`). Nas demais configurações o mock não é carregado.
+
+**Variáveis do backend:** `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `CORS_ALLOWED_ORIGINS` (veja `.env.example`). O Spring não lê `.env` sozinho:
+exporte na sessão do shell ou configure na IDE.
 
 ## Banco de dados
 
@@ -70,7 +77,7 @@ A importação da planilha está em [`database/importacao/`](database/importacao
 Nada é enviado direto para a `main`; o merge é feito por revisão (PR).
 
 **Sem Docker.** O desenvolvimento acontece numa máquina corporativa sem permissão para instalar softwares.
-Backend builda nativo (Maven) no Render, sem Dockerfile.
+Backend builda nativo (Maven) no Railway, sem Dockerfile.
 
 **Ambientes:** por enquanto só 1 ambiente (dev), no projeto Supabase. Homologação/produção separados entram
 quando o sistema tiver algo real rodando.

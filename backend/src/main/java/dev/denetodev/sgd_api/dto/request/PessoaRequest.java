@@ -15,6 +15,8 @@ public record PessoaRequest(
         @NotNull(message = "areaId é obrigatório") UUID areaId,
         UUID cargoId,
         StatusPessoa status,
-        PerfilPessoa perfil
+        PerfilPessoa perfil,
+        /** Referência de equipe dessa área; nulo remove a referência (é uma atribuição, como areaId e cargoId). */
+        UUID referenciaAreaId
 ) {
 }
