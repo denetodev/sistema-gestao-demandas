@@ -38,3 +38,17 @@ Texto da planilha é normalizado para Unicode NFC (a planilha mistura acentos co
   Adriana dos Santos Lima (TESOU/GEASE/MERCADO); Anderson = Anderson Bezerra ("Parcinha"); Fernanda = Fernanda Parizi.
 - Pessoas novas entram **sem login**; quem se cadastrar depois é vinculado pelo CPF (ver `V12`).
 - Mês de peças e atividades segue a coluna **Dia**.
+
+## Planilha Multimídia UGR (1T, 2T e 3T 2026)
+"Multimídia" está para a UGR como "HOUSE" está para o CRM: nomes informais das equipes; CRM e UGR são as diretorias do BB.
+
+```bash
+node database/importacao/gerar-importacao-ugr.cjs "C:/caminho/Demandas Multimídia 26-UGR.xlsx"
+```
+
+Gera `saida-ugr/` (ignorada pelo git) com o mesmo fluxo: `01-carga-NN.sql` → `01-conferir-carga.sql` → `03-ensaio-com-rollback.sql` → `02-importar.sql`.
+Diferenças em relação à HOUSE:
+- **Agrupamento:** linhas com a mesma *descrição* (ex.: `20260911_Captação_BBCast_Agro`) são a mesma demanda lançada por vídeo, operação, redação etc.
+- **Tabela de valores** (aba DADOS, por função) fornece o preço dos serviços; quando a planilha cobra diferente de forma consistente (ex.: Teleprompter + Painel de LED, R$ 1.300 contra R$ 900 na tabela), vale a planilha. O relatório lista as divergências.
+- **Diretoria:** a demanda é da diretoria UGR; a coluna *Diretoria* da planilha é a diretoria solicitante e vai nas observações. O *Cliente* vira Demandante (por nome; a diretoria é a que mais aparece).
+- **Equipe:** os 8 atuais já cadastrados + Raul (Designer, UGR). Quem saiu (Guilherme Otone, Isadora, Wagner…) entra como **INATIVO**, com o nome como está na planilha, para manter o histórico.
