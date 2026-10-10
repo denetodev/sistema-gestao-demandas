@@ -45,3 +45,5 @@ server:
     # o DevTools liga "always" em desenvolvimento; aqui fica explícito para nunca devolver stack trace
     include-stacktrace: never
     include-message: always
+  # Railway injeta a porta em PORT; local continua em 8080
+  port: ${PORT:8080}
