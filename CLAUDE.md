@@ -39,7 +39,7 @@ O mock do frontend fica atrás de `environment.usarMock` (`false` por padrão; `
 - **Dashboard de valor gerado** respeita o escopo do perfil e ignora demandas canceladas.
 - **Relatório mensal** é gerado e aprovado pela própria pessoa e trava depois. Só GESTOR ou ADMIN reabrem um relatório aprovado.
 - **Escopos de listagem de demandas:** MINHAS (padrão), EQUIPE (só Referência), DIRETORIA, TODAS (só Gestor e Admin). Cancelar uma demanda: GESTOR, ADMIN ou Responsável principal.
-- **Segurança vive no backend.** O frontend nunca é a única barreira. `GET /areas` e `GET /cargos` são os únicos endpoints abertos a conta autenticada ainda não vinculada (a tela de completar cadastro precisa deles).
+- **Segurança vive no backend.** O frontend nunca é a única barreira. `GET /areas` e `GET /cargos` são os únicos endpoints abertos a conta autenticada ainda não vinculada (a tela de completar cadastro precisa deles). `GET /health` é o único endpoint público (healthcheck do Railway).
 - O CPF nunca é devolvido por inteiro pela API (só a máscara).
 - Linhas importadas têm `source_system = 'planilha-house-crm'` (COE/CRM, 472 demandas) ou `'planilha-multimidia-ugr'` (UGR, 607 demandas). São dados reais: nunca apague nem altere essas linhas em testes.
 
