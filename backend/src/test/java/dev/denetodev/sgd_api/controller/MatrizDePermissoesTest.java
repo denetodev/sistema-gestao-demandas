@@ -174,6 +174,7 @@ class MatrizDePermissoesTest {
         c.add(new Caso(A, "/pessoas/" + ID + "/aprovar", GESTAO));
         c.add(new Caso(A, "/pessoas/" + ID + "/rejeitar", GESTAO));
         c.add(new Caso(A, "/pessoas/" + ID + "/vincular-auth", SO_ADMIN));
+        c.add(new Caso(P, "/pessoas/" + ID + "/vincular-a", GESTAO));
 
         // relatório de outra pessoa e reabertura são decididos no serviço; aqui só a trava de Visualizador
         c.add(new Caso(P, "/relatorios/2026-10/reabrir", QUEM_ESCREVE));

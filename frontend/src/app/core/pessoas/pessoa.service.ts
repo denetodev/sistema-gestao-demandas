@@ -14,6 +14,14 @@ export class PessoaService {
         this.apenasPendentes() ? `${this.#base}?pendente=true` : this.#base,
     );
 
+    /** Todas as pessoas (sem filtro de aba): usada para achar o cadastro existente ao vincular uma conta. */
+    todas = httpResource<Pessoa[]>(() => this.#base);
+
+    /** Liga a conta pendente {pendenteId} ao cadastro que já existe; o cadastro pendente é removido. */
+    vincularAPessoaExistente(pendenteId: string, pessoaExistenteId: string) {
+        return this.#http.post<Pessoa>(`${this.#base}/${pendenteId}/vincular-a`, { pessoaExistenteId });
+    }
+
     atualizar(id: string, payload: PessoaPayload) {
         return this.#http.put<Pessoa>(`${this.#base}/${id}`, payload);
     }

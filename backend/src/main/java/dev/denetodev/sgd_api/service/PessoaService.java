@@ -127,6 +127,54 @@ public class PessoaService {
         return paraResponse(pessoa);
     }
 
+    /**
+     * Liga a conta pendente (recém-cadastrada) a uma pessoa que já existe, por exemplo importada da planilha.
+     * A conta passa a ser da pessoa existente, que mantém todo o histórico; o cadastro pendente, que seria
+     * uma duplicata, é removido. CPF e e-mail informados no cadastro só entram se a pessoa ainda não os tem.
+     */
+    public PessoaResponse vincularContaAPessoaExistente(Jwt jwt, UUID pendenteId, UUID existenteId) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        if (pendenteId.equals(existenteId)) {
+            throw new EstadoInvalidoException("Escolha um cadastro diferente do pendente");
+        }
+        Pessoa pendente = buscarEntidade(pendenteId);
+        Pessoa existente = buscarEntidade(existenteId);
+
+        if (pendente.getAprovadoEm() != null || pendente.getStatus() == StatusPessoa.REJEITADO
+                || pendente.getAuthUserId() == null) {
+            throw new EstadoInvalidoException("Só uma conta aguardando aprovação pode ser vinculada");
+        }
+        if (existente.getAuthUserId() != null) {
+            throw new EstadoInvalidoException("Essa pessoa já tem uma conta vinculada");
+        }
+        if (existente.getAprovadoEm() == null) {
+            throw new EstadoInvalidoException("Escolha um cadastro já aprovado");
+        }
+        if (existente.getStatus() != StatusPessoa.ATIVO) {
+            throw new EstadoInvalidoException("Reative a pessoa antes de vincular uma conta a ela");
+        }
+        checarPermissaoSobrePerfil(ator, existente.getPerfil(), existente);
+
+        UUID authUserId = pendente.getAuthUserId();
+        String cpf = pendente.getCpf();
+        String email = pendente.getEmail();
+
+        // remove o duplicado primeiro: auth_user_id e cpf são únicos e vão para a pessoa existente
+        pessoaRepository.delete(pendente);
+        pessoaRepository.flush();
+
+        existente.setAuthUserId(authUserId);
+        if (existente.getEmail() == null && email != null) {
+            existente.setEmail(email);
+        }
+        if (existente.getCpf() == null && cpf != null) {
+            existente.setCpf(cpf);
+        }
+        registrarAuditoria(existente.getId(), "auth_user_id", null, authUserId.toString(), ator.getId());
+
+        return paraResponse(existente);
+    }
+
     @Transactional(readOnly = true)
     public MeResponse buscarStatusPorAuthUserId(UUID authUserId) {
         return pessoaRepository.findByAuthUserId(authUserId)

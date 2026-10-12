@@ -76,6 +76,17 @@ public class PessoaController {
         return pessoaService.vincularAuth(id, request.authUserId());
     }
 
+    /** Liga a conta pendente {id} à pessoa que já existe (ex.: importada da planilha). */
+    @PostMapping("/{id}/vincular-a")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public PessoaResponse vincularContaAPessoaExistente(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody VincularContaRequest request
+    ) {
+        return pessoaService.vincularContaAPessoaExistente(jwt, id, request.pessoaExistenteId());
+    }
+
     @PostMapping("/auto-cadastro")
     public ResponseEntity<PessoaResponse> autoCadastro(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AutoCadastroRequest request) {
         PessoaResponse criada = pessoaService.autoCadastro(jwt, request);

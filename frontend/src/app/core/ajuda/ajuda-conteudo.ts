@@ -220,6 +220,11 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
           'Abra a pessoa com cadastro pendente, confira área e cargo, escolha o perfil e aprove. Um cadastro rejeitado não pode ser aprovado depois.',
       },
       {
+        pergunta: 'Alguém já está no sistema mas criou uma conta nova. O que faço?',
+        resposta:
+          'Abra o cadastro pendente da conta nova e use "Esta pessoa já existe no sistema?": escolha o cadastro que já existe (por exemplo, importado da planilha) e vincule. A conta passa a ser dessa pessoa, com todo o histórico, e o cadastro novo é removido. Se você aprovar sem vincular, a pessoa fica duplicada.',
+      },
+      {
         pergunta: 'Para que serve o CPF?',
         resposta:
           'Para ligar a conta de quem se cadastra ao registro que já existe (pessoas importadas da planilha). Se o CPF já existir, um Gestor ou Admin faz o vínculo manualmente.',
