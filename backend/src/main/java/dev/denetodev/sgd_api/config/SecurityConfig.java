@@ -18,6 +18,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final HttpMethod[] ESCRITA = {
+            HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE };
+
+    private static final String[] CADASTROS_BASE = {
+            "/diretorias/**", "/areas/**", "/cargos/**", "/tipos-atividade/**", "/demandantes/**", "/projetos/**" };
+
     @Bean
     public SecurityFilterChain filterChain(
             HttpSecurity http,
@@ -30,15 +36,38 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/health").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/pessoas/me").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/pessoas/auto-cadastro").authenticated()
-                        // listas usadas na tela de completar cadastro, antes de a conta ser vinculada (só leitura)
-                        .requestMatchers(HttpMethod.GET, "/areas", "/cargos").authenticated()
-                        .anyRequest().hasAuthority("VINCULADO")
-                )
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/health").permitAll();
+                    auth.requestMatchers(HttpMethod.GET, "/pessoas/me").authenticated();
+                    auth.requestMatchers(HttpMethod.POST, "/pessoas/auto-cadastro").authenticated();
+                    // listas usadas na tela de completar cadastro, antes de a conta ser vinculada (só leitura)
+                    auth.requestMatchers(HttpMethod.GET, "/areas", "/cargos").authenticated();
+                    // Visualizador é somente leitura, mas edita o próprio perfil
+                    auth.requestMatchers(HttpMethod.PUT, "/pessoas/me").hasAuthority("VINCULADO");
+
+                    // gestão de pessoas (o serviço ainda barra o Gestor de mexer em ADMIN)
+                    auth.requestMatchers(HttpMethod.PATCH, "/pessoas/*/vincular-auth").hasRole("ADMIN");
+                    auth.requestMatchers(HttpMethod.POST, "/pessoas").hasAnyRole("ADMIN", "GESTOR");
+                    auth.requestMatchers(HttpMethod.PUT, "/pessoas/*").hasAnyRole("ADMIN", "GESTOR");
+                    auth.requestMatchers(HttpMethod.DELETE, "/pessoas/*").hasAnyRole("ADMIN", "GESTOR");
+                    auth.requestMatchers(HttpMethod.PATCH, "/pessoas/*/aprovar", "/pessoas/*/rejeitar")
+                            .hasAnyRole("ADMIN", "GESTOR");
+
+                    // cadastros base: só Gestor e Admin escrevem
+                    for (HttpMethod metodo : ESCRITA) {
+                        auth.requestMatchers(metodo, CADASTROS_BASE).hasAnyRole("ADMIN", "GESTOR");
+                    }
+                    // campanha: todo profissional cria e edita; excluir é da gestão
+                    auth.requestMatchers(HttpMethod.DELETE, "/campanhas/**").hasAnyRole("ADMIN", "GESTOR");
+
+                    // demais escritas (demandas, atividades, peças, evidências, relatório, tipos de peça,
+                    // campanhas): Visualizador é somente leitura. Regras finas por item ficam nos serviços.
+                    for (HttpMethod metodo : ESCRITA) {
+                        auth.requestMatchers(metodo, "/**").hasAnyRole("ADMIN", "GESTOR", "PROFISSIONAL");
+                    }
+                    auth.anyRequest().hasAuthority("VINCULADO");
+                })
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(pessoaAuthenticationConverter))
                         .authenticationEntryPoint(restAuthenticationEntryPoint)

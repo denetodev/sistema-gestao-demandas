@@ -40,6 +40,7 @@ O mock do frontend fica atrás de `environment.usarMock` (`false` por padrão; `
 - **Relatório mensal** é gerado e aprovado pela própria pessoa e trava depois. Só GESTOR ou ADMIN reabrem um relatório aprovado.
 - **Escopos de listagem de demandas:** MINHAS (padrão), EQUIPE (só Referência), DIRETORIA, TODAS (só Gestor e Admin). Cancelar uma demanda: GESTOR, ADMIN ou Responsável principal.
 - **Segurança vive no backend.** O frontend nunca é a única barreira. `GET /areas` e `GET /cargos` são os únicos endpoints abertos a conta autenticada ainda não vinculada (a tela de completar cadastro precisa deles). `GET /health` é o único endpoint público (healthcheck do Railway).
+- **Quem escreve o quê (barreira em `SecurityConfig`, testada em `MatrizDePermissoesTest`):** VISUALIZADOR nunca escreve (só edita o próprio perfil). Cadastros base (diretorias, áreas, cargos, tipos de atividade, demandantes, projetos) só ADMIN e GESTOR. Campanhas: todo profissional cria e edita, só ADMIN e GESTOR excluem. Regras por item (dono, Referência de equipe, Responsável principal) ficam nos serviços. **Todo endpoint ou regra de acesso novo entra na matriz de permissões.**
 - O CPF nunca é devolvido por inteiro pela API (só a máscara).
 - Linhas importadas têm `source_system = 'planilha-house-crm'` (COE/CRM, 472 demandas) ou `'planilha-multimidia-ugr'` (UGR, 607 demandas). São dados reais: nunca apague nem altere essas linhas em testes.
 
