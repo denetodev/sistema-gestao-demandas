@@ -52,3 +52,10 @@ Diferenças em relação à HOUSE:
 - **Tabela de valores** (aba DADOS, por função) fornece o preço dos serviços; quando a planilha cobra diferente de forma consistente (ex.: Teleprompter + Painel de LED, R$ 1.300 contra R$ 900 na tabela), vale a planilha. O relatório lista as divergências.
 - **Diretoria:** a demanda é da diretoria UGR; a coluna *Diretoria* da planilha é a diretoria solicitante e vai nas observações. O *Cliente* vira Demandante (por nome; a diretoria é a que mais aparece).
 - **Equipe:** os 8 atuais já cadastrados + Raul (Designer, UGR). Quem saiu (Guilherme Otone, Isadora, Wagner…) entra como **INATIVO**, com o nome como está na planilha, para manter o histórico.
+
+## Campanhas (depois da importação)
+As planilhas não trazem campanha. `vincular-campanhas.sql` cria as campanhas a partir do assunto que se repete nos títulos
+(por exemplo "BBCast Agro", "Desenrola Brasil", "BBBE Livelo") e vincula as demandas importadas. É idempotente e só
+preenche demanda ainda **sem** campanha, então não sobrescreve escolhas feitas no sistema. **Rode depois de qualquer
+reimportação**: reprocessar apaga e recria as demandas, e o vínculo se perde. Na House CRM, `CAM #n.n` é a squad, não a campanha.
+Para incluir uma campanha nova, acrescente uma linha na lista de regras do arquivo.
