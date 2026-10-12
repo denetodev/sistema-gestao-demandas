@@ -48,9 +48,34 @@ export interface CriarDemandaPayload {
   linkExterno: string | null;
 }
 
+/** Rótulos para mostrar na tela (o valor guardado continua em maiúsculas, como a API usa). */
+export const ROTULO_PRIORIDADE: Record<Prioridade, string> = {
+  BAIXA: 'Baixa',
+  NORMAL: 'Normal',
+  ALTA: 'Alta',
+  URGENTE: 'Urgente',
+};
+
+/** Filtros da lista de demandas. Texto vazio significa "sem este filtro". */
 export interface DemandaFiltro {
   escopo: EscopoDemanda;
+  busca: string;
+  status: StatusDemanda | '';
+  /** Núcleo (a diretoria da demanda). */
+  diretoriaId: string;
+  /** Equipe (a área de alguém ativo do time). */
+  areaId: string;
   page: number;
   size: number;
   sort?: string;
 }
+
+export const FILTRO_PADRAO: DemandaFiltro = {
+  escopo: 'MINHAS',
+  busca: '',
+  status: '',
+  diretoriaId: '',
+  areaId: '',
+  page: 0,
+  size: 10,
+};

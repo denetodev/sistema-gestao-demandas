@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
@@ -19,10 +19,13 @@ import { CurrencyPipe } from '@angular/common';
 import { ConfirmationService } from 'primeng/api';
 
 import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
+import { OpcaoPilula, Pilulas } from '../../../ui/pilulas/pilulas';
+import { contemTexto } from '../../../util/listas';
 
 @Component({
   selector: 'app-tipo-peca-lista',
-  imports: [Ajuda, 
+  imports: [FormsModule, CampoBusca, Pilulas, Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,
@@ -54,6 +57,40 @@ export class TipoPecaLista {
         a.areaNome.localeCompare(b.areaNome, 'pt-BR') || a.nome.localeCompare(b.nome, 'pt-BR'),
     ),
   );
+
+  // filtros da lista: por equipe (pílulas) e por nome
+  busca = signal('');
+  equipeFiltro = signal('');
+
+  /** Uma pílula por equipe que tem tipos de peça; se o nome se repete em núcleos diferentes, o núcleo vai junto. */
+  opcoesEquipe = computed<OpcaoPilula[]>(() => {
+    const doTipos = new Map<string, string>();
+    (this.tipos.value() ?? []).forEach((t) => doTipos.set(t.areaId, t.areaNome));
+    const areas = this.areas.value() ?? [];
+    const repetidos = new Set<string>();
+    const vistos = new Set<string>();
+    doTipos.forEach((nome) => (vistos.has(nome) ? repetidos.add(nome) : vistos.add(nome)));
+    const equipes = [...doTipos.entries()].map(([id, nome]) => ({
+      valor: id,
+      rotulo: nome,
+      detalhe: repetidos.has(nome) ? (areas.find((a) => a.id === id)?.diretoriaNome ?? null) : null,
+    }));
+    equipes.sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt-BR') || (a.detalhe ?? '').localeCompare(b.detalhe ?? '', 'pt-BR'));
+    return [{ valor: '', rotulo: 'Todas as equipes' }, ...equipes];
+  });
+
+  filtrados = computed(() =>
+    this.tiposOrdenados().filter(
+      (t) => contemTexto([t.nome, t.descricao], this.busca()) && (!this.equipeFiltro() || t.areaId === this.equipeFiltro()),
+    ),
+  );
+
+  filtrosAtivos = computed(() => !!(this.busca() || this.equipeFiltro()));
+
+  limparFiltros() {
+    this.busca.set('');
+    this.equipeFiltro.set('');
+  }
 
   /** Admin e Gestor gerenciam tudo; Referência de Equipe só a própria área. */
   podeCriar = computed(

@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
@@ -17,10 +17,13 @@ import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
 import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
+import { OpcaoPilula, Pilulas } from '../../../ui/pilulas/pilulas';
+import { contemTexto, maisRecentesPrimeiro } from '../../../util/listas';
 
 @Component({
   selector: 'app-projeto-lista',
-  imports: [Ajuda, 
+  imports: [FormsModule, CampoBusca, Pilulas, Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,
@@ -48,6 +51,38 @@ export class ProjetoLista {
     { label: 'Pausado', value: 'PAUSADO' },
     { label: 'Encerrado', value: 'ENCERRADO' },
   ];
+
+  // filtros da lista: os últimos cadastrados primeiro, 10 por página
+  busca = signal('');
+  situacaoFiltro = signal('');
+  nucleoFiltro = signal<string | null>(null);
+  opcoesSituacao: OpcaoPilula[] = [{ valor: '', rotulo: 'Todos' }, ...[
+    { valor: 'ATIVO', rotulo: 'Ativos' },
+    { valor: 'PAUSADO', rotulo: 'Pausados' },
+    { valor: 'ENCERRADO', rotulo: 'Encerrados' },
+  ]];
+  opcoesNucleo = computed(() => (this.diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+
+  filtrados = computed(() =>
+    maisRecentesPrimeiro(this.projetos.value() ?? []).filter(
+      (p) =>
+        contemTexto([p.nome, p.demandanteNome, p.descricao], this.busca()) &&
+        (!this.situacaoFiltro() || p.status === this.situacaoFiltro()) &&
+        (!this.nucleoFiltro() || p.diretoriaId === this.nucleoFiltro()),
+    ),
+  );
+
+  filtrosAtivos = computed(() => !!(this.busca() || this.situacaoFiltro() || this.nucleoFiltro()));
+
+  limparFiltros() {
+    this.busca.set('');
+    this.situacaoFiltro.set('');
+    this.nucleoFiltro.set(null);
+  }
+
+  rotuloStatus(status: StatusProjeto): string {
+    return this.opcoesStatus.find((o) => o.value === status)?.label ?? status;
+  }
 
   dialogAberto = signal(false);
   editandoId = signal<string | null>(null);

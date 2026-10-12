@@ -4,9 +4,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
-import { SelectButton } from 'primeng/selectbutton';
 import { InputText } from 'primeng/inputtext';
-import { Textarea } from 'primeng/textarea';
 import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
@@ -23,12 +21,16 @@ import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { candidatosAVinculo } from '../candidatos-vinculo';
 import type { Pessoa, StatusPessoa } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
+import { CampoBusca } from '../../ui/campo-busca/campo-busca';
+import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
+import { contemTexto } from '../../util/listas';
+import { DiretoriaService } from '../../dados-mestres/diretoria/diretoria.service';
 
 
 @Component({
   selector: 'app-pessoa-lista',
-  imports: [
-    Ajuda, ReactiveFormsModule, TableModule, Dialog, SelectButton, InputText, Textarea,
+  imports: [CampoBusca, Pilulas, 
+    Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText,
     Select, Button, Message, Tag, Tooltip, BarraPagina, DatePipe, FormsModule
   ],
   templateUrl: './pessoa-lista.html',
@@ -50,10 +52,81 @@ export class PessoaLista {
 
   apenasPendentes = this.#service.apenasPendentes;
 
-  abas = [
-    { label: 'Todas', value: false },
-    { label: 'Aguardando aprovação', value: true },
+  abas: OpcaoPilula[] = [
+    { valor: 'todas', rotulo: 'Todas' },
+    { valor: 'pendentes', rotulo: 'Aguardando aprovação' },
   ];
+  aba = computed(() => (this.apenasPendentes() ? 'pendentes' : 'todas'));
+
+  mudarAba(valor: string) {
+    this.apenasPendentes.set(valor === 'pendentes');
+  }
+
+  // ---- filtros da lista (a busca e os selects estreitam o que veio do servidor) ----
+  #diretorias = inject(DiretoriaService).listar;
+  busca = signal('');
+  nucleoFiltro = signal<string | null>(null);
+  equipeFiltro = signal<string | null>(null);
+  perfilFiltro = signal<string | null>(null);
+  situacaoFiltro = signal<string | null>(null);
+
+  opcoesNucleo = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  /** O mesmo nome de equipe existe em núcleos diferentes (Design em CRM e em UGR), então o núcleo vai junto. */
+  opcoesEquipe = computed(() =>
+    (this.areas.value() ?? []).map((a) => ({
+      valor: a.id,
+      rotulo: a.diretoriaNome ? `${a.nome} · ${a.diretoriaNome}` : a.nome,
+    })),
+  );
+  opcoesPerfilFiltro = [
+    { label: 'Visualizador', value: 'VISUALIZADOR' },
+    { label: 'Profissional', value: 'PROFISSIONAL' },
+    { label: 'Gestor', value: 'GESTOR' },
+    { label: 'Admin', value: 'ADMIN' },
+  ];
+  opcoesSituacao = [
+    { label: 'Ativo', value: 'ATIVO' },
+    { label: 'Inativo', value: 'INATIVO' },
+    { label: 'Afastado', value: 'AFASTADO' },
+    { label: 'Aguardando aprovação', value: 'AGUARDANDO' },
+    { label: 'Rejeitado', value: 'REJEITADO' },
+  ];
+
+  filtrados = computed(() =>
+    [...(this.pessoas.value() ?? [])]
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      .filter((p) => {
+        const aguardando = p.aprovadoEm === null && p.status !== 'REJEITADO';
+        const situacao = this.situacaoFiltro();
+        return (
+          contemTexto([p.nome, p.nomeExibicao, p.email], this.busca()) &&
+          (!this.nucleoFiltro() || p.diretoriaId === this.nucleoFiltro()) &&
+          (!this.equipeFiltro() || p.areaId === this.equipeFiltro()) &&
+          (!this.perfilFiltro() || p.perfil === this.perfilFiltro()) &&
+          (!situacao || (situacao === 'AGUARDANDO' ? aguardando : !aguardando && p.status === situacao))
+        );
+      }),
+  );
+
+  filtrosAtivos = computed(
+    () => !!(this.busca() || this.nucleoFiltro() || this.equipeFiltro() || this.perfilFiltro() || this.situacaoFiltro()),
+  );
+
+  limparFiltros() {
+    this.busca.set('');
+    this.nucleoFiltro.set(null);
+    this.equipeFiltro.set(null);
+    this.perfilFiltro.set(null);
+    this.situacaoFiltro.set(null);
+  }
+
+  rotuloPerfil(perfil: string): string {
+    return this.opcoesPerfilFiltro.find((o) => o.value === perfil)?.label ?? perfil;
+  }
+
+  rotuloSituacao(status: string): string {
+    return this.opcoesSituacao.find((o) => o.value === status)?.label ?? status;
+  }
 
   opcoesPerfil = [
     { label: 'Visualizador', value: 'VISUALIZADOR' },

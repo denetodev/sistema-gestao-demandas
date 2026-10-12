@@ -1,0 +1,10 @@
+<div class="campo-busca">
+  <i class="pi pi-search" aria-hidden="true"></i>
+  <input type="search" autocomplete="off" [attr.aria-label]="descricao()" [placeholder]="placeholder()"
+    [value]="texto()" (input)="digitar($event)" (keydown.enter)="buscarAgora()" />
+  @if (texto()) {
+    <button type="button" class="campo-busca__limpar" aria-label="Limpar a busca" (click)="limpar()">
+      <i class="pi pi-times"></i>
+    </button>
+  }
+</div>

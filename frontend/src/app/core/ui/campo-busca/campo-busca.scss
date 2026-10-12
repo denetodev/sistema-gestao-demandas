@@ -1,0 +1,76 @@
+:host {
+  display: block;
+  min-width: 220px;
+}
+
+.campo-busca {
+  position: relative;
+
+  > .pi-search {
+    position: absolute;
+    left: 0.9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sgd-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    height: 40px;
+    padding: 0 2.2rem 0 2.45rem;
+    border: 1px solid var(--sgd-borda);
+    border-radius: 10px;
+    background: var(--sgd-cartao);
+    color: var(--sgd-texto);
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder {
+      color: var(--sgd-muted);
+    }
+
+    &:hover {
+      border-color: var(--sgd-muted);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--sgd-laranja);
+      box-shadow: 0 0 0 3px var(--sgd-laranja-suave);
+    }
+
+    // o X do próprio navegador some: usamos o nosso, igual em todos
+    &::-webkit-search-cancel-button {
+      display: none;
+    }
+  }
+}
+
+.campo-busca__limpar {
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sgd-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sgd-realce);
+    color: var(--sgd-texto);
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
+}

@@ -1,54 +1,90 @@
-<app-barra-pagina titulo="Pessoas">
-    <ng-container inicio>
-        <p-selectbutton [options]="abas" [(ngModel)]="apenasPendentes" optionLabel="label" optionValue="value"
-            [allowEmpty]="false" />
-    </ng-container>
+<app-barra-pagina titulo="Pessoas" subtitulo="Quem usa o sistema: aprove cadastros, defina perfil e equipe.">
 </app-barra-pagina>
 
 <div class="pagina-corpo">
   <app-ajuda chave="pessoas" />
-    <p-table [value]="pessoas.value() ?? []" [loading]="pessoas.isLoading()" [paginator]="true" [rows]="20" dataKey="id"
-        [stripedRows]="true" sortMode="single">
-        <ng-template pTemplate="header">
-            <tr>
-                <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
-                <th>E-mail</th>
-                <th>Área</th>
-                <th>Cargo</th>
-                <th>Perfil</th>
-                <th>Situação</th>
-                <th>Ações</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-pessoa>
-            <tr>
-                <td>{{ pessoa.nome }}</td>
-                <td>{{ pessoa.email ?? '—' }}</td>
-                <td>{{ pessoa.areaNome ?? '—' }}</td>
-                <td>{{ pessoa.cargoNome ?? '—' }}</td>
-                <td>{{ pessoa.perfil }}</td>
-                <td>
-                    @if (pessoa.aprovadoEm === null && pessoa.status !== 'REJEITADO') {
-                    <p-tag value="Aguardando" severity="warn" />
-                    } @else {
-                    <p-tag [value]="pessoa.status" [severity]="severityStatus(pessoa.status)" />
-                    }
+    <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <app-pilulas descricao="Quais pessoas mostrar" [opcoes]="abas" [valor]="aba()" (valorChange)="mudarAba($event)" />
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por nome ou e-mail..." descricao="Buscar pessoas"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+        <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Núcleo" [showClear]="true" [ngModel]="nucleoFiltro()"
+          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por núcleo" />
+        <p-select class="filtros__campo" [options]="opcoesEquipe()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Equipe" [showClear]="true" [filter]="true" filterBy="rotulo" [ngModel]="equipeFiltro()"
+          (ngModelChange)="equipeFiltro.set($event)" ariaLabel="Filtrar por equipe" />
+        <p-select class="filtros__campo" [options]="opcoesPerfilFiltro" optionLabel="label" optionValue="value"
+          placeholder="Perfil" [showClear]="true" [ngModel]="perfilFiltro()"
+          (ngModelChange)="perfilFiltro.set($event)" ariaLabel="Filtrar por perfil" />
+        <p-select class="filtros__campo" [options]="opcoesSituacao" optionLabel="label" optionValue="value"
+          placeholder="Situação" [showClear]="true" [ngModel]="situacaoFiltro()"
+          (ngModelChange)="situacaoFiltro.set($event)" ariaLabel="Filtrar por situação" />
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
+            (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <p-table [value]="filtrados()" [loading]="pessoas.isLoading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pessoas" dataKey="id" sortMode="single">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+                    <th>E-mail</th>
+                    <th>Equipe</th>
+                    <th>Cargo</th>
+                    <th>Perfil</th>
+                    <th>Situação</th>
+                    <th>Ações</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-pessoa>
+                <tr>
+                    <td>{{ pessoa.nome }}</td>
+                    <td>{{ pessoa.email ?? '—' }}</td>
+                    <td>{{ pessoa.areaNome ?? '—' }}
+                    @if (pessoa.diretoriaNome) { <span class="sub">{{ pessoa.diretoriaNome }}</span> }
                 </td>
-                <td>
-                    @if (podeGerenciar(pessoa)) {
-                    <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrir(pessoa)"
-                        [pTooltip]="pessoa.aprovadoEm === null ? 'Aprovar cadastro' : 'Editar pessoa'"
-                        tooltipPosition="top" />
-                    }
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-            <tr>
-                <td colspan="7">Nenhuma pessoa encontrada.</td>
-            </tr>
-        </ng-template>
-    </p-table>
+                    <td>{{ pessoa.cargoNome ?? '—' }}</td>
+                    <td>{{ rotuloPerfil(pessoa.perfil) }}</td>
+                    <td>
+                        @if (pessoa.aprovadoEm === null && pessoa.status !== 'REJEITADO') {
+                        <p-tag value="Aguardando" severity="warn" />
+                        } @else {
+                        <p-tag [value]="rotuloSituacao(pessoa.status)" [severity]="severityStatus(pessoa.status)" />
+                        }
+                    </td>
+                    <td>
+                        @if (podeGerenciar(pessoa)) {
+                        <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrir(pessoa)"
+                            [pTooltip]="pessoa.aprovadoEm === null ? 'Aprovar cadastro' : 'Editar pessoa'"
+                            tooltipPosition="top" />
+                        }
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7">
+              <div class="vazio">
+                @if (filtrosAtivos()) {
+                  <strong>Nenhuma pessoa com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros para ver tudo de novo.
+                  <p-button class="vazio__acao" label="Limpar filtros" icon="pi pi-filter-slash" severity="secondary"
+                    [outlined]="true" (onClick)="limparFiltros()" />
+                } @else {
+                  <strong>Nenhuma pessoa encontrada</strong>
+                  Novos cadastros aparecem em "Aguardando aprovação".
+                }
+              </div>
+            </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+  </section>
 </div>
 
 <p-dialog [(visible)]="dialogEdicao" header="Editar pessoa" [modal]="true" [style]="{ width: '440px' }">
@@ -67,7 +103,7 @@
         <small class="dica dica--erro">CPF inválido.</small>
         }
 
-        <label for="ed-area">Área</label>
+        <label for="ed-area">Equipe</label>
         <p-select inputId="ed-area" formControlName="areaId" [options]="areas.value() ?? []" optionLabel="nome"
             optionValue="id" placeholder="Selecione" />
 
@@ -79,7 +115,7 @@
         <p-select inputId="ed-perfil" formControlName="perfil" [options]="perfisDisponiveis()" optionLabel="label"
             optionValue="value" />
 
-        <label for="ed-referencia">Referência de equipe da área</label>
+        <label for="ed-referencia">Referência da equipe</label>
         <p-select inputId="ed-referencia" formControlName="referenciaAreaId" [options]="areas.value() ?? []"
             optionLabel="nome" optionValue="id" placeholder="Nenhuma" [showClear]="true" />
 
@@ -128,7 +164,7 @@
             optionValue="value" placeholder="Selecione" />
 
         <label for="ap-area">
-            Área
+            Equipe
             @if (ajustado('areaId')) { <span class="ajustado">ajustado</span> }
         </label>
         <p-select inputId="ap-area" formControlName="areaId" [options]="areas.value() ?? []" optionLabel="nome"

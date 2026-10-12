@@ -26,7 +26,7 @@
       <h2>Atalhos</h2>
       <div class="atalhos">
         @if (ehVisualizador()) {
-          <p-button label="Ver demandas da diretoria" severity="secondary" (onClick)="irParaDemandas('DIRETORIA')" />
+          <p-button label="Ver demandas do núcleo" severity="secondary" (onClick)="irParaDemandas('DIRETORIA')" />
         } @else {
           <p-button label="Minhas demandas" severity="secondary" (onClick)="irParaDemandas('MINHAS')" />
         }
@@ -84,7 +84,7 @@
         <p-table [value]="d.porArea" dataKey="areaId" [stripedRows]="true">
           <ng-template pTemplate="header">
             <tr>
-              <th>Área</th><th>Pessoas</th><th>Demandas ativas</th><th>Atividades no mês</th>
+              <th>Equipe</th><th>Pessoas</th><th>Demandas ativas</th><th>Atividades no mês</th>
               <th>Atrasadas</th><th>Valor no mês</th>
             </tr>
           </ng-template>
@@ -108,7 +108,7 @@
         <p-table [value]="d.porPessoa" dataKey="pessoaId" [stripedRows]="true">
           <ng-template pTemplate="header">
             <tr>
-              <th>Pessoa</th><th>Área</th><th>Diretoria</th><th>Demandas ativas</th>
+              <th>Pessoa</th><th>Equipe</th><th>Núcleo</th><th>Demandas ativas</th>
               <th>Atividades no mês</th><th>Valor no mês</th>
             </tr>
           </ng-template>

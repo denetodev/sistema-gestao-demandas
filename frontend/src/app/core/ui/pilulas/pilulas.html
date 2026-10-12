@@ -1,0 +1,11 @@
+<div class="pilulas" role="radiogroup" [attr.aria-label]="descricao()">
+  @for (opcao of opcoes(); track opcao.valor) {
+    <button type="button" class="pilula" role="radio" [class.pilula--ativa]="opcao.valor === valor()"
+      [attr.aria-checked]="opcao.valor === valor()" (click)="escolher(opcao.valor)">
+      <span>{{ opcao.rotulo }}</span>
+      @if (opcao.detalhe) {
+        <span class="pilula__detalhe">{{ opcao.detalhe }}</span>
+      }
+    </button>
+  }
+</div>

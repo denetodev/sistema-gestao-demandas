@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Demanda, CriarDemandaPayload, EscopoDemanda, DemandaFiltro } from './demanda.model';
+import { Demanda, CriarDemandaPayload, DemandaFiltro, FILTRO_PADRAO } from './demanda.model';
 import { Pagina } from '../../../core/http/pagina.model';
 
 @Injectable({ providedIn: 'root' })
@@ -9,7 +9,7 @@ export class DemandaService {
   #http = inject(HttpClient);
   #base = `${environment.apiUrl}/demandas`;
 
-  filtro = signal<DemandaFiltro>({ escopo: 'MINHAS', page: 0, size: 20 });
+  filtro = signal<DemandaFiltro>({ ...FILTRO_PADRAO });
 
   listar = httpResource<Pagina<Demanda>>(() => {
     const f = this.filtro();
@@ -19,6 +19,10 @@ export class DemandaService {
         escopo: f.escopo,
         page: f.page,
         size: f.size,
+        ...(f.busca ? { busca: f.busca } : {}),
+        ...(f.status ? { status: f.status } : {}),
+        ...(f.diretoriaId ? { diretoriaId: f.diretoriaId } : {}),
+        ...(f.areaId ? { areaId: f.areaId } : {}),
         ...(f.sort ? { sort: f.sort } : {}),
       },
     };

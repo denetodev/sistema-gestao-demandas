@@ -180,7 +180,7 @@ function compararPorCampo(a: any, b: any, campo: string): number {
 function responderDemandas(req: HttpRequest<unknown>) {
   const escopo = req.params.get('escopo') ?? 'MINHAS';
   const page = Number(req.params.get('page') ?? 0);
-  const size = Number(req.params.get('size') ?? 20);
+  const size = Number(req.params.get('size') ?? 10);
   const sort = req.params.get('sort');
 
   let filtradas = TODAS_DEMANDAS;
@@ -192,6 +192,18 @@ function responderDemandas(req: HttpRequest<unknown>) {
     filtradas = TODAS_DEMANDAS.filter((d) => d.diretoriaId === PESSOA_ATUAL.diretoriaId);
   }
   // TODAS: sem filtro
+
+  // busca, situação, núcleo e equipe só estreitam o escopo (como na API)
+  const semAcento = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  const busca = req.params.get('busca');
+  if (busca) {
+    const q = semAcento(busca);
+    filtradas = filtradas.filter((d: any) => semAcento(d.titulo + ' ' + (d.codigo ?? '')).includes(q));
+  }
+  const status = req.params.get('status');
+  if (status) filtradas = filtradas.filter((d: any) => d.status === status);
+  const nucleo = req.params.get('diretoriaId');
+  if (nucleo) filtradas = filtradas.filter((d: any) => d.diretoriaId === nucleo);
 
   const [campoOrdenacao, direcao] = (sort ?? 'dataCriacao,desc').split(',');
   filtradas = [...filtradas].sort((a, b) =>

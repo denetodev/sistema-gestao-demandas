@@ -463,3 +463,54 @@ button,
     display: none;
   }
 }
+
+/* ==========================================================================
+   Barra de filtros das listas (pílulas, busca e selects) e tabela em cartão
+   ========================================================================== */
+.filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--sgd-borda);
+}
+
+.filtros__linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.filtros__busca {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+.filtros__campo {
+  flex: 0 1 190px;
+  min-width: 150px;
+}
+
+.tabela-rolagem {
+  overflow-x: auto;
+}
+
+.tabela-rolagem .p-datatable-table {
+  min-width: 760px;
+}
+
+.col-numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.col-acoes {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.vazio__acao {
+  display: inline-block;
+  margin-top: 0.9rem;
+}

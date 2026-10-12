@@ -1,8 +1,4 @@
-<app-barra-pagina titulo="Demandas">
-  <ng-container inicio>
-    <p-selectbutton [options]="escopos()" optionLabel="label" optionValue="value" [allowEmpty]="false"
-                    [ngModel]="filtro().escopo" (ngModelChange)="mudarEscopo($event)" />
-  </ng-container>
+<app-barra-pagina titulo="Demandas" subtitulo="Acompanhe o que a sua equipe está produzindo, do pedido à entrega.">
   <ng-container fim>
     @if (auth.podeEditar()) {
       <p-button icon="pi pi-plus" label="Nova demanda" (onClick)="abrirNovo()" />
@@ -12,67 +8,126 @@
 
 <div class="pagina-corpo">
   <app-ajuda chave="demandas" />
-  <p-table
-    [value]="demandas.value()?.content ?? []"
-    [loading]="demandas.isLoading()"
-    [lazy]="true"
-    (onLazyLoad)="aoCarregar($event)"
-    [paginator]="true"
-    [rows]="20"
-    [totalRecords]="demandas.value()?.totalElements ?? 0"
-    [rowsPerPageOptions]="[20, 50, 100]"
-    sortMode="single"
-    dataKey="id"
-    [stripedRows]="true"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th pSortableColumn="titulo">Título <p-sortIcon field="titulo" /></th>
-        <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
-        <th pSortableColumn="prioridade">Prioridade <p-sortIcon field="prioridade" /></th>
-        <th>Diretoria</th>
-        <th pSortableColumn="dataPrazo">Prazo <p-sortIcon field="dataPrazo" /></th>
-        <th>Valor</th>
-        <th>Ações</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-demanda>
-      <tr>
-        <td><a [routerLink]="['/demandas', demanda.id]">{{ demanda.titulo }}</a></td>
-        <td><p-tag [value]="demanda.status" [severity]="severityStatus(demanda.status)" /></td>
-        <td>
-          <p-tag [value]="demanda.prioridade" [severity]="severityPrioridade(demanda.prioridade)" />
-        </td>
-        <td>{{ demanda.diretoriaNome }}</td>
-        <td>{{ demanda.dataPrazo | date: 'dd/MM/yyyy' }}</td>
-        <td>{{ demanda.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
-        <td>
-          @if (demanda.podeAlterar) {
-            <p-button
-              [text]="true"
-              icon="pi pi-pencil"
-              (onClick)="abrirEdicao(demanda)"
-              pTooltip="Editar"
-              tooltipPosition="top"
-            />
-            <p-button
-              [text]="true"
-              severity="danger"
-              icon="pi pi-times-circle"
-              (onClick)="confirmarExclusao(demanda)"
-              pTooltip="Cancelar demanda"
-              tooltipPosition="top"
-            />
-          }
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="8">Nenhuma demanda encontrada.</td>
-      </tr>
-    </ng-template>
-  </p-table>
+
+  <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <app-pilulas descricao="O que mostrar na lista" [opcoes]="opcoesEscopo()" [valor]="filtro().escopo"
+        (valorChange)="mudar({ escopo: $any($event) })" />
+
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por título ou código..." descricao="Buscar demandas"
+          [valor]="filtro().busca" (valorChange)="mudar({ busca: $event })" />
+
+        <p-select class="filtros__campo" [options]="opcoesStatus" optionLabel="rotulo" optionValue="valor"
+          placeholder="Situação" [showClear]="true" [ngModel]="filtro().status || null"
+          (ngModelChange)="mudar({ status: $event ?? '' })" ariaLabel="Filtrar por situação" />
+
+        @if (ehGestao()) {
+          <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
+            placeholder="Núcleo" [showClear]="true" [ngModel]="filtro().diretoriaId || null"
+            (ngModelChange)="mudar({ diretoriaId: $event ?? '' })" ariaLabel="Filtrar por núcleo" />
+          <p-select class="filtros__campo" [options]="opcoesEquipe()" optionLabel="rotulo" optionValue="valor"
+            placeholder="Equipe" [showClear]="true" [filter]="true" filterBy="rotulo" [ngModel]="filtro().areaId || null"
+            (ngModelChange)="mudar({ areaId: $event ?? '' })" ariaLabel="Filtrar por equipe" />
+        }
+
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
+            (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
+
+    <div class="tabela-rolagem">
+      <p-table
+        [value]="demandas.value()?.content ?? []"
+        [loading]="demandas.isLoading()"
+        [lazy]="true"
+        (onLazyLoad)="aoCarregar($event)"
+        [paginator]="true"
+        [rows]="filtro().size"
+        [first]="filtro().page * filtro().size"
+        [totalRecords]="demandas.value()?.totalElements ?? 0"
+        [rowsPerPageOptions]="[10, 30, 50, 100]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} demandas"
+        sortMode="single"
+        sortField="dataCriacao"
+        [sortOrder]="-1"
+        dataKey="id"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="titulo">Demanda <p-sortIcon field="titulo" /></th>
+            <th pSortableColumn="status">Situação <p-sortIcon field="status" /></th>
+            <th pSortableColumn="prioridade">Prioridade <p-sortIcon field="prioridade" /></th>
+            <th>Núcleo</th>
+            <th pSortableColumn="dataCriacao">Criada em <p-sortIcon field="dataCriacao" /></th>
+            <th pSortableColumn="dataPrazo">Prazo <p-sortIcon field="dataPrazo" /></th>
+            <th class="col-numero">Valor</th>
+            <th class="col-acoes">Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-demanda>
+          @let t = apresentar(demanda);
+          <tr>
+            <td class="col-titulo">
+              <a [routerLink]="['/demandas', demanda.id]" class="titulo-link">
+                @if (t.codigo) {
+                  <span class="codigo-chip">{{ t.codigo }}</span>
+                }
+                <span>{{ t.titulo }}</span>
+              </a>
+              @if (demanda.campanhaNome) {
+                <span class="sub"><i class="pi pi-megaphone"></i> {{ demanda.campanhaNome }}</span>
+              }
+            </td>
+            <td><p-tag [value]="rotuloStatus[demanda.status]" [severity]="severityStatus(demanda.status)" /></td>
+            <td><p-tag [value]="rotuloPrioridade[demanda.prioridade]" [severity]="severityPrioridade(demanda.prioridade)" /></td>
+            <td>{{ demanda.diretoriaNome }}</td>
+            <td class="numero">{{ demanda.dataCriacao | date: 'dd/MM/yyyy' }}</td>
+            <td class="numero" [class.atrasada]="atrasada(demanda)">
+              {{ demanda.dataPrazo | date: 'dd/MM/yyyy' }}
+              @if (atrasada(demanda)) {
+                <span class="sub sub--atraso">atrasada</span>
+              }
+            </td>
+            <td class="col-numero numero">{{ demanda.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+            <td class="col-acoes">
+              @if (demanda.podeAlterar) {
+                <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demanda)" pTooltip="Editar"
+                  tooltipPosition="top" ariaLabel="Editar demanda" />
+              }
+              @if (demanda.podeAlterar && ehGestao() && demanda.status !== 'CANCELADA') {
+                <p-button [text]="true" severity="danger" icon="pi pi-times-circle" (onClick)="confirmarExclusao(demanda)"
+                  pTooltip="Cancelar demanda" tooltipPosition="top" ariaLabel="Cancelar demanda" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8">
+              <div class="vazio">
+                @if (filtrosAtivos()) {
+                  <strong>Nenhuma demanda com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros para ver tudo de novo.
+                  <p-button class="vazio__acao" label="Limpar filtros" icon="pi pi-filter-slash" severity="secondary"
+                    [outlined]="true" (onClick)="limparFiltros()" />
+                } @else {
+                  <strong>Nenhuma demanda por aqui ainda</strong>
+                  Quando você participar de uma demanda, ela aparece nesta lista.
+                  @if (auth.podeEditar()) {
+                    <p-button class="vazio__acao" label="Nova demanda" icon="pi pi-plus" (onClick)="abrirNovo()" />
+                  }
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
 </div>
 
 <app-demanda-form

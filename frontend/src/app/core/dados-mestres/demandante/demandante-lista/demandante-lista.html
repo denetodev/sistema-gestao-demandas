@@ -1,4 +1,4 @@
-<app-barra-pagina titulo="Demandantes">
+<app-barra-pagina titulo="Demandantes" subtitulo="Quem pede o trabalho: pessoas, áreas, unidades ou gente de fora.">
   <ng-container fim>
     @if (auth.temPerfil('ADMIN', 'GESTOR')) {
       <p-button icon="pi pi-plus" label="Novo demandante" (onClick)="abrirNovo()" />
@@ -8,47 +8,78 @@
 
 <div class="pagina-corpo">
   <app-ajuda chave="demandantes" />
-  <p-table
-    [value]="demandantes.value() ?? []"
-    [loading]="demandantes.isLoading()"
-    [paginator]="true"
-    [rows]="10"
-    dataKey="id"
-    [stripedRows]="true"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
-        <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" /></th>
-        <th>Diretoria</th>
-        <th>Situação</th>
-        <th>Ações</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-demandante>
-      <tr>
-        <td>{{ demandante.nome }}</td>
-        <td>{{ demandante.tipo }}</td>
-        <td>{{ demandante.diretoriaNome ?? '—' }}</td>
-        <td>
-          <p-tag
-            [value]="demandante.ativo ? 'Ativo' : 'Inativo'"
-            [severity]="demandante.ativo ? 'success' : 'secondary'"
-          />
-        </td>
-        <td>
-          @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-            <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demandante)" />
-          }
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="5">Nenhum demandante cadastrado.</td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por nome ou observação..." descricao="Buscar demandantes"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+        <p-select class="filtros__campo" [options]="opcoesTipo" optionLabel="label" optionValue="value"
+          placeholder="Tipo" [showClear]="true" [ngModel]="tipoFiltro()"
+          (ngModelChange)="tipoFiltro.set($event)" ariaLabel="Filtrar por tipo" />
+        <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Núcleo" [showClear]="true" [ngModel]="nucleoFiltro()"
+          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por núcleo" />
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
+            (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <p-table
+        [value]="filtrados()"
+        [loading]="demandantes.isLoading()"
+        [paginator]="true"
+        [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} demandantes"
+        dataKey="id"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+            <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" /></th>
+            <th>Núcleo</th>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-demandante>
+          <tr>
+            <td>{{ demandante.nome }}</td>
+            <td>{{ rotuloTipo(demandante.tipo) }}</td>
+            <td>{{ demandante.diretoriaNome ?? '—' }}</td>
+            <td>
+              <p-tag
+                [value]="demandante.ativo ? 'Ativo' : 'Inativo'"
+                [severity]="demandante.ativo ? 'success' : 'secondary'"
+              />
+            </td>
+            <td>
+              @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+                <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demandante)" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="vazio">
+                @if (filtrosAtivos()) {
+                  <strong>Nenhum demandante com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros para ver tudo de novo.
+                  <p-button class="vazio__acao" label="Limpar filtros" icon="pi pi-filter-slash" severity="secondary"
+                    [outlined]="true" (onClick)="limparFiltros()" />
+                } @else {
+                  <strong>Nenhum demandante cadastrado</strong>
+                  Cadastre quem costuma pedir trabalho para escolher nas demandas.
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
 </div>
 
 <p-dialog
@@ -69,7 +100,7 @@
       placeholder="Selecione"
     />
 
-    <label for="diretoria">Diretoria</label>
+    <label for="diretoria">Núcleo</label>
     <p-select
       inputId="diretoria"
       formControlName="diretoriaId"
