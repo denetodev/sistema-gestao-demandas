@@ -74,6 +74,7 @@ class MatrizDePermissoesTest {
     @MockitoBean AreaService areaService;
     @MockitoBean AtividadeService atividadeService;
     @MockitoBean CampanhaService campanhaService;
+    @MockitoBean CampanhaResumoService campanhaResumoService;
     @MockitoBean CargoService cargoService;
     @MockitoBean DashboardService dashboardService;
     @MockitoBean DemandaService demandaService;
@@ -118,7 +119,7 @@ class MatrizDePermissoesTest {
 
         // leitura: todo vinculado (inclusive Visualizador)
         for (String caminho : List.of("/demandas", "/demandas/" + ID, "/atividades", "/pecas", "/evidencias",
-                "/projetos", "/campanhas", "/demandantes", "/tipos-peca", "/tipos-atividade", "/diretorias",
+                "/projetos", "/campanhas", "/campanhas/resumo", "/campanhas/" + ID + "/resumo", "/demandantes", "/tipos-peca", "/tipos-atividade", "/diretorias",
                 "/pessoas", "/dashboard", "/relatorios/2026-10", "/demandas/" + ID + "/participantes")) {
             c.add(new Caso(G, caminho, TODOS_VINCULADOS));
         }

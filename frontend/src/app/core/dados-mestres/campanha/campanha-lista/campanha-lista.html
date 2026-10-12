@@ -17,16 +17,22 @@
                 <th>Projeto</th>
                 <th pSortableColumn="dataInicio">Início <p-sortIcon field="dataInicio" /></th>
                 <th>Fim</th>
+                <th>Demandas</th>
+                <th>Pessoas</th>
+                <th>Valor gerado</th>
                 <th>Ações</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-campanha>
             <tr>
-                <td>{{ campanha.nome }}</td>
+                <td><a [routerLink]="['/campanhas', campanha.id]">{{ campanha.nome }}</a></td>
                 <td>{{ campanha.codigo ?? '—' }}</td>
                 <td>{{ campanha.projetoNome ?? '—' }}</td>
                 <td>{{ campanha.dataInicio | date:'dd/MM/yyyy' }}</td>
                 <td>{{ campanha.dataFim | date:'dd/MM/yyyy' }}</td>
+                <td>{{ resumo(campanha.id)?.demandasAtivas ?? 0 }}</td>
+                <td>{{ resumo(campanha.id)?.pessoas ?? 0 }}</td>
+                <td>{{ (resumo(campanha.id)?.valor ?? 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
                 <td>
                     @if (auth.podeEditar()) {
                     <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(campanha)" />
@@ -40,7 +46,7 @@
         </ng-template>
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td colspan="6">Nenhuma campanha cadastrada.</td>
+                <td colspan="9">Nenhuma campanha cadastrada.</td>
             </tr>
         </ng-template>
     </p-table>
