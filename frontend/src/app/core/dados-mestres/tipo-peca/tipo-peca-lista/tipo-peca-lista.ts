@@ -62,7 +62,7 @@ export class TipoPecaLista {
   busca = signal('');
   equipeFiltro = signal('');
 
-  /** Uma pílula por equipe que tem tipos de peça; se o nome se repete em núcleos diferentes, o núcleo vai junto. */
+  /** Uma pílula por equipe que tem tipos de peça; se o nome se repete em diretorias diferentes, a diretoria vai junto. */
   opcoesEquipe = computed<OpcaoPilula[]>(() => {
     const doTipos = new Map<string, string>();
     (this.tipos.value() ?? []).forEach((t) => doTipos.set(t.areaId, t.areaNome));

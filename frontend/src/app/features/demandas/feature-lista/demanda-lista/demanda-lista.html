@@ -24,8 +24,8 @@
 
         @if (ehGestao()) {
           <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
-            placeholder="Núcleo" [showClear]="true" [ngModel]="filtro().diretoriaId || null"
-            (ngModelChange)="mudar({ diretoriaId: $event ?? '' })" ariaLabel="Filtrar por núcleo" />
+            placeholder="Diretoria" [showClear]="true" [ngModel]="filtro().diretoriaId || null"
+            (ngModelChange)="mudar({ diretoriaId: $event ?? '' })" ariaLabel="Filtrar por diretoria" />
           <p-select class="filtros__campo" [options]="opcoesEquipe()" optionLabel="rotulo" optionValue="valor"
             placeholder="Equipe" [showClear]="true" [filter]="true" filterBy="rotulo" [ngModel]="filtro().areaId || null"
             (ngModelChange)="mudar({ areaId: $event ?? '' })" ariaLabel="Filtrar por equipe" />
@@ -61,7 +61,7 @@
             <th pSortableColumn="titulo">Demanda <p-sortIcon field="titulo" /></th>
             <th pSortableColumn="status">Situação <p-sortIcon field="status" /></th>
             <th pSortableColumn="prioridade">Prioridade <p-sortIcon field="prioridade" /></th>
-            <th>Núcleo</th>
+            <th>Diretoria</th>
             <th pSortableColumn="dataCriacao">Criada em <p-sortIcon field="dataCriacao" /></th>
             <th pSortableColumn="dataPrazo">Prazo <p-sortIcon field="dataPrazo" /></th>
             <th class="col-numero">Valor</th>

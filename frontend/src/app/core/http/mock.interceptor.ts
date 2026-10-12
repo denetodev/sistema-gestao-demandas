@@ -193,7 +193,7 @@ function responderDemandas(req: HttpRequest<unknown>) {
   }
   // TODAS: sem filtro
 
-  // busca, situação, núcleo e equipe só estreitam o escopo (como na API)
+  // busca, situação, diretoria e equipe só estreitam o escopo (como na API)
   const semAcento = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
   const busca = req.params.get('busca');
   if (busca) {
