@@ -154,6 +154,7 @@ function gerarDemandas(qtd: number) {
       dataEntregaReal: concluida ? data(criacao - 10) : null,
       valor,
       valorCalculado: valor === null ? null : Math.round(valor * 1.15),
+      podeAlterar: true,
       observacoes: null,
       createdAt: '',
       updatedAt: '',

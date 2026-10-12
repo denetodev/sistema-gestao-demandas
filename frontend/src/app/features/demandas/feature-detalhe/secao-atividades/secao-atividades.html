@@ -16,7 +16,7 @@
         <td>{{ a.dataRealizacao ?? '—' }}</td>
         <td>{{ a.descricao ?? '—' }}</td>
         <td class="acoes">
-          @if (editavel()) {
+          @if (editavel() && podeMexer(a.pessoaId)) {
             <p-button [text]="true" icon="pi pi-pencil" (onClick)="editar(a)" />
             <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(a)" />
           }

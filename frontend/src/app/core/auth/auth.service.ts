@@ -6,6 +6,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase-client';
 import { environment } from '../../../environments/environment';
 import { PessoaMe, PessoaMeResponse, Perfil } from './auth.model';
+import { podeMexerNoItem as podeMexerNoItemRegra } from './pode-mexer-no-item';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -53,6 +54,14 @@ export class AuthService {
   podeEditar(): boolean {
     const perfil = this.pessoa()?.perfil;
     return !!perfil && perfil !== 'VISUALIZADOR';
+  }
+
+  /**
+   * Atividade ou peça: o dono, Gestor, Admin ou quem é Referência de equipe (o backend confere a área).
+   * Só esconde botão; a barreira de verdade é o backend.
+   */
+  podeMexerNoItem(pessoaIdDoItem: string | null): boolean {
+    return podeMexerNoItemRegra(this.pessoa(), pessoaIdDoItem);
   }
 
   constructor() {

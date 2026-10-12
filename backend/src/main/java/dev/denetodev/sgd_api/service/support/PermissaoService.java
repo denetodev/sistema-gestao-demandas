@@ -10,6 +10,7 @@ import dev.denetodev.sgd_api.repository.PessoaDemandaRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +34,18 @@ public class PermissaoService {
         if (ehAdminOuGestor(usuario)) {
             return true;
         }
-        List<PessoaDemanda> time = pessoaDemandaRepository.findByDemandaId(demandaId).stream()
+        return podeAlterarDemanda(usuario, pessoaDemandaRepository.findByDemandaId(demandaId));
+    }
+
+    /** Mesma regra, com o time da demanda já carregado (evita uma consulta por demanda ao listar). */
+    public boolean podeAlterarDemanda(Pessoa usuario, Collection<PessoaDemanda> vinculos) {
+        if (usuario.getPerfil() == PerfilPessoa.VISUALIZADOR) {
+            return false;
+        }
+        if (ehAdminOuGestor(usuario)) {
+            return true;
+        }
+        List<PessoaDemanda> time = vinculos.stream()
                 .filter(v -> v.getDataSaida() == null)
                 .toList();
         boolean participa = time.stream().anyMatch(v -> v.getPessoa().getId().equals(usuario.getId()));

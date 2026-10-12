@@ -18,7 +18,7 @@
         <td>{{ p.valorUnitario | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
         <td>{{ p.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
         <td class="acoes">
-          @if (editavel()) {
+          @if (editavel() && podeMexer(p.pessoaId)) {
             <p-button [text]="true" icon="pi pi-pencil" (onClick)="editar(p)" />
             <p-button [text]="true" severity="danger" icon="pi pi-times" (onClick)="remover(p)" />
           }

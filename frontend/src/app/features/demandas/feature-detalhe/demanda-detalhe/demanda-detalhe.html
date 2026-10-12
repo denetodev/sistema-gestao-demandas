@@ -3,10 +3,12 @@
     <a routerLink="/demandas" class="voltar"><i class="pi pi-arrow-left"></i> Voltar para Demandas</a>
   </ng-container>
   <ng-container fim>
-    @if (demanda.hasValue() && auth.podeEditar() && !cancelada()) {
+    @if (demanda.value()?.podeAlterar && !cancelada()) {
       <p-button icon="pi pi-pencil" label="Editar" severity="secondary" (onClick)="dialogAberto.set(true)" />
-      <p-button icon="pi pi-times-circle" label="Cancelar demanda" severity="danger" [outlined]="true"
-                (onClick)="cancelar()" />
+      @if (podeCancelar()) {
+        <p-button icon="pi pi-times-circle" label="Cancelar demanda" severity="danger" [outlined]="true"
+                  (onClick)="cancelar()" />
+      }
     }
   </ng-container>
 </app-barra-pagina>
@@ -20,6 +22,12 @@
       <p-message severity="info">Visualizador: tudo em somente leitura.</p-message>
     } @else if (cancelada()) {
       <p-message severity="warn">Demanda cancelada: somente leitura.</p-message>
+    } @else if (!d.podeAlterar) {
+      <p-message severity="info">
+        <span>Você não participa desta demanda, então ela está só para consulta.</span>
+        <p-button label="Participar desta demanda" icon="pi pi-user-plus" size="small" [text]="true"
+                  (onClick)="participar()" />
+      </p-message>
     }
 
     <section class="secao">

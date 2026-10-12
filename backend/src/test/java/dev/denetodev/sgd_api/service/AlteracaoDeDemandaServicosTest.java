@@ -19,12 +19,21 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import dev.denetodev.sgd_api.dto.response.DemandaResponse;
+import dev.denetodev.sgd_api.entity.EscopoListagem;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -135,5 +144,47 @@ class AlteracaoDeDemandaServicosTest {
         if (erro instanceof AccessDeniedException) {
             throw (AccessDeniedException) erro;
         }
+    }
+
+    // ---- campo podeAlterar (a interface usa para esconder ou mostrar os botões) ----
+
+    private Demanda demandaComId() {
+        Diretoria diretoria = mock(Diretoria.class);
+        when(diretoria.getId()).thenReturn(UUID.randomUUID());
+        Demanda d = spy(new Demanda("Campanha X", diretoria));
+        doReturn(demandaId).when(d).getId();
+        when(demandaRepository.findById(demandaId)).thenReturn(Optional.of(d));
+        return d;
+    }
+
+    @Test
+    void detalheDizQueQuemEstaForaDoTimeNaoPodeAlterar() {
+        demandaComId();
+        assertFalse(demandaService.buscarPorId(jwt, demandaId).podeAlterar());
+    }
+
+    @Test
+    void detalheDizQueParticipantePodeAlterar() {
+        Demanda d = demandaComId();
+        when(vinculos.findByDemandaId(demandaId)).thenReturn(List.of(new PessoaDemanda(ana, d)));
+        assertTrue(demandaService.buscarPorId(jwt, demandaId).podeAlterar());
+    }
+
+    @Test
+    void listaMarcaPodeAlterarSoNasDemandasDoTime() {
+        Demanda d = demandaComId();
+        Diretoria dirDaAna = mock(Diretoria.class);
+        when(dirDaAna.getId()).thenReturn(UUID.randomUUID());
+        when(ana.getArea().getDiretoria()).thenReturn(dirDaAna);
+        when(demandaRepository.findByDiretoriaId(any(), any()))
+                .thenReturn(new PageImpl<>(List.of(d), PageRequest.of(0, 20), 1));
+
+        when(vinculos.findByDemandaIdIn(any())).thenReturn(List.of());
+        Page<DemandaResponse> foraDoTime = demandaService.listarComEscopo(jwt, EscopoListagem.DIRETORIA, PageRequest.of(0, 20));
+        assertFalse(foraDoTime.getContent().get(0).podeAlterar());
+
+        when(vinculos.findByDemandaIdIn(any())).thenReturn(List.of(new PessoaDemanda(ana, d)));
+        Page<DemandaResponse> noTime = demandaService.listarComEscopo(jwt, EscopoListagem.DIRETORIA, PageRequest.of(0, 20));
+        assertTrue(noTime.getContent().get(0).podeAlterar());
     }
 }

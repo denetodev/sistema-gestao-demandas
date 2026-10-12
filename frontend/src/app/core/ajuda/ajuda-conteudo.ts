@@ -102,7 +102,7 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
       {
         pergunta: 'Quem pode alterar esta demanda?',
         resposta:
-          'Quem participa dela, a Referência da área de alguém do time, o Gestor e o Admin. Isso vale para editar, mudar o status e lançar atividades e peças. Se você precisa mexer e não está no time, peça para um participante ou um Gestor adicionar você em Participantes.',
+          'Quem participa dela, a Referência da área de alguém do time, o Gestor e o Admin. Isso vale para editar, mudar o status e lançar atividades e peças. Se você precisa mexer e não está no time, use o botão "Participar desta demanda" no topo da página.',
       },
       {
         pergunta: 'O que é uma evidência?',

@@ -31,6 +31,7 @@ export class SecaoPecas {
   #service = inject(DemandaItensService);
   #fb = inject(FormBuilder);
   #auth = inject(AuthService);
+  podeMexer = (pessoaId: string | null) => this.#auth.podeMexerNoItem(pessoaId);
 
   tipos = inject(TipoPecaService).listar;
   pessoas = this.#service.pessoas();

@@ -31,6 +31,8 @@ public record DemandaResponse(
         String linkExterno,
         BigDecimal valorCalculado,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
+        OffsetDateTime updatedAt,
+        /** A pessoa logada pode alterar esta demanda (participa, Referência da área do time, Gestor ou Admin). */
+        boolean podeAlterar
 ) {
 }
