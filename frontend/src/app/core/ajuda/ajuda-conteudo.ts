@@ -100,6 +100,11 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
           'Mostram quem está envolvido e com qual responsabilidade. Quem cria a demanda entra como Responsável principal. Só o Responsável principal, o Gestor ou o Admin cancelam a demanda.',
       },
       {
+        pergunta: 'Quem pode alterar esta demanda?',
+        resposta:
+          'Quem participa dela, a Referência da área de alguém do time, o Gestor e o Admin. Isso vale para editar, mudar o status e lançar atividades e peças. Se você precisa mexer e não está no time, peça para um participante ou um Gestor adicionar você em Participantes.',
+      },
+      {
         pergunta: 'O que é uma evidência?',
         resposta:
           'A prova do que foi feito: uma imagem (JPEG ou PNG, até 5 MB) ou um link para o material. Anexe em uma atividade ou peça para o trabalho poder ser conferido depois.',

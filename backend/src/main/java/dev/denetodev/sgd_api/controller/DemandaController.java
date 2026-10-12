@@ -54,8 +54,12 @@ public class DemandaController {
     }
 
     @PutMapping("/{id}")
-    public DemandaResponse atualizar(@PathVariable UUID id, @Valid @RequestBody DemandaRequest request) {
-        return demandaService.atualizar(id, request);
+    public DemandaResponse atualizar(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID id,
+            @Valid @RequestBody DemandaRequest request
+    ) {
+        return demandaService.atualizar(jwt, id, request);
     }
 
     @PatchMapping("/{id}/status")
