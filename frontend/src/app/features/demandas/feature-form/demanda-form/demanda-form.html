@@ -6,9 +6,11 @@
 >
   <form [formGroup]="form" (ngSubmit)="salvar()" class="demanda-form">
     <label for="titulo">Título</label>
+    <small class="dica">Um nome que outra pessoa entenda sem abrir a demanda: o que é e, se couber, para quem.</small>
     <input pInputText id="titulo" formControlName="titulo" />
 
     <label for="descricao">Descrição</label>
+    <small class="dica">O que foi pedido, em poucas linhas.</small>
     <textarea pTextarea id="descricao" formControlName="descricao" rows="2"></textarea>
 
     <label for="diretoria">Diretoria</label>
@@ -16,31 +18,38 @@
               optionLabel="nome" optionValue="id" placeholder="Selecione" />
 
     <label for="demandante">Demandante</label>
+    <small class="dica">Quem pediu o trabalho.</small>
     <p-select inputId="demandante" formControlName="demandanteId" [options]="opcoesDemandante()"
               optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Selecione" />
 
     <label for="projeto">Projeto</label>
+    <small class="dica">Opcional. O objetivo maior ao qual esta demanda pertence.</small>
     <p-select inputId="projeto" formControlName="projetoId" [options]="opcoesProjeto()"
               optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Nenhum" />
 
     <label for="campanha">Campanha</label>
+    <small class="dica">Opcional. A ação que reúne esta e outras demandas, para ver o conjunto depois.</small>
     <p-select inputId="campanha" formControlName="campanhaId" [options]="opcoesCampanha()"
               optionLabel="nome" optionValue="id" [showClear]="true"
               [placeholder]="form.controls.projetoId.value ? 'Nenhuma' : 'Escolha um projeto antes'" />
 
     <label for="prioridade">Prioridade</label>
+    <small class="dica">Urgente é o que precisa sair antes de todo o resto.</small>
     <p-select inputId="prioridade" formControlName="prioridade" [options]="opcoesPrioridade" />
 
     <label for="prazo">Prazo</label>
+    <small class="dica">Data combinada de entrega. Sem prazo, a demanda nunca aparece como atrasada.</small>
     <p-datepicker inputId="prazo" formControlName="dataPrazo" dateFormat="dd/mm/yy" [showIcon]="true" />
 
     <label for="linkExterno">Link externo (opcional)</label>
+    <small class="dica">Onde está o acompanhamento ou o material (Planner, ClickUp, pasta).</small>
     <input pInputText id="linkExterno" formControlName="linkExterno" placeholder="URL do Planner ou ClickUp" />
     @if (form.controls.linkExterno.invalid) {
       <small class="erro-campo">Informe uma URL começando com http:// ou https://</small>
     }
 
     <label for="observacoes">Observações</label>
+    <small class="dica">Combinados, restrições ou qualquer detalhe que não coube nos outros campos.</small>
     <textarea pTextarea id="observacoes" formControlName="observacoes" rows="3"></textarea>
 
     @if (erro()) {

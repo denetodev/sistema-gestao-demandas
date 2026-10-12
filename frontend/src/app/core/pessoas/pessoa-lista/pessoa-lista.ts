@@ -22,9 +22,11 @@ import { cpfValidator, formatarCpf } from '../../../core/util/cpf';
 import type { Pessoa, StatusPessoa } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
 
+import { Ajuda } from '../../ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-pessoa-lista',
-  imports: [
+  imports: [Ajuda, 
     ReactiveFormsModule, TableModule, Dialog, SelectButton, InputText, Textarea,
     Select, Button, Message, Tag, Tooltip, BarraPagina, DatePipe, FormsModule
   ],

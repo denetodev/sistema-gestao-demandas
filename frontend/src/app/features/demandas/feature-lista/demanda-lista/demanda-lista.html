@@ -11,6 +11,7 @@
 </app-barra-pagina>
 
 <div class="pagina-corpo">
+  <app-ajuda chave="demandas" />
   <p-table
     [value]="demandas.value()?.content ?? []"
     [loading]="demandas.isLoading()"

@@ -15,11 +15,13 @@ import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
 import { RelatorioService, mesAtual } from '../data-access/relatorio.service';
 import type { ItemAtividade, RelatorioResumo } from '../data-access/relatorio.model';
 
+import { Ajuda } from '../../../core/ajuda/ajuda/ajuda';
+
 const AVULSAS = 'Atividades avulsas (sem demanda)';
 
 @Component({
   selector: 'app-relatorio',
-  imports: [
+  imports: [Ajuda, 
     CurrencyPipe, DatePipe, FormsModule, Button, Select, Checkbox, Textarea, TableModule, Tag, Message,
     BarraPagina,
   ],

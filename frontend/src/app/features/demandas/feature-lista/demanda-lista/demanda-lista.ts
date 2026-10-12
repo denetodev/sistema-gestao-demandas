@@ -14,9 +14,11 @@ import { DemandaForm } from '../../feature-form/demanda-form/demanda-form';
 import { ConfirmationService } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
 
+import { Ajuda } from '../../../../core/ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-demanda-lista',
-  imports: [FormsModule, SelectButton, TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm, RouterLink],
+  imports: [Ajuda, FormsModule, SelectButton, TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm, RouterLink],
   templateUrl: './demanda-lista.html',
   styleUrl: './demanda-lista.scss',
 })

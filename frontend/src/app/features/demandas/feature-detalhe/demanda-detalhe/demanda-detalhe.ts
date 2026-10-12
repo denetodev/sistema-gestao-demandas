@@ -23,9 +23,11 @@ import { SecaoPecas } from '../secao-pecas/secao-pecas';
 import { SecaoAtividades } from '../secao-atividades/secao-atividades';
 import { SecaoEvidencias } from '../secao-evidencias/secao-evidencias';
 
+import { Ajuda } from '../../../../core/ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-demanda-detalhe',
-  imports: [
+  imports: [Ajuda, 
     RouterLink, CurrencyPipe, DatePipe, FormsModule, TableModule, Button, Tag, Select, Message, BarraPagina, DemandaForm,
     SecaoParticipantes, SecaoPecas, SecaoAtividades, SecaoEvidencias,
   ],

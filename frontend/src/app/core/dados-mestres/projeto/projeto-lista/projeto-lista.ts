@@ -16,9 +16,11 @@ import { ProjetoService } from '../projeto.service';
 import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
+import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-projeto-lista',
-  imports: [
+  imports: [Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,

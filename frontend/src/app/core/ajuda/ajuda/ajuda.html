@@ -1,0 +1,15 @@
+<details class="ajuda" [open]="aberta()" (toggle)="alternar($event)">
+  <summary class="ajuda__titulo">
+    <i class="pi pi-question-circle" aria-hidden="true"></i>
+    <span>{{ conteudo().titulo }}</span>
+    <i class="pi pi-chevron-down ajuda__seta" aria-hidden="true"></i>
+  </summary>
+  <dl class="ajuda__lista">
+    @for (item of conteudo().itens; track item.pergunta) {
+      <div class="ajuda__item">
+        <dt>{{ item.pergunta }}</dt>
+        <dd>{{ item.resposta }}</dd>
+      </div>
+    }
+  </dl>
+</details>

@@ -18,9 +18,11 @@ import { TipoPecaService } from '../tipo-peca.service';
 import { CurrencyPipe } from '@angular/common';
 import { ConfirmationService } from 'primeng/api';
 
+import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-tipo-peca-lista',
-  imports: [
+  imports: [Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,

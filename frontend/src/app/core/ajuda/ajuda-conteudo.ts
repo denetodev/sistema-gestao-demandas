@@ -1,0 +1,250 @@
+/**
+ * Textos de ajuda de cada tela, em formato de pergunta e resposta curta.
+ *
+ * É o único lugar para revisar e ajustar a linguagem do sistema: o componente <app-ajuda> só
+ * mostra o que está aqui. Cada tela usa uma chave (ver ChaveAjuda).
+ * Rascunho inicial: o padrão de preenchimento é definido pela equipe, então edite à vontade.
+ */
+
+export interface ItemAjuda {
+  pergunta: string;
+  resposta: string;
+}
+
+export interface Ajuda {
+  /** Título da faixa recolhível. */
+  titulo: string;
+  itens: ItemAjuda[];
+}
+
+export type ChaveAjuda =
+  | 'dashboard'
+  | 'demandas'
+  | 'demanda-detalhe'
+  | 'demandantes'
+  | 'projetos'
+  | 'campanhas'
+  | 'tipos-peca'
+  | 'pessoas'
+  | 'relatorio';
+
+export const AJUDA: Record<ChaveAjuda, Ajuda> = {
+  dashboard: {
+    titulo: 'Como ler este painel?',
+    itens: [
+      {
+        pergunta: 'Quanto trabalho eu registrei ao longo do ano?',
+        resposta:
+          'O mapa de atividades mostra um quadrado por dia. Quanto mais escuro, mais atividades foram registradas naquele dia.',
+      },
+      {
+        pergunta: 'O que é o "valor gerado"?',
+        resposta:
+          'É a soma de quantidade × valor unitário de todas as peças produzidas. É uma referência de mercado (quanto esse trabalho custaria), não é salário nem custo real. Demandas canceladas ficam de fora.',
+      },
+      {
+        pergunta: 'Quando uma demanda conta como atrasada?',
+        resposta:
+          'Quando o prazo já passou e ela ainda não está concluída nem cancelada. Demandas sem prazo nunca aparecem como atrasadas.',
+      },
+      {
+        pergunta: 'Por que vejo só os meus números?',
+        resposta:
+          'O painel respeita o seu perfil. Todo profissional vê os próprios números. Quem é Referência de equipe vê também a equipe da sua área. Gestor e Admin veem por diretoria e por pessoa.',
+      },
+    ],
+  },
+
+  demandas: {
+    titulo: 'Como funcionam as demandas?',
+    itens: [
+      {
+        pergunta: 'O que é uma demanda?',
+        resposta:
+          'Um pedido de trabalho que chegou até você ou sua equipe: um e-mail marketing, um podcast, uma sessão de fotos. Tudo o que você faz (atividades) e entrega (peças) fica registrado dentro de uma demanda.',
+      },
+      {
+        pergunta: 'Qual a diferença entre Minhas, Minha equipe, Minha diretoria e Todas?',
+        resposta:
+          'Minhas: demandas em que você participa. Minha equipe: as da sua área (só para quem é Referência de equipe). Minha diretoria: todas da sua diretoria. Todas: o sistema inteiro (só Gestor e Admin).',
+      },
+      {
+        pergunta: 'O que significam os status?',
+        resposta:
+          'Não iniciada: ainda não começou. Em andamento: está sendo produzida. Em aprovação: foi entregue e aguarda o retorno de quem pediu. Concluída: finalizada. Cancelada: não vai mais acontecer (fica só para consulta).',
+      },
+      {
+        pergunta: 'Preciso preencher projeto e campanha?',
+        resposta:
+          'Não, são opcionais. Preencha quando a demanda fizer parte de uma ação maior, para depois conseguir enxergar o conjunto.',
+      },
+    ],
+  },
+
+  'demanda-detalhe': {
+    titulo: 'O que registrar nesta demanda?',
+    itens: [
+      {
+        pergunta: 'Qual a diferença entre atividade e peça?',
+        resposta:
+          'Atividade é o trabalho que você fez, com a data (por exemplo: criei o layout, editei o vídeo). Peça é o que foi entregue, com tipo e quantidade (por exemplo: 3 e-mails). É a peça que gera valor, pela quantidade vezes o valor unitário do tipo.',
+      },
+      {
+        pergunta: 'Por que o valor da peça não muda quando o tipo de peça muda?',
+        resposta:
+          'O valor unitário é congelado no momento do lançamento. Assim o que foi entregue no passado continua com o valor da época.',
+      },
+      {
+        pergunta: 'Para que servem os participantes e os papéis?',
+        resposta:
+          'Mostram quem está envolvido e com qual responsabilidade. Quem cria a demanda entra como Responsável principal. Só o Responsável principal, o Gestor ou o Admin cancelam a demanda.',
+      },
+      {
+        pergunta: 'O que é uma evidência?',
+        resposta:
+          'A prova do que foi feito: uma imagem (JPEG ou PNG, até 5 MB) ou um link para o material. Anexe em uma atividade ou peça para o trabalho poder ser conferido depois.',
+      },
+      {
+        pergunta: 'Onde vejo quem mudou o status e quando?',
+        resposta:
+          'No histórico da demanda. Cada mudança de status registra quem fez, quando e o motivo informado.',
+      },
+    ],
+  },
+
+  demandantes: {
+    titulo: 'O que é um demandante?',
+    itens: [
+      {
+        pergunta: 'Quem é o demandante?',
+        resposta:
+          'Quem pediu o trabalho. Pode ser uma pessoa, uma área, uma unidade ou alguém de fora da empresa.',
+      },
+      {
+        pergunta: 'Por que registrar o demandante?',
+        resposta:
+          'Para saber de onde vêm os pedidos e para quem o trabalho foi feito, sem depender da memória de cada profissional.',
+      },
+    ],
+  },
+
+  projetos: {
+    titulo: 'Para que serve um projeto?',
+    itens: [
+      {
+        pergunta: 'O que é um projeto?',
+        resposta:
+          'Um objetivo maior, de prazo mais longo, que reúne campanhas e demandas ligadas entre si. É opcional.',
+      },
+      {
+        pergunta: 'Qual a diferença entre projeto e campanha?',
+        resposta:
+          'O projeto é o objetivo geral. A campanha é uma ação específica dentro dele, com datas de início e fim.',
+      },
+      {
+        pergunta: 'O que significam Ativo, Pausado e Encerrado?',
+        resposta:
+          'Ativo: em andamento. Pausado: parado por enquanto. Encerrado: concluído, mantido só para consulta.',
+      },
+    ],
+  },
+
+  campanhas: {
+    titulo: 'Para que serve uma campanha?',
+    itens: [
+      {
+        pergunta: 'O que é uma campanha?',
+        resposta:
+          'Uma ação que mobiliza várias frentes de trabalho ao mesmo tempo, como e-mail, peças gráficas, vídeo e podcast. Ela reúne essas demandas para você enxergar o todo.',
+      },
+      {
+        pergunta: 'Por que vincular as demandas a uma campanha?',
+        resposta:
+          'Para conseguir responder perguntas como: quantas pessoas participaram da campanha? Quantas demandas ela teve? Quanto trabalho ela gerou? Sem o vínculo, cada demanda aparece isolada.',
+      },
+      {
+        pergunta: 'O que é o código da campanha?',
+        resposta:
+          'Um identificador livre, se a sua área usa um (por exemplo BC2606CR). Não precisa ser único e nem todo setor usa.',
+      },
+      {
+        pergunta: 'Preciso informar uma campanha em toda demanda?',
+        resposta:
+          'Não. Só quando a demanda fizer parte de uma ação maior. Demandas avulsas ficam sem campanha.',
+      },
+    ],
+  },
+
+  'tipos-peca': {
+    titulo: 'O que é um tipo de peça?',
+    itens: [
+      {
+        pergunta: 'O que é um tipo de peça?',
+        resposta:
+          'Um item do catálogo de entregas de cada área (por exemplo e-mail, vídeo, foto), com um valor de referência por unidade. É escolhido ao lançar uma peça.',
+      },
+      {
+        pergunta: 'O que é o valor de referência?',
+        resposta:
+          'O valor de mercado de uma unidade daquela entrega. O valor da peça é a quantidade vezes esse valor. Mudar o valor aqui não altera peças já lançadas.',
+      },
+      {
+        pergunta: 'Quem pode criar e editar tipos de peça?',
+        resposta:
+          'Gestor e Admin, em qualquer área. A Referência de equipe, só nos tipos da própria área.',
+      },
+    ],
+  },
+
+  pessoas: {
+    titulo: 'Como funcionam as pessoas e os perfis?',
+    itens: [
+      {
+        pergunta: 'O que cada perfil pode fazer?',
+        resposta:
+          'Profissional: registra o próprio trabalho. Visualizador: só consulta, sem relatório. Gestor: aprova cadastros e gerencia pessoas, menos Admins. Admin: tudo, inclusive conceder o perfil Admin.',
+      },
+      {
+        pergunta: 'O que é Referência de equipe?',
+        resposta:
+          'Não é um perfil: é um Profissional que referencia a própria área. Ele edita e cancela atividades, peças e evidências dos colegas da área e gerencia os tipos de peça dela. Defina ao aprovar ou ao editar a pessoa.',
+      },
+      {
+        pergunta: 'Como aprovar um cadastro novo?',
+        resposta:
+          'Abra a pessoa com cadastro pendente, confira área e cargo, escolha o perfil e aprove. Um cadastro rejeitado não pode ser aprovado depois.',
+      },
+      {
+        pergunta: 'Para que serve o CPF?',
+        resposta:
+          'Para ligar a conta de quem se cadastra ao registro que já existe (pessoas importadas da planilha). Se o CPF já existir, um Gestor ou Admin faz o vínculo manualmente.',
+      },
+    ],
+  },
+
+  relatorio: {
+    titulo: 'Como funciona o relatório mensal?',
+    itens: [
+      {
+        pergunta: 'O que é o relatório mensal?',
+        resposta:
+          'O resumo do que você produziu no mês, montado automaticamente a partir das suas atividades e peças. Você confere, ajusta e aprova.',
+      },
+      {
+        pergunta: 'Posso tirar algo do relatório?',
+        resposta:
+          'Sim. Desmarque as atividades que não devem entrar e escreva as observações gerais. Isso só vale para o relatório, não apaga nada do sistema.',
+      },
+      {
+        pergunta: 'O que acontece quando eu aprovo?',
+        resposta:
+          'O conteúdo fica congelado: mesmo que atividades sejam editadas depois, o relatório assinado não muda. Só um Gestor ou Admin consegue reabrir.',
+      },
+      {
+        pergunta: 'Como envio o relatório?',
+        resposta:
+          'Depois de aprovado, use Baixar DOCX ou Imprimir / Salvar PDF.',
+      },
+    ],
+  },
+};

@@ -17,9 +17,11 @@ import { CampanhaService } from '../campanha.service';
 import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
+import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-campanha-lista',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, BarraPagina],
+  imports: [Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, BarraPagina],
   templateUrl: './campanha-lista.html',
   styleUrl: './campanha-lista.scss',
 })
