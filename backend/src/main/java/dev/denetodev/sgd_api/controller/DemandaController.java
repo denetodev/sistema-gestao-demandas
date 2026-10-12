@@ -4,7 +4,9 @@ import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.request.StatusUpdateRequest;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
+import dev.denetodev.sgd_api.dto.request.FiltroDemanda;
 import dev.denetodev.sgd_api.entity.EscopoListagem;
+import dev.denetodev.sgd_api.entity.StatusDemanda;
 import dev.denetodev.sgd_api.service.DemandaService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -35,9 +37,13 @@ public class DemandaController {
     public Page<DemandaResponse> listar(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(required = false, defaultValue = "MINHAS") EscopoListagem escopo,
-            @PageableDefault(size = 20, sort = "dataCriacao", direction = Sort.Direction.DESC) Pageable pageable
+            @RequestParam(required = false) String busca,
+            @RequestParam(required = false) StatusDemanda status,
+            @RequestParam(required = false) UUID diretoriaId,
+            @RequestParam(required = false) UUID areaId,
+            @PageableDefault(size = 10) Pageable pageable
     ) {
-        return demandaService.listarComEscopo(jwt, escopo, pageable);
+        return demandaService.listarComEscopo(jwt, new FiltroDemanda(escopo, busca, status, diretoriaId, areaId), pageable);
     }
 
     @GetMapping("/{id}")
