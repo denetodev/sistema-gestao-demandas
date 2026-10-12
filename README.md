@@ -8,6 +8,7 @@ Plataforma para centralizar a gestão da produção criativa da Aristocrata
 - `frontend/` — Angular 20 + PrimeNG (hospedagem prevista: Vercel)
 - `database/` — migrations `V{n}`, importação da planilha e decisões de modelagem (Supabase/PostgreSQL)
 - `docs/` — arquitetura, requisitos (inclui `wireframe-sgd.html`), API, relatórios
+- Operação do dia a dia e solução de problemas: [`docs/operacao/guia-de-operacao.md`](docs/operacao/guia-de-operacao.md)
 
 ## Estado atual
 
