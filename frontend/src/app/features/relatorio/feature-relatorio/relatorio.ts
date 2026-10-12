@@ -16,12 +16,14 @@ import { RelatorioService, mesAtual } from '../data-access/relatorio.service';
 import type { ItemAtividade, RelatorioResumo } from '../data-access/relatorio.model';
 
 import { Ajuda } from '../../../core/ajuda/ajuda/ajuda';
+import { CampoBusca } from '../../../core/ui/campo-busca/campo-busca';
+import { contemTexto } from '../../../core/util/listas';
 
 const AVULSAS = 'Atividades avulsas (sem demanda)';
 
 @Component({
   selector: 'app-relatorio',
-  imports: [Ajuda, 
+  imports: [Ajuda, CampoBusca, 
     CurrencyPipe, DatePipe, FormsModule, Button, Select, Checkbox, Textarea, TableModule, Tag, Message,
     BarraPagina,
   ],
@@ -79,6 +81,13 @@ export class RelatorioMensal {
       .sort(([a], [b]) => Number(a === AVULSAS) - Number(b === AVULSAS) || a.localeCompare(b, 'pt-BR'))
       .map(([titulo, itens]) => ({ titulo, itens }));
   });
+
+  buscaResumo = signal('');
+  resumoFiltrado = computed(() =>
+    [...(this.resumo.value() ?? [])]
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      .filter((l) => contemTexto([l.nome, l.area], this.buscaResumo())),
+  );
 
   nomeMes = computed(() => this.#rotuloMes(this.filtro().mes));
 

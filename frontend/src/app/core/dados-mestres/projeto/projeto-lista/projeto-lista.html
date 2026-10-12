@@ -1,4 +1,4 @@
-<app-barra-pagina titulo="Projetos">
+<app-barra-pagina titulo="Projetos" subtitulo="Os objetivos maiores que reúnem campanhas e demandas.">
   <ng-container fim>
     @if (auth.temPerfil('ADMIN', 'GESTOR')) {
       <p-button icon="pi pi-plus" label="Novo projeto" (onClick)="abrirNovo()" />
@@ -8,42 +8,72 @@
 
 <div class="pagina-corpo">
   <app-ajuda chave="projetos" />
-  <p-table
-    [value]="projetos.value() ?? []"
-    [loading]="projetos.isLoading()"
-    [paginator]="true"
-    [rows]="10"
-    dataKey="id"
-    [stripedRows]="true"
-  >
-    <ng-template pTemplate="header">
-      <tr>
-        <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
-        <th>Demandante</th>
-        <th>Diretoria</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-projeto>
-      <tr>
-        <td>{{ projeto.nome }}</td>
-        <td>{{ projeto.demandanteNome ?? '—' }}</td>
-        <td>{{ projeto.diretoriaNome ?? '—' }}</td>
-        <td><p-tag [value]="projeto.status" [severity]="severityStatus(projeto.status)" /></td>
-        <td>
-          @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-            <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(projeto)" />
-          }
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="5">Nenhum projeto cadastrado.</td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <app-pilulas descricao="Situação do projeto" [opcoes]="opcoesSituacao" [valor]="situacaoFiltro()"
+        (valorChange)="situacaoFiltro.set($event)" />
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por nome ou demandante..." descricao="Buscar projetos"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+        <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Núcleo" [showClear]="true" [ngModel]="nucleoFiltro()"
+          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por núcleo" />
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
+            (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <p-table
+        [value]="filtrados()"
+        [loading]="projetos.isLoading()"
+        [paginator]="true"
+        [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} projetos"
+        dataKey="id"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+            <th>Demandante</th>
+            <th>Núcleo</th>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-projeto>
+          <tr>
+            <td>{{ projeto.nome }}</td>
+            <td>{{ projeto.demandanteNome ?? '—' }}</td>
+            <td>{{ projeto.diretoriaNome ?? '—' }}</td>
+            <td><p-tag [value]="rotuloStatus(projeto.status)" [severity]="severityStatus(projeto.status)" /></td>
+            <td>
+              @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+                <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(projeto)" />
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="vazio">
+                @if (filtrosAtivos()) {
+                  <strong>Nenhum projeto com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros para ver tudo de novo.
+                  <p-button class="vazio__acao" label="Limpar filtros" icon="pi pi-filter-slash" severity="secondary"
+                    [outlined]="true" (onClick)="limparFiltros()" />
+                } @else {
+                  <strong>Nenhum projeto cadastrado</strong>
+                  Projetos são opcionais: use quando várias campanhas servem a um mesmo objetivo.
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
 
   <p-dialog
     [(visible)]="dialogAberto"
@@ -66,7 +96,7 @@
         [showClear]="true"
       />
 
-      <label for="diretoria">Diretoria</label>
+      <label for="diretoria">Núcleo</label>
       <p-select
         inputId="diretoria"
         formControlName="diretoriaId"

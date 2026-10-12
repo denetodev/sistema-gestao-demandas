@@ -1,4 +1,4 @@
-<app-barra-pagina titulo="Tipos de peça">
+<app-barra-pagina titulo="Tipos de peça" subtitulo="O catálogo de entregas de cada equipe, com o valor de referência de cada uma.">
   <ng-container fim>
     @if (podeCriar()) {
     <p-button icon="pi pi-plus" label="Novo tipo" (onClick)="abrirNovo()" />
@@ -8,48 +8,75 @@
 
 <div class="pagina-corpo">
   <app-ajuda chave="tipos-peca" />
-  <p-table [value]="tiposOrdenados()" [loading]="tipos.isLoading()" [paginator]="true" [rows]="20" dataKey="id"
-    [stripedRows]="true" [groupRowsBy]="'areaNome'" rowGroupMode="subheader">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Nome</th>
-        <th>Descrição</th>
-        <th>Valor de referência</th>
-        <th>Situação</th>
-        <th>Ações</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="groupheader" let-tipo>
-      <tr pRowGroupHeader>
-        <td colspan="5"><strong>{{ tipo.areaNome }}</strong></td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-tipo>
-      <tr>
-        <td>{{ tipo.nome }}</td>
-        <td>{{ tipo.descricao ?? '—' }}</td>
-        <td>{{ tipo.valorReferencia | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
-        <td>
-          <p-tag [value]="tipo.ativo ? 'Ativo' : 'Inativo'" [severity]="tipo.ativo ? 'success' : 'secondary'" />
-        </td>
-        <td>
-          @if (podeGerenciar(tipo)) {
-          <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(tipo)" pTooltip="Editar"
-            tooltipPosition="top" />
-          @if (tipo.ativo) {
-          <p-button [text]="true" severity="danger" icon="pi pi-ban" (onClick)="confirmarDesativacao(tipo)"
-            pTooltip="Desativar" tooltipPosition="top" />
-          }
-          }
-        </td>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="5">Nenhum tipo de peça cadastrado.</td>
-      </tr>
-    </ng-template>
-  </p-table>
+  <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <app-pilulas descricao="Equipe dona do tipo de peça" [opcoes]="opcoesEquipe()" [valor]="equipeFiltro()"
+        (valorChange)="equipeFiltro.set($event)" />
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar tipo de peça..." descricao="Buscar tipos de peça"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
+            (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <p-table [value]="filtrados()" [loading]="tipos.isLoading()" [paginator]="true" [rows]="30" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} tipos de peça" dataKey="id" [groupRowsBy]="'areaNome'" rowGroupMode="subheader">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th>Valor de referência</th>
+            <th>Situação</th>
+            <th>Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="groupheader" let-tipo>
+          <tr pRowGroupHeader>
+            <td colspan="5"><strong>{{ tipo.areaNome }}</strong></td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-tipo>
+          <tr>
+            <td>{{ tipo.nome }}</td>
+            <td>{{ tipo.descricao ?? '—' }}</td>
+            <td>{{ tipo.valorReferencia | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+            <td>
+              <p-tag [value]="tipo.ativo ? 'Ativo' : 'Inativo'" [severity]="tipo.ativo ? 'success' : 'secondary'" />
+            </td>
+            <td>
+              @if (podeGerenciar(tipo)) {
+              <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(tipo)" pTooltip="Editar"
+                tooltipPosition="top" />
+              @if (tipo.ativo) {
+              <p-button [text]="true" severity="danger" icon="pi pi-ban" (onClick)="confirmarDesativacao(tipo)"
+                pTooltip="Desativar" tooltipPosition="top" />
+              }
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5">
+              <div class="vazio">
+                @if (filtrosAtivos()) {
+                  <strong>Nenhum tipo de peça com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros para ver tudo de novo.
+                  <p-button class="vazio__acao" label="Limpar filtros" icon="pi pi-filter-slash" severity="secondary"
+                    [outlined]="true" (onClick)="limparFiltros()" />
+                } @else {
+                  <strong>Nenhum tipo de peça cadastrado</strong>
+                  Tipos de peça são escolhidos ao lançar uma peça numa demanda.
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
 </div>
 
 <p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar tipo de peça' : 'Novo tipo de peça'"
@@ -58,7 +85,7 @@
     <label for="nome">Nome</label>
     <input pInputText id="nome" formControlName="nome" />
 
-    <label for="area">Área</label>
+    <label for="area">Equipe</label>
     <p-select inputId="area" formControlName="areaId" [options]="areas.value() ?? []" optionLabel="nome"
       optionValue="id" placeholder="Selecione" [disabled]="areaTravada()" />
 

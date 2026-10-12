@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -19,10 +19,13 @@ import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 
 import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
+import { OpcaoPilula, Pilulas } from '../../../ui/pilulas/pilulas';
+import { contemTexto, maisRecentesPrimeiro } from '../../../util/listas';
 
 @Component({
   selector: 'app-campanha-lista',
-  imports: [Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, CurrencyPipe, RouterLink, BarraPagina],
+  imports: [FormsModule, CampoBusca, Pilulas, Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, CurrencyPipe, RouterLink, BarraPagina],
   templateUrl: './campanha-lista.html',
   styleUrl: './campanha-lista.scss',
 })
@@ -38,6 +41,36 @@ export class CampanhaLista {
     return this.#resumoPorId().get(id);
   }
   projetos = inject(ProjetoService).listar;
+
+  // filtros da lista: as últimas cadastradas primeiro, 10 por página
+  busca = signal('');
+  usoFiltro = signal('');
+  projetoFiltro = signal<string | null>(null);
+  opcoesUso: OpcaoPilula[] = [
+    { valor: '', rotulo: 'Todas' },
+    { valor: 'COM', rotulo: 'Com demandas' },
+    { valor: 'SEM', rotulo: 'Sem demandas' },
+  ];
+  opcoesProjeto = computed(() => (this.projetos.value() ?? []).map((p) => ({ valor: p.id, rotulo: p.nome })));
+
+  filtrados = computed(() =>
+    maisRecentesPrimeiro(this.campanhas.value() ?? []).filter((c) => {
+      const demandas = this.resumo(c.id)?.demandas ?? 0;
+      return (
+        contemTexto([c.nome, c.codigo, c.projetoNome], this.busca()) &&
+        (!this.projetoFiltro() || c.projetoId === this.projetoFiltro()) &&
+        (!this.usoFiltro() || (this.usoFiltro() === 'COM' ? demandas > 0 : demandas === 0))
+      );
+    }),
+  );
+
+  filtrosAtivos = computed(() => !!(this.busca() || this.usoFiltro() || this.projetoFiltro()));
+
+  limparFiltros() {
+    this.busca.set('');
+    this.usoFiltro.set('');
+    this.projetoFiltro.set(null);
+  }
 
   dialogAberto = signal(false);
   editandoId = signal<string | null>(null);

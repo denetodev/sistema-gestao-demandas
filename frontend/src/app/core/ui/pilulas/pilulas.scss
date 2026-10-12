@@ -1,0 +1,45 @@
+.pilulas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pilula {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--sgd-borda);
+  border-radius: 999px;
+  background: var(--sgd-cartao);
+  color: var(--sgd-texto);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    background: var(--sgd-realce);
+    border-color: var(--sgd-muted);
+  }
+
+  &--ativa,
+  &--ativa:hover {
+    background: var(--sgd-laranja);
+    border-color: var(--sgd-laranja);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+  }
+}
+
+.pilula__detalhe {
+  font-weight: 500;
+  opacity: 0.72;
+
+  &::before {
+    content: '·';
+    margin-right: 0.4rem;
+  }
+}

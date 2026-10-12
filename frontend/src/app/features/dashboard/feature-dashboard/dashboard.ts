@@ -11,7 +11,6 @@ import { Message } from 'primeng/message';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
 import { DiretoriaService } from '../../../core/dados-mestres/diretoria/diretoria.service';
-import { DemandaService } from '../../demandas/data-access/demanda.service';
 import type { EscopoDemanda, StatusDemanda } from '../../demandas/data-access/demanda.model';
 import { ROTULO_STATUS } from '../../demandas/data-access/demanda-itens.model';
 import { DashboardService } from '../data-access/dashboard.service';
@@ -32,7 +31,6 @@ const STATUS: StatusDemanda[] = ['NAO_INICIADA', 'EM_ANDAMENTO', 'EM_APROVACAO',
 export class Dashboard {
   auth = inject(AuthService);
   #service = inject(DashboardService);
-  #demandas = inject(DemandaService);
   #router = inject(Router);
 
   dashboard = this.#service.dashboard;
@@ -49,7 +47,7 @@ export class Dashboard {
   );
 
   opcoesDiretoria = computed(() => [
-    { id: null, nome: 'Todas as diretorias' },
+    { id: null, nome: 'Todos os núcleos' },
     ...(this.diretorias.value() ?? []),
   ]);
 
@@ -102,7 +100,7 @@ export class Dashboard {
   }
 
   irParaDemandas(escopo: EscopoDemanda) {
-    this.#demandas.filtro.update((f) => ({ ...f, escopo, page: 0 }));
-    this.#router.navigateByUrl('/demandas');
+    // a lista de demandas lê o escopo da URL
+    this.#router.navigate(['/demandas'], { queryParams: { escopo } });
   }
 }

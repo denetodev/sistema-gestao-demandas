@@ -145,9 +145,14 @@
     @if (ehGestorOuAdmin() && resumo.value()?.length) {
       <section class="caixa nao-imprimir">
         <h2>Relatórios de {{ nomeMes() }}</h2>
-        <p-table [value]="resumo.value() ?? []" dataKey="pessoaId" [stripedRows]="true">
+        <div class="filtros">
+          <div class="filtros__linha">
+            <app-campo-busca class="filtros__busca" [(valor)]="buscaResumo" placeholder="Buscar pessoa ou equipe" />
+          </div>
+        </div>
+        <p-table [value]="resumoFiltrado()" dataKey="pessoaId" [stripedRows]="true" [paginator]="resumoFiltrado().length > 10" [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]">
           <ng-template pTemplate="header">
-            <tr><th>Pessoa</th><th>Área</th><th>Atividades</th><th>Situação</th><th></th></tr>
+            <tr><th>Pessoa</th><th>Equipe</th><th>Atividades</th><th>Situação</th><th></th></tr>
           </ng-template>
           <ng-template pTemplate="body" let-l>
             <tr>
@@ -161,6 +166,9 @@
                 <p-button label="Abrir" [text]="true" size="small" (onClick)="abrirDe(l)" />
               </td>
             </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="5">Ninguém encontrado para essa busca.</td></tr>
           </ng-template>
         </p-table>
       </section>

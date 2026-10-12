@@ -1,57 +1,147 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { SelectButton } from 'primeng/selectbutton';
-import { DatePipe, CurrencyPipe } from '@angular/common';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
-import { DemandaService } from '../../data-access/demanda.service';
-import type { StatusDemanda, Prioridade, Demanda, EscopoDemanda } from '../../data-access/demanda.model';
-import { RouterLink } from '@angular/router';
+import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
-import { AuthService } from '../../../../core/auth/auth.service';
-import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
-import { DemandaForm } from '../../feature-form/demanda-form/demanda-form';
+import { Tooltip } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
-
+import { DemandaService } from '../../data-access/demanda.service';
+import {
+  Demanda,
+  DemandaFiltro,
+  EscopoDemanda,
+  Prioridade,
+  ROTULO_PRIORIDADE,
+  StatusDemanda,
+} from '../../data-access/demanda.model';
+import { ROTULO_STATUS } from '../../data-access/demanda-itens.model';
+import { separarCodigo } from '../../data-access/demanda-apresentacao';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { AreaService } from '../../../../core/dados-mestres/area/area.service';
+import { DiretoriaService } from '../../../../core/dados-mestres/diretoria/diretoria.service';
+import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
 import { Ajuda } from '../../../../core/ajuda/ajuda/ajuda';
+import { CampoBusca } from '../../../../core/ui/campo-busca/campo-busca';
+import { OpcaoPilula, Pilulas } from '../../../../core/ui/pilulas/pilulas';
+import { DemandaForm } from '../../feature-form/demanda-form/demanda-form';
+
+const STATUS_VALIDOS = Object.keys(ROTULO_STATUS) as StatusDemanda[];
 
 @Component({
   selector: 'app-demanda-lista',
-  imports: [Ajuda, FormsModule, SelectButton, TableModule, Tag, DatePipe, CurrencyPipe, Button, BarraPagina, DemandaForm, RouterLink],
+  imports: [
+    Ajuda, FormsModule, TableModule, Tag, Select, Tooltip, DatePipe, CurrencyPipe, Button, BarraPagina,
+    DemandaForm, RouterLink, Pilulas, CampoBusca,
+  ],
   templateUrl: './demanda-lista.html',
   styleUrl: './demanda-lista.scss',
 })
-export class DemandaLista implements OnInit {
+export class DemandaLista {
   #service = inject(DemandaService);
+  #router = inject(Router);
+  #route = inject(ActivatedRoute);
+  #confirmationService = inject(ConfirmationService);
+
   auth = inject(AuthService);
   demandas = this.#service.listar;
   filtro = this.#service.filtro;
   dialogAberto = signal(false);
   demandaEditandoId = signal<string | null>(null);
-  #confirmationService = inject(ConfirmationService);
 
-  /** Só aparecem os escopos que o perfil pode pedir (o backend também valida). */
-  escopos = computed(() => {
-    const opcoes: { label: string; value: EscopoDemanda }[] = [];
-    if (!this.auth.temPerfil('VISUALIZADOR')) opcoes.push({ label: 'Minhas', value: 'MINHAS' });
-    if (this.auth.pessoa()?.referenciaAreaId) opcoes.push({ label: 'Minha equipe', value: 'EQUIPE' });
-    opcoes.push({ label: 'Minha diretoria', value: 'DIRETORIA' });
-    if (this.auth.temPerfil('ADMIN', 'GESTOR')) opcoes.push({ label: 'Todas', value: 'TODAS' });
+  #diretorias = inject(DiretoriaService).listar;
+  #areas = inject(AreaService).listar;
+
+  rotuloStatus: Record<string, string> = ROTULO_STATUS;
+  rotuloPrioridade: Record<string, string> = ROTULO_PRIORIDADE;
+
+  ehGestao = computed(() => this.auth.temPerfil('ADMIN', 'GESTOR'));
+
+  /** Os botões de escopo mostram o nome real da equipe e do núcleo da pessoa. */
+  opcoesEscopo = computed<OpcaoPilula[]>(() => {
+    const p = this.auth.pessoa();
+    const opcoes: OpcaoPilula[] = [];
+    if (!this.auth.temPerfil('VISUALIZADOR')) opcoes.push({ valor: 'MINHAS', rotulo: 'Minhas' });
+    if (p?.referenciaAreaId || p?.areaId) {
+      opcoes.push({ valor: 'EQUIPE', rotulo: 'Minha equipe', detalhe: p.referenciaAreaNome ?? p.areaNome });
+    }
+    opcoes.push({ valor: 'DIRETORIA', rotulo: 'Meu núcleo', detalhe: p?.diretoriaNome });
+    if (this.ehGestao()) opcoes.push({ valor: 'TODAS', rotulo: 'Todas' });
     return opcoes;
   });
 
-  ngOnInit() {
-    // o escopo guardado pode não valer para este perfil (ex.: Visualizador abre em "Minha diretoria")
-    if (!this.escopos().some((o) => o.value === this.filtro().escopo)) {
-      this.filtro.update((f) => ({ ...f, escopo: this.escopos()[0].value, page: 0 }));
-    }
-    this.demandas.reload();
+  opcoesStatus = STATUS_VALIDOS.map((valor) => ({ valor, rotulo: ROTULO_STATUS[valor] }));
+  opcoesNucleo = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  /** O mesmo nome de equipe existe em núcleos diferentes (Design em CRM e em UGR), então o núcleo vai junto. */
+  opcoesEquipe = computed(() =>
+    (this.#areas.value() ?? []).map((a) => ({
+      valor: a.id,
+      rotulo: a.diretoriaNome ? `${a.nome} · ${a.diretoriaNome}` : a.nome,
+    })),
+  );
+
+  filtrosAtivos = computed(() => {
+    const f = this.filtro();
+    return !!(f.busca || f.status || f.diretoriaId || f.areaId);
+  });
+
+  constructor() {
+    // A URL manda nos filtros: busca do topo, atalhos do dashboard e links compartilhados chegam por ela.
+    this.#route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((p) => this.#aplicarUrl(p));
   }
 
-  mudarEscopo(escopo: EscopoDemanda | null) {
-    if (!escopo) return;
-    this.filtro.update((f) => ({ ...f, escopo, page: 0 }));
+  #escopoPadrao(): EscopoDemanda {
+    return (this.opcoesEscopo()[0]?.valor ?? 'DIRETORIA') as EscopoDemanda;
+  }
+
+  #aplicarUrl(p: ParamMap) {
+    const permitidos = this.opcoesEscopo().map((o) => o.valor);
+    const doUrl = p.get('escopo');
+    const status = p.get('status') as StatusDemanda | null;
+    const novo = {
+      escopo: (doUrl && permitidos.includes(doUrl) ? doUrl : this.#escopoPadrao()) as EscopoDemanda,
+      busca: p.get('busca') ?? '',
+      status: status && STATUS_VALIDOS.includes(status) ? status : ('' as const),
+      diretoriaId: p.get('nucleo') ?? '',
+      areaId: p.get('equipe') ?? '',
+    };
+    const atual = this.filtro();
+    const igual = (Object.keys(novo) as (keyof typeof novo)[]).every((k) => atual[k] === novo[k]);
+    if (!igual) this.filtro.update((f) => ({ ...f, ...novo, page: 0 }));
+  }
+
+  /** Muda um ou mais filtros: vai para a URL, que por sua vez atualiza a lista. */
+  mudar(parcial: Partial<Pick<DemandaFiltro, 'escopo' | 'busca' | 'status' | 'diretoriaId' | 'areaId'>>) {
+    const f = { ...this.filtro(), ...parcial };
+    this.#router.navigate([], {
+      relativeTo: this.#route,
+      replaceUrl: true,
+      queryParams: {
+        escopo: f.escopo !== this.#escopoPadrao() ? f.escopo : null,
+        busca: f.busca || null,
+        status: f.status || null,
+        nucleo: f.diretoriaId || null,
+        equipe: f.areaId || null,
+      },
+    });
+  }
+
+  limparFiltros() {
+    this.mudar({ busca: '', status: '', diretoriaId: '', areaId: '' });
+  }
+
+  apresentar(d: Demanda) {
+    return separarCodigo(d.titulo, d.codigo);
+  }
+
+  /** Prazo vencido numa demanda que ainda está em aberto. */
+  atrasada(d: Demanda): boolean {
+    if (!d.dataPrazo || d.status === 'CONCLUIDA' || d.status === 'CANCELADA') return false;
+    return new Date(d.dataPrazo + 'T23:59:59') < new Date();
   }
 
   severityStatus(status: StatusDemanda) {
@@ -114,12 +204,12 @@ export class DemandaLista implements OnInit {
   }
 
   aoCarregar(evento: TableLazyLoadEvent) {
-    const size = evento.rows ?? 20;
+    const size = evento.rows ?? 10;
     const page = Math.floor((evento.first ?? 0) / size);
     const sort = evento.sortField
       ? `${evento.sortField},${evento.sortOrder === -1 ? 'desc' : 'asc'}`
       : undefined;
 
-    this.filtro.update((f) => ({ ...f, page, size, sort }));
+    this.filtro.update((f) => (f.page === page && f.size === size && f.sort === sort ? f : { ...f, page, size, sort }));
   }
 }

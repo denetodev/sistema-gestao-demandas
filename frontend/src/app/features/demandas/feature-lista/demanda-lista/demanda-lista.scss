@@ -1,0 +1,39 @@
+.cartao--tabela {
+  overflow: hidden;
+}
+
+.col-titulo {
+  max-width: 460px;
+}
+
+.titulo-link {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  line-height: 1.35;
+}
+
+.sub {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--sgd-muted);
+
+  i {
+    font-size: 0.7rem;
+    margin-right: 0.15rem;
+    color: var(--sgd-laranja);
+  }
+}
+
+.sub--atraso,
+.atrasada {
+  color: #d92d20;
+}
+
+.sub--atraso {
+  margin-top: 0;
+  font-weight: 700;
+}
+

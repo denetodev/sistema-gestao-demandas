@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
@@ -16,10 +16,13 @@ import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 import type { Demandante, TipoDemandante } from '../demandante.model';
 
 import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
+import { OpcaoPilula, Pilulas } from '../../../ui/pilulas/pilulas';
+import { contemTexto, maisRecentesPrimeiro } from '../../../util/listas';
 
 @Component({
   selector: 'app-demandante-lista',
-  imports: [Ajuda, 
+  imports: [FormsModule, CampoBusca, Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,
@@ -41,6 +44,33 @@ export class DemandanteLista {
   auth = inject(AuthService);
   demandantes = this.#service.listar;
   diretorias = inject(DiretoriaService).listar;
+
+  // filtros da lista: as últimas cadastradas primeiro, 10 por página
+  busca = signal('');
+  tipoFiltro = signal<string | null>(null);
+  nucleoFiltro = signal<string | null>(null);
+  opcoesNucleo = computed(() => (this.diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+
+  filtrados = computed(() =>
+    maisRecentesPrimeiro(this.demandantes.value() ?? []).filter(
+      (d) =>
+        contemTexto([d.nome, d.observacao], this.busca()) &&
+        (!this.tipoFiltro() || d.tipo === this.tipoFiltro()) &&
+        (!this.nucleoFiltro() || d.diretoriaId === this.nucleoFiltro()),
+    ),
+  );
+
+  filtrosAtivos = computed(() => !!(this.busca() || this.tipoFiltro() || this.nucleoFiltro()));
+
+  limparFiltros() {
+    this.busca.set('');
+    this.tipoFiltro.set(null);
+    this.nucleoFiltro.set(null);
+  }
+
+  rotuloTipo(tipo: TipoDemandante): string {
+    return this.opcoesTipo.find((o) => o.value === tipo)?.label ?? tipo;
+  }
 
   opcoesTipo = [
     { label: 'Pessoa', value: 'PESSOA' },

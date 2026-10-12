@@ -1,4 +1,4 @@
-<app-barra-pagina titulo="Campanhas">
+<app-barra-pagina titulo="Campanhas" subtitulo="Ações que reúnem várias frentes de trabalho. Veja quanto cada uma reuniu.">
     <ng-container fim>
         @if (auth.podeEditar()) {
         <p-button icon="pi pi-plus" label="Nova campanha" (onClick)="abrirNovo()" />
@@ -8,48 +8,79 @@
 
 <div class="pagina-corpo">
   <app-ajuda chave="campanhas" />
-    <p-table [value]="campanhas.value() ?? []" [loading]="campanhas.isLoading()" [paginator]="true" [rows]="20"
-        dataKey="id" [stripedRows]="true" sortMode="single">
-        <ng-template pTemplate="header">
-            <tr>
-                <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
-                <th>Código</th>
-                <th>Projeto</th>
-                <th pSortableColumn="dataInicio">Início <p-sortIcon field="dataInicio" /></th>
-                <th>Fim</th>
-                <th>Demandas</th>
-                <th>Pessoas</th>
-                <th>Valor gerado</th>
-                <th>Ações</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-campanha>
-            <tr>
-                <td><a [routerLink]="['/campanhas', campanha.id]">{{ campanha.nome }}</a></td>
-                <td>{{ campanha.codigo ?? '—' }}</td>
-                <td>{{ campanha.projetoNome ?? '—' }}</td>
-                <td>{{ campanha.dataInicio | date:'dd/MM/yyyy' }}</td>
-                <td>{{ campanha.dataFim | date:'dd/MM/yyyy' }}</td>
-                <td>{{ resumo(campanha.id)?.demandasAtivas ?? 0 }}</td>
-                <td>{{ resumo(campanha.id)?.pessoas ?? 0 }}</td>
-                <td>{{ (resumo(campanha.id)?.valor ?? 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
-                <td>
-                    @if (auth.podeEditar()) {
-                    <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(campanha)" />
-                    }
-                    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-                    <p-button [text]="true" severity="danger" icon="pi pi-trash"
-                        (onClick)="confirmarExclusao(campanha)" />
-                    }
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-            <tr>
-                <td colspan="9">Nenhuma campanha cadastrada.</td>
-            </tr>
-        </ng-template>
-    </p-table>
+    <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <app-pilulas descricao="Campanhas com ou sem demandas" [opcoes]="opcoesUso" [valor]="usoFiltro()"
+        (valorChange)="usoFiltro.set($event)" />
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por nome, código ou projeto..." descricao="Buscar campanhas"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+        <p-select class="filtros__campo" [options]="opcoesProjeto()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Projeto" [showClear]="true" [filter]="true" filterBy="rotulo" [ngModel]="projetoFiltro()"
+          (ngModelChange)="projetoFiltro.set($event)" ariaLabel="Filtrar por projeto" />
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
+            (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <p-table [value]="filtrados()" [loading]="campanhas.isLoading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} campanhas"
+            dataKey="id" sortMode="single">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+                    <th>Código</th>
+                    <th>Projeto</th>
+                    <th pSortableColumn="dataInicio">Início <p-sortIcon field="dataInicio" /></th>
+                    <th>Fim</th>
+                    <th>Demandas</th>
+                    <th>Pessoas</th>
+                    <th>Valor gerado</th>
+                    <th>Ações</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-campanha>
+                <tr>
+                    <td><a [routerLink]="['/campanhas', campanha.id]">{{ campanha.nome }}</a></td>
+                    <td>{{ campanha.codigo ?? '—' }}</td>
+                    <td>{{ campanha.projetoNome ?? '—' }}</td>
+                    <td>{{ campanha.dataInicio | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ campanha.dataFim | date:'dd/MM/yyyy' }}</td>
+                    <td>{{ resumo(campanha.id)?.demandasAtivas ?? 0 }}</td>
+                    <td>{{ resumo(campanha.id)?.pessoas ?? 0 }}</td>
+                    <td>{{ (resumo(campanha.id)?.valor ?? 0) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td>
+                    <td>
+                        @if (auth.podeEditar()) {
+                        <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(campanha)" />
+                        }
+                        @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+                        <p-button [text]="true" severity="danger" icon="pi pi-trash"
+                            (onClick)="confirmarExclusao(campanha)" />
+                        }
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="9">
+              <div class="vazio">
+                @if (filtrosAtivos()) {
+                  <strong>Nenhuma campanha com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros para ver tudo de novo.
+                  <p-button class="vazio__acao" label="Limpar filtros" icon="pi pi-filter-slash" severity="secondary"
+                    [outlined]="true" (onClick)="limparFiltros()" />
+                } @else {
+                  <strong>Nenhuma campanha cadastrada</strong>
+                  Crie uma campanha e escolha-a nas demandas para enxergar o conjunto.
+                }
+              </div>
+            </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+  </section>
 
     <p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar campanha' : 'Nova campanha'" [modal]="true"
         [style]="{ width: '400px' }">
