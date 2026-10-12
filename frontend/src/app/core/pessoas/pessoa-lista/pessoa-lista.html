@@ -105,6 +105,21 @@
         <span><strong>Cadastrado em:</strong> {{ pessoa.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
     </div>
 
+    <div class="vinculo">
+        <h3>Esta pessoa já existe no sistema?</h3>
+        <small class="dica">Se ela já aparece na lista (por exemplo, importada da planilha), vincule esta conta ao cadastro
+            dela. Todo o histórico é mantido e este cadastro novo é removido.</small>
+        @if (candidatos().length) {
+        <p-select inputId="vinculo" [options]="candidatos()" optionLabel="label" optionValue="id" [filter]="true"
+            filterBy="label" placeholder="Escolha o cadastro existente" [showClear]="true"
+            [ngModel]="vinculoId()" (ngModelChange)="vinculoId.set($event)" />
+        <p-button type="button" label="Vincular a este cadastro" icon="pi pi-link" severity="secondary"
+            [outlined]="true" [disabled]="!vinculoId()" [loading]="salvando()" (onClick)="confirmarVinculo()" />
+        } @else {
+        <small class="dica">Nenhuma pessoa sem conta disponível para vincular.</small>
+        }
+    </div>
+
     <form [formGroup]="form" (ngSubmit)="aprovar()" class="dialog-form">
         <h3>Definir na aprovação</h3>
 

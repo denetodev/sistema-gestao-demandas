@@ -19,15 +19,16 @@ import { CargoService } from '../../../core/dados-mestres/cargo/cargo.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
 import { cpfValidator, formatarCpf } from '../../../core/util/cpf';
+import { Ajuda } from '../../ajuda/ajuda/ajuda';
+import { candidatosAVinculo } from '../candidatos-vinculo';
 import type { Pessoa, StatusPessoa } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
 
-import { Ajuda } from '../../ajuda/ajuda/ajuda';
 
 @Component({
   selector: 'app-pessoa-lista',
-  imports: [Ajuda, 
-    ReactiveFormsModule, TableModule, Dialog, SelectButton, InputText, Textarea,
+  imports: [
+    Ajuda, ReactiveFormsModule, TableModule, Dialog, SelectButton, InputText, Textarea,
     Select, Button, Message, Tag, Tooltip, BarraPagina, DatePipe, FormsModule
   ],
   templateUrl: './pessoa-lista.html',
@@ -80,6 +81,41 @@ export class PessoaLista {
 
   pendente = computed(() => this.pessoaSelecionada()?.aprovadoEm === null);
 
+  // vínculo da conta pendente a um cadastro que já existe (ex.: importado da planilha)
+  vinculoId = signal<string | null>(null);
+  candidatos = computed(() => candidatosAVinculo(this.#service.todas.value() ?? []));
+
+  confirmarVinculo() {
+    const pessoa = this.pessoaSelecionada();
+    const destino = this.candidatos().find((c) => c.id === this.vinculoId());
+    if (!pessoa || !destino) return;
+    this.#confirmationService.confirm({
+      header: 'Vincular conta ao cadastro existente',
+      message: `A conta de ${pessoa.nome} (${pessoa.email ?? 'sem e-mail'}) passa a ser de "${destino.label}", que mantém todo o histórico. Este cadastro novo será removido e isso não pode ser desfeito.`,
+      icon: 'pi pi-link',
+      acceptLabel: 'Vincular',
+      rejectLabel: 'Voltar',
+      accept: () => this.#vincular(pessoa, destino.id),
+    });
+  }
+
+  async #vincular(pessoa: Pessoa, existenteId: string) {
+    this.salvando.set(true);
+    this.erro.set(null);
+    try {
+      await firstValueFrom(this.#service.vincularAPessoaExistente(pessoa.id, existenteId));
+      this.dialogAprovacao.set(false);
+      this.vinculoId.set(null);
+      this.pessoas.reload();
+      this.#service.todas.reload();
+      this.#messageService.add({ severity: 'success', summary: 'Conta vinculada ao cadastro existente', life: 4000 });
+    } catch (e) {
+      this.erro.set((e as { error?: { mensagem?: string } }).error?.mensagem ?? 'Não foi possível vincular a conta.');
+    } finally {
+      this.salvando.set(false);
+    }
+  }
+
   form = this.#fb.nonNullable.group({
     perfil: this.#fb.control<Perfil | null>(null, Validators.required),
     areaId: this.#fb.control<string | null>(null),
@@ -90,6 +126,7 @@ export class PessoaLista {
   abrir(pessoa: Pessoa) {
     this.pessoaSelecionada.set(pessoa);
     this.erro.set(null);
+    this.vinculoId.set(null);
     if (pessoa.aprovadoEm === null) {
       this.form.setValue({
         perfil: 'PROFISSIONAL',

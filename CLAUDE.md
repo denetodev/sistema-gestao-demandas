@@ -34,7 +34,7 @@ O mock do frontend fica atrás de `environment.usarMock` (`false` por padrão; `
 
 - **Referência de Equipe não é perfil:** é uma Pessoa com `referencia_area_id`. Edita e cancela atividades, peças e evidências de colegas da própria área e gerencia só os `TipoPeca` da própria área. Gestor/Admin definem e removem a referência ao aprovar ou ao editar a pessoa.
 - **Perfis:** ADMIN, GESTOR, PROFISSIONAL, VISUALIZADOR. VISUALIZADOR é somente leitura e não tem relatório. GESTOR não pode conceder nem alterar ADMIN.
-- **Autocadastro** fica AGUARDANDO (conta sem `aprovado_em`) até ADMIN ou GESTOR aprovar ou rejeitar. REJEITADO é terminal. CPF já existente (pessoa importada, sem login) exige vínculo manual por ADMIN ou GESTOR.
+- **Autocadastro** fica AGUARDANDO (conta sem `aprovado_em`) até ADMIN ou GESTOR aprovar ou rejeitar. REJEITADO é terminal. CPF já existente (pessoa importada, sem login) exige vínculo manual por ADMIN ou GESTOR. A conta nova que ficou pendente é ligada à pessoa importada por `POST /pessoas/{pendente}/vincular-a` (tela de Pessoas): a conta vai para a pessoa existente, que mantém o histórico, e o cadastro pendente duplicado é removido. Gestor não vincula a pessoa ADMIN.
 - **Valor da demanda = soma das peças** (`valor = quantidade x valor_unitario`, congelado do `TipoPeca` no lançamento). `demanda.valor` só existe nas importadas.
 - **Dashboard de valor gerado** respeita o escopo do perfil e ignora demandas canceladas.
 - **Relatório mensal** é gerado e aprovado pela própria pessoa e trava depois. Só GESTOR ou ADMIN reabrem um relatório aprovado.

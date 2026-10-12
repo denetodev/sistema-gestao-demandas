@@ -53,6 +53,7 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.DELETE, "/pessoas/*").hasAnyRole("ADMIN", "GESTOR");
                     auth.requestMatchers(HttpMethod.PATCH, "/pessoas/*/aprovar", "/pessoas/*/rejeitar")
                             .hasAnyRole("ADMIN", "GESTOR");
+                    auth.requestMatchers(HttpMethod.POST, "/pessoas/*/vincular-a").hasAnyRole("ADMIN", "GESTOR");
 
                     // cadastros base: só Gestor e Admin escrevem
                     for (HttpMethod metodo : ESCRITA) {
