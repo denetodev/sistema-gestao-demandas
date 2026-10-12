@@ -1,6 +1,7 @@
 package dev.denetodev.sgd_api.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -40,6 +41,9 @@ public class Pessoa {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private StatusPessoa status = StatusPessoa.ATIVO;
+
+    @Column(name = "inativado_em")
+    private LocalDate inativadoEm;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "perfil", nullable = false, length = 20)
@@ -96,7 +100,16 @@ public class Pessoa {
     public void setCargo(Cargo cargo) { this.cargo = cargo; }
 
     public StatusPessoa getStatus() { return status; }
-    public void setStatus(StatusPessoa status) { this.status = status; }
+    public void setStatus(StatusPessoa status) {
+        if (status == StatusPessoa.INATIVO && this.status != StatusPessoa.INATIVO) {
+            this.inativadoEm = LocalDate.now();
+        } else if (status == StatusPessoa.ATIVO) {
+            this.inativadoEm = null;
+        }
+        this.status = status;
+    }
+
+    public LocalDate getInativadoEm() { return inativadoEm; }
 
     public PerfilPessoa getPerfil() { return perfil; }
     public void setPerfil(PerfilPessoa perfil) { this.perfil = perfil; }
