@@ -10,25 +10,42 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    min-height: 48px;
+    min-height: 72px;
     flex-wrap: wrap;
-    padding: 0.5rem 1.5rem;
-    background: var(--p-content-background);
-    border-bottom: 1px solid var(--p-content-border-color);
+    padding: 0.9rem 1.5rem;
+    background: var(--sgd-cartao);
+    border-bottom: 1px solid var(--sgd-borda);
+    box-shadow: var(--sgd-sombra-leve);
 }
 
 .barra__inicio,
 .barra__fim {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
+
 .barra__inicio {
-  min-width: 0;
+    min-width: 0;
+    gap: 1.25rem;
+}
+
+.barra__texto {
+    min-width: 0;
 }
 
 .barra__titulo {
-    font-size: 1rem;
-    font-weight: 600;
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--sgd-texto);
+}
+
+.barra__subtitulo {
+    margin: 0.15rem 0 0;
+    font-size: 0.85rem;
+    color: var(--sgd-muted);
 }

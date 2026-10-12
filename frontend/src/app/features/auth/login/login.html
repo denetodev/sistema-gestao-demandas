@@ -1,19 +1,33 @@
-<div class="login-page">
-  <form [formGroup]="form" (ngSubmit)="entrar()" class="login-card">
-    <h1>Entrar</h1>
+<div class="auth">
+  <section class="auth__marca">
+    <div class="auth__logo"><span>S</span> SGD</div>
+    <h2>O trabalho da equipe, <em>num só lugar.</em></h2>
+    <p>Registre demandas, atividades e peças, acompanhe o que cada núcleo entregou e feche o relatório do mês sem planilha.</p>
+    <ul class="auth__pontos">
+      <li><i class="pi pi-briefcase"></i> Demandas por núcleo, equipe e pessoa</li>
+      <li><i class="pi pi-megaphone"></i> Campanhas com o valor gerado em cada uma</li>
+      <li><i class="pi pi-file-edit"></i> Relatório mensal pronto para aprovar e exportar</li>
+    </ul>
+  </section>
 
-    <label for="email">E-mail</label>
-    <input pInputText id="email" formControlName="email" autocomplete="email" />
+  <section class="auth__painel">
+    <form [formGroup]="form" (ngSubmit)="entrar()" class="auth__cartao">
+      <h1>Entrar</h1>
+      <p class="auth__subtitulo">Use o e-mail e a senha da sua conta.</p>
 
-    <label for="senha">Senha</label>
-    <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" autocomplete="current-password" />
+      <label for="email">E-mail</label>
+      <input pInputText id="email" formControlName="email" autocomplete="email" />
 
-    @if (erro()) {
-      <p-message severity="error">{{ erro() }}</p-message>
-    }
+      <label for="senha">Senha</label>
+      <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" autocomplete="current-password" />
 
-    <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Entrar</p-button>
+      @if (erro()) {
+        <p-message severity="error">{{ erro() }}</p-message>
+      }
 
-    <a routerLink="/cadastro">Criar conta</a>
-  </form>
+      <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Entrar</p-button>
+
+      <p class="auth__rodape">Ainda não tem conta? <a routerLink="/cadastro">Criar conta</a></p>
+    </form>
+  </section>
 </div>

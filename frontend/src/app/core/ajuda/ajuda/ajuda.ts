@@ -5,7 +5,7 @@ const PREFIXO = 'sgd.ajuda.';
 
 /**
  * Faixa recolhível de ajuda no topo de cada tela, em perguntas e respostas curtas.
- * Abre sozinha na primeira visita e lembra, por navegador, se a pessoa recolheu.
+ * Abre sozinha na primeira visita (em tela larga) e lembra, por navegador, se a pessoa recolheu.
  * O texto vem de ajuda-conteudo.ts.
  */
 @Component({
@@ -20,7 +20,9 @@ export class Ajuda implements OnInit {
   aberta = signal(true);
 
   ngOnInit() {
-    this.aberta.set(lerPreferencia(this.chave()) !== 'fechada');
+    const guardada = lerPreferencia(this.chave());
+    // sem escolha guardada: abre em tela larga e fica recolhida no celular, para não empurrar a lista
+    this.aberta.set(guardada ? guardada !== 'fechada' : window.innerWidth >= 640);
   }
 
   alternar(evento: Event) {

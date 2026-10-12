@@ -1,22 +1,36 @@
-<div class="login-page">
-  <form [formGroup]="form" (ngSubmit)="criarConta()" class="login-card">
-    <h1>Criar conta</h1>
+<div class="auth">
+  <section class="auth__marca">
+    <div class="auth__logo"><span>S</span> SGD</div>
+    <h2>Comece em <em>poucos minutos.</em></h2>
+    <p>Crie a sua conta, informe nome, CPF, núcleo e equipe, e aguarde a liberação de um Gestor ou Admin.</p>
+    <ul class="auth__pontos">
+      <li><i class="pi pi-user-plus"></i> Você cria a conta com o seu e-mail</li>
+      <li><i class="pi pi-id-card"></i> Completa o cadastro com CPF e equipe</li>
+      <li><i class="pi pi-check-circle"></i> Um Gestor ou Admin libera o seu acesso</li>
+    </ul>
+  </section>
 
-    <label for="email">E-mail</label>
-    <input pInputText id="email" formControlName="email" autocomplete="email" />
+  <section class="auth__painel">
+    <form [formGroup]="form" (ngSubmit)="criarConta()" class="auth__cartao">
+      <h1>Criar conta</h1>
+      <p class="auth__subtitulo">Depois de criar, você completa o cadastro.</p>
 
-    <label for="senha">Senha</label>
-    <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" autocomplete="new-password" />
+      <label for="email">E-mail</label>
+      <input pInputText id="email" formControlName="email" autocomplete="email" />
 
-    @if (erro()) {
-      <p-message severity="error">{{ erro() }}</p-message>
-    }
-    @if (sucesso()) {
-      <p-message severity="success">{{ sucesso() }}</p-message>
-    }
+      <label for="senha">Senha</label>
+      <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" autocomplete="new-password" />
 
-    <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Criar conta</p-button>
+      @if (erro()) {
+        <p-message severity="error">{{ erro() }}</p-message>
+      }
+      @if (sucesso()) {
+        <p-message severity="success">{{ sucesso() }}</p-message>
+      }
 
-    <a routerLink="/login">Já tenho conta</a>
-  </form>
+      <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid">Criar conta</p-button>
+
+      <p class="auth__rodape">Já tem conta? <a routerLink="/login">Entrar</a></p>
+    </form>
+  </section>
 </div>

@@ -1,6 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { Button } from 'primeng/button';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme/theme.service';
 import { Menu } from 'primeng/menu';
@@ -9,10 +8,18 @@ import { CompletarCadastro } from '../../../features/acesso/completar-cadastro/c
 import type { MenuItem } from 'primeng/api';
 
 const CHAVE_SIDEBAR = 'sgd-sidebar-recolhida';
+const LARGURA_CELULAR = 900;
+
+const ROTULO_PERFIL: Record<string, string> = {
+  ADMIN: 'Admin',
+  GESTOR: 'Gestor',
+  PROFISSIONAL: 'Profissional',
+  VISUALIZADOR: 'Visualizador',
+};
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Button, Menu, ContaPendente, CompletarCadastro],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Menu, ContaPendente, CompletarCadastro],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })
@@ -21,10 +28,22 @@ export class AppShell {
   tema = inject(ThemeService);
   #router = inject(Router);
 
-  sidebarRecolhida = signal(localStorage.getItem(CHAVE_SIDEBAR) === 'true');
+  /** No computador o menu recolhe para só os ícones; a escolha fica guardada neste navegador. */
+  sidebarRecolhida = signal(lerRecolhida());
+  /** No celular o menu é uma gaveta que abre por cima do conteúdo. */
+  menuMovelAberto = signal(false);
+  busca = signal('');
 
   /** O nome que a pessoa escolheu ou, sem ele, o nome completo. */
   nomeExibido = computed(() => this.auth.pessoa()?.nomeExibicao || this.auth.pessoa()?.nome || '');
+
+  perfilRotulo = computed(() => ROTULO_PERFIL[this.auth.pessoa()?.perfil ?? ''] ?? '');
+
+  /** Núcleo, equipe e cargo da pessoa: o trilho que aparece no rodapé do menu. */
+  hierarquia = computed(() => {
+    const p = this.auth.pessoa();
+    return { nucleo: p?.diretoriaNome ?? '—', equipe: p?.areaNome ?? '—', cargo: p?.cargoNome ?? '—' };
+  });
 
   iniciais = computed(() => {
     const nome = this.nomeExibido();
@@ -41,13 +60,41 @@ export class AppShell {
     { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.sair() },
   ];
 
-  alternarSidebar() {
+  alternarMenu() {
+    if (window.innerWidth < LARGURA_CELULAR) {
+      this.menuMovelAberto.update((v) => !v);
+      return;
+    }
     this.sidebarRecolhida.update((v) => !v);
-    localStorage.setItem(CHAVE_SIDEBAR, String(this.sidebarRecolhida()));
+    try {
+      localStorage.setItem(CHAVE_SIDEBAR, String(this.sidebarRecolhida()));
+    } catch {
+      /* sem persistência, tudo bem */
+    }
+  }
+
+  fecharMenuMovel() {
+    this.menuMovelAberto.set(false);
+  }
+
+  /** Enter na busca do topo leva para a lista de demandas já filtrada. */
+  buscar(evento: Event) {
+    evento.preventDefault();
+    const texto = this.busca().trim();
+    this.#router.navigate(['/demandas'], { queryParams: texto ? { busca: texto } : {} });
+    this.fecharMenuMovel();
   }
 
   async sair() {
     await this.auth.logout();
     this.#router.navigateByUrl('/login');
+  }
+}
+
+function lerRecolhida(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_SIDEBAR) === 'true';
+  } catch {
+    return false;
   }
 }
