@@ -1,12 +1,15 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
+import dev.denetodev.sgd_api.dto.request.FiltroDemanda;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.*;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.repository.DemandaSpecs;
+import dev.denetodev.sgd_api.service.support.OrdenacaoDemanda;
 import dev.denetodev.sgd_api.service.support.PermissaoService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -66,16 +70,20 @@ public class DemandaService {
     }
 
     @Transactional(readOnly = true)
-    public Page<DemandaResponse> listarComEscopo(Jwt jwt, EscopoListagem escopo, Pageable pageable) {
+    public Page<DemandaResponse> listarComEscopo(Jwt jwt, FiltroDemanda filtro, Pageable pageable) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        EscopoListagem escopo = filtro.escopo() != null ? filtro.escopo() : EscopoListagem.MINHAS;
         permissaoService.validarEscopo(usuario, escopo);
 
-        Page<Demanda> pagina = switch (escopo) {
-            case MINHAS -> demandaRepository.findMinhas(usuario.getId(), pageable);
-            case EQUIPE -> demandaRepository.findEquipe(usuario.getReferenciaArea().getId(), pageable);
-            case DIRETORIA -> demandaRepository.findByDiretoriaId(usuario.getArea().getDiretoria().getId(), pageable);
-            case TODAS -> demandaRepository.findAll(pageable);
-        };
+        // o escopo diz o que a pessoa pode ver; busca, status, núcleo e equipe só estreitam
+        // filtros não informados viram "sem restrição"
+        Specification<Demanda> consulta = Specification.allOf(
+                DemandaSpecs.escopo(escopo, usuario, permissaoService.areaDaEquipe(usuario)),
+                DemandaSpecs.busca(filtro.busca()),
+                DemandaSpecs.status(filtro.status()),
+                DemandaSpecs.nucleo(filtro.diretoriaId()),
+                DemandaSpecs.equipe(filtro.areaId()));
+        Page<Demanda> pagina = demandaRepository.findAll(consulta, OrdenacaoDemanda.sanear(pageable));
 
         Map<UUID, List<PessoaDemanda>> times = pagina.isEmpty() ? Map.of()
                 : pessoaDemandaRepository.findByDemandaIdIn(pagina.getContent().stream().map(Demanda::getId).toList())

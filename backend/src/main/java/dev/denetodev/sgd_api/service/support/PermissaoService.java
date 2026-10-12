@@ -92,15 +92,23 @@ public class PermissaoService {
     }
 
     /** Valida se o perfil/função do usuário permite pedir esse escopo —
-     * lança 403 quando não permite. MINHAS e DIRETORIA são livres pra
-     * qualquer autenticado. */
+     * lança 403 quando não permite. MINHAS, EQUIPE e DIRETORIA (o núcleo) são livres
+     * para qualquer vinculado; TODAS é de Gestor e Admin. */
     public void validarEscopo(Pessoa usuario, EscopoListagem escopo) {
-        if (escopo == EscopoListagem.EQUIPE && usuario.getReferenciaArea() == null) {
-            throw new AccessDeniedException("Escopo 'equipe' exige ser Referência de uma Área");
+        if (escopo == EscopoListagem.EQUIPE && areaDaEquipe(usuario) == null) {
+            throw new AccessDeniedException("Escopo 'equipe' exige ter uma equipe (área) definida");
         }
         if (escopo == EscopoListagem.TODAS && !ehAdminOuGestor(usuario)) {
             throw new AccessDeniedException("Escopo 'todas' restrito a ADMIN/GESTOR");
         }
+    }
+
+    /**
+     * A equipe da pessoa: a área que ela referencia (se for Referência) ou, senão, a própria área.
+     * É o que o botão "Minha equipe" mostra.
+     */
+    public Area areaDaEquipe(Pessoa usuario) {
+        return usuario.getReferenciaArea() != null ? usuario.getReferenciaArea() : usuario.getArea();
     }
 
     private boolean ehAdminOuGestor(Pessoa usuario) {
