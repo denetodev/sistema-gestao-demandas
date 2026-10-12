@@ -31,7 +31,7 @@
     <small class="dica">Opcional. A ação que reúne esta e outras demandas, para ver o conjunto depois.</small>
     <p-select inputId="campanha" formControlName="campanhaId" [options]="opcoesCampanha()"
               optionLabel="nome" optionValue="id" [showClear]="true"
-              [placeholder]="form.controls.projetoId.value ? 'Nenhuma' : 'Escolha um projeto antes'" />
+              placeholder="Nenhuma" />
 
     <label for="prioridade">Prioridade</label>
     <small class="dica">Urgente é o que precisa sair antes de todo o resto.</small>
