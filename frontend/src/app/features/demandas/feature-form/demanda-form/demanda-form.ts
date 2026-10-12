@@ -16,6 +16,7 @@ import { ProjetoService } from '../../../../core/dados-mestres/projeto/projeto.s
 import { CampanhaService } from '../../../../core/dados-mestres/campanha/campanha.service';
 import { DiretoriaService } from '../../../../core/dados-mestres/diretoria/diretoria.service';
 import { formatarData, paraData } from '../../../../core/util/data';
+import { filtrarCampanhas } from './opcoes-campanha';
 
 @Component({
   selector: 'app-demanda-form',
@@ -78,9 +79,7 @@ export class DemandaForm {
         (!this.#demandante() || p.demandanteId === this.#demandante()),
     ),
   );
-  opcoesCampanha = computed(() =>
-    (this.#campanhas.value() ?? []).filter((c) => !!this.#projeto() && c.projetoId === this.#projeto()),
-  );
+  opcoesCampanha = computed(() => filtrarCampanhas(this.#campanhas.value() ?? [], this.#projeto()));
 
   constructor() {
     this.form.controls.diretoriaId.valueChanges.subscribe(() => {

@@ -1,6 +1,6 @@
 <app-barra-pagina titulo="Campanhas">
     <ng-container fim>
-        @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+        @if (auth.podeEditar()) {
         <p-button icon="pi pi-plus" label="Nova campanha" (onClick)="abrirNovo()" />
         }
     </ng-container>
@@ -27,8 +27,10 @@
                 <td>{{ campanha.dataInicio | date:'dd/MM/yyyy' }}</td>
                 <td>{{ campanha.dataFim | date:'dd/MM/yyyy' }}</td>
                 <td>
-                    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+                    @if (auth.podeEditar()) {
                     <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(campanha)" />
+                    }
+                    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
                     <p-button [text]="true" severity="danger" icon="pi pi-trash"
                         (onClick)="confirmarExclusao(campanha)" />
                     }
