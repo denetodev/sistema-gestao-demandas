@@ -1,8 +1,13 @@
 <div class="barra">
     <div class="barra__inicio">
-        @if (titulo()) {
-        <span class="barra__titulo">{{ titulo() }}</span>
-        }
+        <div class="barra__texto">
+            @if (titulo()) {
+            <h1 class="barra__titulo">{{ titulo() }}</h1>
+            }
+            @if (subtitulo()) {
+            <p class="barra__subtitulo">{{ subtitulo() }}</p>
+            }
+        </div>
         <ng-content select="[inicio]" />
     </div>
     <div class="barra__fim">

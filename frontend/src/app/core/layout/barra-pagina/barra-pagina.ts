@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 
+/** Cabeçalho da página: título, uma linha explicando para que serve a tela e as ações à direita. */
 @Component({
   selector: 'app-barra-pagina',
   imports: [],
@@ -8,4 +9,5 @@ import { Component, input } from '@angular/core';
 })
 export class BarraPagina {
   titulo = input<string>();
+  subtitulo = input<string>();
 }

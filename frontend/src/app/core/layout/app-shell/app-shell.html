@@ -1,5 +1,5 @@
 @if (auth.me.isLoading()) {
-<p>Carregando...</p>
+<p class="app-carregando">Carregando...</p>
 } @else if (auth.erroAoCarregarPessoa()) {
 <app-conta-pendente situacao="erro" />
 } @else if (!auth.pessoa()) {
@@ -7,76 +7,110 @@
 } @else if (!auth.vinculado()) {
 <app-conta-pendente [situacao]="auth.pessoa()?.status === 'REJEITADO' ? 'rejeitada' : 'pendente'" />
 } @else {
-<div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()">
-  <header class="app-topbar">
-    <div class="app-topbar__inicio">
-      <span class="app-marca">SGD</span>
+<div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()" [class.menu-aberto]="menuMovelAberto()">
+  <aside class="app-sidebar" id="menu-lateral">
+    <div class="app-marca">
+      <span class="app-marca__logo" aria-hidden="true">S</span>
+      <span class="app-marca__texto">
+        <strong>SGD</strong>
+        <small>Gestão de demandas</small>
+      </span>
     </div>
 
-    <div class="app-topbar__fim">
-      <p-button [text]="true" [rounded]="true" [icon]="tema.dark() ? 'pi pi-sun' : 'pi pi-moon'"
-        (onClick)="tema.toggle()" />
+    <nav class="app-nav" aria-label="Menu principal" (click)="fecharMenuMovel()">
+      <span class="app-nav__secao"><span>Visão geral</span></span>
+      <a routerLink="/dashboard" routerLinkActive="ativo" class="app-nav__item" title="Dashboard">
+        <i class="pi pi-chart-bar"></i><span class="app-nav__rotulo">Dashboard</span>
+      </a>
+      <a routerLink="/demandas" routerLinkActive="ativo" class="app-nav__item" title="Demandas">
+        <i class="pi pi-briefcase"></i><span class="app-nav__rotulo">Demandas</span>
+      </a>
+      @if (auth.podeEditar()) {
+      <a routerLink="/relatorio" routerLinkActive="ativo" class="app-nav__item" title="Relatório mensal">
+        <i class="pi pi-file-edit"></i><span class="app-nav__rotulo">Relatório mensal</span>
+      </a>
+      }
 
-      <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)">
-        <div class="app-usuario">
+      <span class="app-nav__secao"><span>Cadastros</span></span>
+      <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">
+        <i class="pi pi-users"></i><span class="app-nav__rotulo">Demandantes</span>
+      </a>
+      <a routerLink="/projetos" routerLinkActive="ativo" class="app-nav__item" title="Projetos">
+        <i class="pi pi-folder"></i><span class="app-nav__rotulo">Projetos</span>
+      </a>
+      <a routerLink="/campanhas" routerLinkActive="ativo" class="app-nav__item" title="Campanhas">
+        <i class="pi pi-megaphone"></i><span class="app-nav__rotulo">Campanhas</span>
+      </a>
+
+      <span class="app-nav__secao"><span>Produção</span></span>
+      <a routerLink="/tipos-peca" routerLinkActive="ativo" class="app-nav__item" title="Tipos de peça">
+        <i class="pi pi-tags"></i><span class="app-nav__rotulo">Tipos de peça</span>
+      </a>
+
+      @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+      <span class="app-nav__secao"><span>Administração</span></span>
+      <a routerLink="/pessoas" routerLinkActive="ativo" class="app-nav__item" title="Pessoas">
+        <i class="pi pi-id-card"></i><span class="app-nav__rotulo">Pessoas</span>
+      </a>
+      }
+    </nav>
+
+    <div class="app-hierarquia" aria-label="Seu núcleo, equipe e cargo">
+      <span class="app-hierarquia__titulo">Você está em</span>
+      <ol class="app-trilho">
+        <li>
+          <small>Núcleo</small>
+          <strong>{{ hierarquia().nucleo }}</strong>
+        </li>
+        <li>
+          <small>Equipe</small>
+          <strong>{{ hierarquia().equipe }}</strong>
+        </li>
+        <li>
+          <small>Cargo</small>
+          <strong>{{ hierarquia().cargo }}</strong>
+        </li>
+      </ol>
+    </div>
+  </aside>
+
+  <header class="app-topbar">
+    <button type="button" class="app-icone-botao" (click)="alternarMenu()" aria-controls="menu-lateral"
+      [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'Recolher menu'"
+      [attr.aria-expanded]="menuMovelAberto() || !sidebarRecolhida()">
+      <i class="pi pi-bars"></i>
+    </button>
+
+    <form class="app-busca" role="search" (submit)="buscar($event)">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input type="search" name="busca" autocomplete="off" aria-label="Buscar demandas"
+        placeholder="Buscar demandas por título ou código..." [value]="busca()"
+        (input)="busca.set($any($event.target).value)" />
+    </form>
+
+    <div class="app-topbar__fim">
+      <button type="button" class="app-icone-botao" (click)="tema.toggle()"
+        [attr.aria-label]="tema.dark() ? 'Usar tema claro' : 'Usar tema escuro'">
+        <i [class]="tema.dark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
+      </button>
+
+      <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)" aria-haspopup="menu">
+        <span class="app-usuario">
           <span class="app-usuario__nome">{{ nomeExibido() }}</span>
-          <span class="app-usuario__perfil">{{ auth.pessoa()?.perfil }}</span>
-        </div>
+          <span class="app-usuario__perfil">{{ perfilRotulo() }}</span>
+        </span>
         @if (auth.pessoa()?.fotoUrl) {
         <img class="app-avatar" [src]="auth.pessoa()!.fotoUrl" alt="" />
         } @else {
-        <div class="app-avatar">{{ iniciais() }}</div>
+        <span class="app-avatar">{{ iniciais() }}</span>
         }
+        <i class="pi pi-angle-down app-usuario__seta" aria-hidden="true"></i>
       </button>
       <p-menu #menuUsuario [model]="itensUsuario" [popup]="true" />
     </div>
   </header>
 
-  <aside class="app-sidebar">
-    <nav class="app-nav">
-      <button type="button" class="app-nav__item app-nav__toggle" (click)="alternarSidebar()"
-        [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'Recolher menu'"
-        [attr.aria-expanded]="!sidebarRecolhida()">
-        <i [class]="sidebarRecolhida() ? 'pi pi-window-maximize' : 'pi pi-sidebar'"></i>
-        <!-- <span>Recolher</span> -->
-      </button>
-
-      <a routerLink="/dashboard" routerLinkActive="ativo" class="app-nav__item" title="Dashboard">
-        <i class="pi pi-chart-bar"></i><span>Dashboard</span>
-      </a>
-      <a routerLink="/demandas" routerLinkActive="ativo" class="app-nav__item" title="Demandas">
-        <i class="pi pi-briefcase"></i><span>Demandas</span>
-      </a>
-
-      @if (auth.podeEditar()) {
-      <a routerLink="/relatorio" routerLinkActive="ativo" class="app-nav__item" title="Relatório mensal">
-        <i class="pi pi-file-edit"></i><span>Relatório mensal</span>
-      </a>
-      }
-
-      <span class="app-nav__secao">Cadastros</span>
-
-      <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">
-        <i class="pi pi-users"></i><span>Demandantes</span>
-      </a>
-      <a routerLink="/projetos" routerLinkActive="ativo" class="app-nav__item" title="Projetos">
-        <i class="pi pi-folder"></i><span>Projetos</span>
-      </a>
-      <a routerLink="/campanhas" routerLinkActive="ativo" class="app-nav__item" title="Campanhas">
-        <i class="pi pi-megaphone"></i><span>Campanhas</span>
-      </a>
-      <span class="app-nav__secao">Produção</span>
-      <a routerLink="/tipos-peca" routerLinkActive="ativo" class="app-nav__item" title="Tipos de peça">
-        <i class="pi pi-tags"></i><span>Tipos de peça</span>
-      </a>
-      @if (auth.temPerfil('ADMIN', 'GESTOR')) {
-      <span class="app-nav__secao">Administração</span>
-      <a routerLink="/pessoas" routerLinkActive="ativo" class="app-nav__item" title="Pessoas">
-        <i class="pi pi-id-card"></i><span>Pessoas</span>
-      </a>
-      }
-    </nav>
-  </aside>
+  <div class="app-backdrop" (click)="fecharMenuMovel()" aria-hidden="true"></div>
 
   <main class="app-conteudo">
     <router-outlet />

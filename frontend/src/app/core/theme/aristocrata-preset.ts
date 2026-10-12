@@ -1,6 +1,10 @@
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
+/**
+ * Tema do SGD: laranja da marca como única cor de ação.
+ * No claro o laranja é o 600 (contraste com texto branco nos botões); no escuro, o 500.
+ */
 export const AristocrataPreset = definePreset(Aura, {
   semantic: {
     primary: {
@@ -29,6 +33,46 @@ export const AristocrataPreset = definePreset(Aura, {
       800: '{slate.800}',
       900: '{slate.900}',
       950: '{slate.950}',
+    },
+    formField: {
+      borderRadius: '10px',
+    },
+    colorScheme: {
+      light: {
+        primary: {
+          color: '{orange.600}',
+          contrastColor: '#ffffff',
+          hoverColor: '{orange.700}',
+          activeColor: '{orange.800}',
+        },
+        highlight: {
+          background: '{orange.50}',
+          focusBackground: '{orange.100}',
+          color: '{orange.700}',
+          focusColor: '{orange.800}',
+        },
+      },
+      dark: {
+        primary: {
+          color: '{orange.500}',
+          contrastColor: '{slate.950}',
+          hoverColor: '{orange.400}',
+          activeColor: '{orange.300}',
+        },
+        highlight: {
+          background: 'color-mix(in srgb, {orange.400}, transparent 84%)',
+          focusBackground: 'color-mix(in srgb, {orange.400}, transparent 76%)',
+          color: 'rgba(255,255,255,.87)',
+          focusColor: 'rgba(255,255,255,.87)',
+        },
+      },
+    },
+  },
+  components: {
+    button: {
+      root: {
+        borderRadius: '10px',
+      },
     },
   },
 });

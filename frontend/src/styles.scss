@@ -1,31 +1,253 @@
 @import 'primeicons/primeicons.css';
 
+/* ==========================================================================
+   Identidade do SGD
+   Tela cinza-azulada, cartões brancos, menu e topo escuros e o laranja da marca
+   como única cor de ação. Modo escuro em .app-dark (botão no topo).
+   ========================================================================== */
+:root {
+  --sgd-fonte: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --sgd-fonte-codigo: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --p-font-family: var(--sgd-fonte);
+
+  --sgd-laranja: #ea580c;
+  --sgd-laranja-forte: #c2410c;
+  --sgd-laranja-suave: #fff1e6;
+
+  --sgd-tela: #f2f4f8;
+  --sgd-cartao: #ffffff;
+  --sgd-borda: #e4e7ee;
+  --sgd-texto: #161b2e;
+  --sgd-muted: #5e6a85;
+  --sgd-realce: #f7f8fb;
+
+  --sgd-menu-bg: #0f1523;
+  --sgd-menu-hover: rgba(255, 255, 255, 0.06);
+  --sgd-menu-texto: #c5cbda;
+  --sgd-menu-muted: #7c86a2;
+  --sgd-menu-linha: rgba(255, 255, 255, 0.09);
+  --sgd-menu-ativo-bg: rgba(249, 115, 22, 0.17);
+
+  --sgd-sombra: 0 1px 2px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.06);
+  --sgd-sombra-leve: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --sgd-raio: 14px;
+  --sgd-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: light;
+}
+
+.app-dark {
+  --sgd-laranja: #f97316;
+  --sgd-laranja-forte: #fb923c;
+  --sgd-laranja-suave: rgba(249, 115, 22, 0.14);
+
+  --sgd-tela: #0a0f1c;
+  --sgd-cartao: #121a2b;
+  --sgd-borda: #232c42;
+  --sgd-texto: #e8ecf5;
+  --sgd-muted: #93a0bc;
+  --sgd-realce: #172036;
+
+  --sgd-menu-bg: #070b14;
+  --sgd-menu-linha: rgba(255, 255, 255, 0.07);
+
+  --sgd-sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --sgd-sombra-leve: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  color-scheme: dark;
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
-  font-family: var(--p-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-family: var(--sgd-fonte);
+  background: var(--sgd-tela);
+  color: var(--sgd-texto);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
 }
 
 a {
-  color: var(--p-primary-color);
+  color: var(--sgd-laranja);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 a:hover {
   text-decoration: underline;
 }
 
+/* Links dentro de tabelas são o nome do item: leem como texto, e acendem no hover. */
+td a:not(.p-button) {
+  color: var(--sgd-texto);
+  font-weight: 600;
+}
+
+td a:not(.p-button):hover {
+  color: var(--sgd-laranja);
+}
+
+:focus-visible {
+  outline: 2px solid var(--sgd-laranja);
+  outline-offset: 2px;
+}
+
+/* ---------- Página e cartões ---------- */
 .pagina-corpo {
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1.5rem 2rem;
   overflow-x: auto;
+}
+
+.cartao {
+  background: var(--sgd-cartao);
+  border: 1px solid var(--sgd-borda);
+  border-radius: var(--sgd-raio);
+  box-shadow: var(--sgd-sombra);
+}
+
+.cartao--tabela {
+  overflow: hidden;
+}
+
+/* Código de demanda (BC2607CQ): peça do vocabulário deles, em fonte de código. */
+.codigo-chip {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  background: var(--sgd-realce);
+  border: 1px solid var(--sgd-borda);
+  font-family: var(--sgd-fonte-codigo);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--sgd-muted);
+  white-space: nowrap;
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+}
+
+.vazio {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--sgd-muted);
+}
+
+.vazio strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--sgd-texto);
+}
+
+/* ---------- Tabelas ---------- */
+.p-datatable {
+  background: transparent;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: transparent;
+  color: var(--sgd-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-color: var(--sgd-borda);
+  padding: 0.75rem 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr {
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  border-color: var(--sgd-borda);
+  padding: 0.85rem 1rem;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: var(--sgd-realce);
+}
+
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+  background: transparent;
+}
+
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even):hover {
+  background: var(--sgd-realce);
+}
+
+.p-paginator {
+  background: transparent;
+  border-top: 1px solid var(--sgd-borda);
+}
+
+/* ---------- Etiquetas de situação, mais suaves ---------- */
+.p-tag {
+  border-radius: 999px;
+  padding: 0.18rem 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.p-tag.p-tag-success { background: #e7f8ef; color: #067647; }
+.p-tag.p-tag-danger { background: #feecea; color: #b42318; }
+.p-tag.p-tag-warn { background: #fff4e0; color: #b54708; }
+.p-tag.p-tag-info { background: #e8f2ff; color: #175cd3; }
+.p-tag.p-tag-secondary { background: #eceff5; color: #475467; }
+
+.app-dark .p-tag.p-tag-success { background: rgba(18, 183, 106, 0.16); color: #6ce9a6; }
+.app-dark .p-tag.p-tag-danger { background: rgba(240, 68, 56, 0.18); color: #fda29b; }
+.app-dark .p-tag.p-tag-warn { background: rgba(247, 144, 9, 0.18); color: #fec84b; }
+.app-dark .p-tag.p-tag-info { background: rgba(46, 144, 250, 0.18); color: #84caff; }
+.app-dark .p-tag.p-tag-secondary { background: rgba(255, 255, 255, 0.08); color: #cbd2e1; }
+
+/* ---------- Movimento ---------- */
+@keyframes pagina-entra {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+button,
+.p-button {
+  transition: background-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.p-button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Impressão (relatório mensal): esconde o casco do app e deixa só o documento. */
 @media print {
   .app-topbar,
   .app-sidebar,
+  .app-backdrop,
   app-barra-pagina,
   .nao-imprimir {
     display: none !important;
@@ -47,5 +269,197 @@ a:hover {
 
   @page {
     margin: 15mm;
+  }
+}
+
+/* ==========================================================================
+   Telas de acesso (entrar e criar conta)
+   ========================================================================== */
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--sgd-tela);
+}
+
+.auth__marca {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 3rem clamp(2rem, 6vw, 5.5rem);
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(60rem 30rem at 12% -10%, rgba(249, 115, 22, 0.32), transparent 60%),
+    radial-gradient(40rem 26rem at 110% 110%, rgba(249, 115, 22, 0.18), transparent 60%),
+    #0f1523;
+}
+
+.auth__marca::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(70% 70% at 30% 40%, #000, transparent 75%);
+  pointer-events: none;
+}
+
+.auth__marca > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.auth__logo span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fb923c, #ea580c);
+  box-shadow: 0 6px 20px rgba(234, 88, 12, 0.45);
+}
+
+.auth__marca h2 {
+  margin: 1.5rem 0 0;
+  max-width: 26rem;
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+
+.auth__marca h2 em {
+  font-style: normal;
+  color: #fb923c;
+}
+
+.auth__marca p {
+  margin: 0;
+  max-width: 28rem;
+  color: #aab3c8;
+  line-height: 1.6;
+}
+
+.auth__pontos {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auth__pontos li {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: #dbe1ef;
+  font-weight: 500;
+}
+
+.auth__pontos i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(249, 115, 22, 0.16);
+  color: #fb923c;
+  font-size: 0.95rem;
+}
+
+.auth__painel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+
+.auth__cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  max-width: 26rem;
+  padding: 2.25rem 2rem 1.75rem;
+  background: var(--sgd-cartao);
+  border: 1px solid var(--sgd-borda);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(16, 24, 40, 0.12);
+  animation: pagina-entra 0.4s var(--sgd-ease) both;
+}
+
+.auth__cartao h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.auth__subtitulo {
+  margin: 0.2rem 0 1.1rem;
+  text-align: center;
+  color: var(--sgd-muted);
+  font-size: 0.9rem;
+}
+
+.auth__cartao label {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--sgd-texto);
+}
+
+.auth__cartao .p-password,
+.auth__cartao .p-password input,
+.auth__cartao input.p-inputtext {
+  width: 100%;
+}
+
+.auth__cartao .p-button {
+  width: 100%;
+  margin-top: 1rem;
+  height: 46px;
+  font-weight: 700;
+  justify-content: center;
+}
+
+.auth__rodape {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--sgd-muted);
+}
+
+@media (max-width: 899px) {
+  .auth {
+    grid-template-columns: 1fr;
+  }
+
+  .auth__marca {
+    padding: 1.75rem 1.5rem 2rem;
+  }
+
+  .auth__marca h2 {
+    margin-top: 0.75rem;
+    font-size: 1.5rem;
+  }
+
+  .auth__pontos {
+    display: none;
   }
 }
