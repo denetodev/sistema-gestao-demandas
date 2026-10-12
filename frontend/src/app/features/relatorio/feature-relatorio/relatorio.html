@@ -10,6 +10,7 @@
 </app-barra-pagina>
 
 <div class="pagina-corpo painel">
+  <app-ajuda chave="relatorio" />
   @if (relatorio.error()) {
     <p-message severity="error">Não foi possível carregar o relatório deste mês.</p-message>
   } @else if (relatorio.value(); as r) {

@@ -17,11 +17,13 @@ import { ROTULO_STATUS } from '../../demandas/data-access/demanda-itens.model';
 import { DashboardService } from '../data-access/dashboard.service';
 import { MapaCalor } from '../ui-mapa-calor/mapa-calor';
 
+import { Ajuda } from '../../../core/ajuda/ajuda/ajuda';
+
 const STATUS: StatusDemanda[] = ['NAO_INICIADA', 'EM_ANDAMENTO', 'EM_APROVACAO', 'CONCLUIDA', 'CANCELADA'];
 
 @Component({
   selector: 'app-dashboard',
-  imports: [
+  imports: [Ajuda, 
     CurrencyPipe, FormsModule, Button, Select, Checkbox, DatePicker, TableModule, Message, BarraPagina, MapaCalor,
   ],
   templateUrl: './dashboard.html',

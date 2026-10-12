@@ -18,6 +18,7 @@
 </app-barra-pagina>
 
 <div class="pagina-corpo painel">
+  <app-ajuda chave="dashboard" />
   @if (dashboard.error()) {
     <p-message severity="error">Não foi possível carregar o dashboard.</p-message>
   } @else if (dashboard.value(); as d) {

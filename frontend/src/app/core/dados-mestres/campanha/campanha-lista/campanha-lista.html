@@ -7,6 +7,7 @@
 </app-barra-pagina>
 
 <div class="pagina-corpo">
+  <app-ajuda chave="campanhas" />
     <p-table [value]="campanhas.value() ?? []" [loading]="campanhas.isLoading()" [paginator]="true" [rows]="20"
         dataKey="id" [stripedRows]="true" sortMode="single">
         <ng-template pTemplate="header">

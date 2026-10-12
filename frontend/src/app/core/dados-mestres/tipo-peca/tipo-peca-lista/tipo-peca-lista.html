@@ -7,6 +7,7 @@
 </app-barra-pagina>
 
 <div class="pagina-corpo">
+  <app-ajuda chave="tipos-peca" />
   <p-table [value]="tiposOrdenados()" [loading]="tipos.isLoading()" [paginator]="true" [rows]="20" dataKey="id"
     [stripedRows]="true" [groupRowsBy]="'areaNome'" rowGroupMode="subheader">
     <ng-template pTemplate="header">

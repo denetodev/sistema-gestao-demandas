@@ -15,9 +15,11 @@ import { AuthService } from '../../../auth/auth.service';
 import { BarraPagina } from '../../../layout/barra-pagina/barra-pagina';
 import type { Demandante, TipoDemandante } from '../demandante.model';
 
+import { Ajuda } from '../../../ajuda/ajuda/ajuda';
+
 @Component({
   selector: 'app-demandante-lista',
-  imports: [
+  imports: [Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,
