@@ -84,6 +84,9 @@ public class AtividadeService {
         if (!permissaoService.podeGerenciar(usuario, pessoaAlvo)) {
             throw new AccessDeniedException("Sem permissão para lançar atividade em nome dessa pessoa");
         }
+        if (request.demandaId() != null) {
+            permissaoService.exigirPodeAlterarDemanda(usuario, request.demandaId());
+        }
 
         TipoAtividade tipo = Resolvers.resolverObrigatorio(request.tipoAtividadeId(), tipoAtividadeRepository, "Tipo de atividade");
 

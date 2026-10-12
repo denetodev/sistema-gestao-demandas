@@ -130,9 +130,14 @@ public class DemandaService {
         return paraResponse(salva);
     }
 
-    public DemandaResponse atualizar(UUID id, DemandaRequest request) {
+    public DemandaResponse atualizar(Jwt jwt, UUID id, DemandaRequest request) {
+        return atualizar(currentPessoaResolver.resolver(jwt), id, request);
+    }
+
+    DemandaResponse atualizar(Pessoa usuario, UUID id, DemandaRequest request) {
         Demanda demanda = demandaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + id));
+        permissaoService.exigirPodeAlterarDemanda(usuario, id);
 
         Diretoria diretoria = diretoriaRepository.findById(request.diretoriaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Diretoria não encontrada: " + request.diretoriaId()));
@@ -168,6 +173,7 @@ public class DemandaService {
         if (usuario.getPerfil() == PerfilPessoa.VISUALIZADOR) {
             throw new AccessDeniedException("Visualizador não altera demandas");
         }
+        permissaoService.exigirPodeAlterarDemanda(usuario, id);
         if (novoStatus == StatusDemanda.CANCELADA && !podeCancelar(usuario, id)) {
             throw new AccessDeniedException("Só Gestor, Admin ou o Responsável principal cancelam a demanda");
         }

@@ -71,6 +71,7 @@ public class PecaService {
         if (!permissaoService.podeGerenciar(usuario, pessoaAlvo)) {
             throw new AccessDeniedException("Sem permissão para lançar peça em nome dessa pessoa");
         }
+        permissaoService.exigirPodeAlterarDemanda(usuario, request.demandaId());
 
         Demanda demanda = Resolvers.resolverObrigatorio(request.demandaId(), demandaRepository, "Demanda");
         TipoPeca tipo = Resolvers.resolverObrigatorio(request.tipoPecaId(), tipoPecaRepository, "Tipo de peça");
