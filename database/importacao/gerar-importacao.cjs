@@ -366,6 +366,17 @@ delete from area a
    and not exists (select 1 from pessoa p where p.area_id = a.id)
    and not exists (select 1 from pessoa p where p.referencia_area_id = a.id);
 `;
+
+// Vínculo de campanhas (vincular-campanhas.sql): o corpo roda dentro da mesma transação da importação,
+// então reprocessar a planilha não perde as campanhas das demandas.
+const CAMPANHAS = (() => {
+  const sql = fs.readFileSync(path.join(__dirname, 'vincular-campanhas.sql'), 'utf8').replace(/\r\n/g, '\n');
+  const i = sql.indexOf('-- >>> corpo');
+  const j = sql.indexOf('-- <<< corpo');
+  if (i < 0 || j < 0) throw new Error('marcadores de corpo ausentes em vincular-campanhas.sql');
+  return sql.slice(sql.indexOf('\n', i) + 1, j);
+})();
+
 const limpeza = `begin;\n${corpoLimpeza}
 select (select count(*) from demanda) as demandas, (select count(*) from pessoa) as pessoas,
        (select count(*) from pessoa where auth_user_id is not null) as pessoas_com_login,
@@ -523,9 +534,9 @@ const CONFERENCIA = `select (select count(*) from demanda where source_system = 
        (select round(sum(p.quantidade * p.valor_unitario), 2) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}' and d.status <> 'CANCELADA') as soma_sem_canceladas,
        (select count(*) from demandante) as demandantes, (select count(*) from tipo_peca) as tipos_peca,
        (select count(*) from pessoa) as pessoas, (select count(*) from pessoa where auth_user_id is not null) as pessoas_com_login;`;
-const importacao = `begin;\n${corpoImportacao}\ndrop table imp_hc_linha, imp_hc_peca, imp_hc_part, imp_hc_grupo, imp_hc_tipo, imp_hc_demandante, imp_hc_pessoa, imp_hc_resp;\n\n-- conferência: compare com relatorio-conferencia.md antes do COMMIT\n${CONFERENCIA}\n\ncommit;\n\n-- Novos integrantes do CRM sem área/cargo definidos (pessoa.area_id é obrigatório). Quando souber a área:\n${PESSOAS_PENDENTES.map((p) => `-- insert into pessoa (nome, nome_exibicao, area_id, status, perfil, aprovado_em) select ${sql(p.nome)}, ${sql(p.exibicao)}, id, 'ATIVO', 'PROFISSIONAL', now() from area where nome = '<ÁREA>';`).join('\n')}\n`;
+const importacao = `begin;\n${corpoImportacao}\n${CAMPANHAS}\ndrop table imp_hc_linha, imp_hc_peca, imp_hc_part, imp_hc_grupo, imp_hc_tipo, imp_hc_demandante, imp_hc_pessoa, imp_hc_resp;\n\n-- conferência: compare com relatorio-conferencia.md antes do COMMIT\n${CONFERENCIA}\n\ncommit;\n\n-- Novos integrantes do CRM sem área/cargo definidos (pessoa.area_id é obrigatório). Quando souber a área:\n${PESSOAS_PENDENTES.map((p) => `-- insert into pessoa (nome, nome_exibicao, area_id, status, perfil, aprovado_em) select ${sql(p.nome)}, ${sql(p.exibicao)}, id, 'ATIVO', 'PROFISSIONAL', now() from area where nome = '<ÁREA>';`).join('\n')}\n`;
 // ensaio: limpeza + importação completas numa transação que termina em ROLLBACK
-const ensaio = `begin;\n${corpoLimpeza}\n${corpoImportacao}\n${CONFERENCIA}\n\nrollback;\n`;
+const ensaio = `begin;\n${corpoLimpeza}\n${corpoImportacao}\n${CAMPANHAS}\n${CONFERENCIA}\n\nrollback;\n`;
 
 // ---------------------------------------------------------------- relatório de conferência
 const fmt = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

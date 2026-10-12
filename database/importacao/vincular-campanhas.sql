@@ -7,7 +7,8 @@
 --
 -- Idempotente: rodar de novo não duplica campanha e só vincula demanda que ainda está SEM campanha,
 -- então nunca sobrescreve uma escolha feita à mão no sistema.
--- Rode DEPOIS de importar (reprocessar a importação recria as demandas e o vínculo se perde).
+-- Os geradores de importação (gerar-importacao*.cjs) já embutem este corpo no 02-importar.sql, então
+-- reimportar devolve as campanhas sozinho. Rode este arquivo à parte só para aplicar sem reimportar.
 --
 -- Reversão: update demanda set campanha_id = null where campanha_id in
 --   (select id from campanha where nome in (<nomes abaixo>));  e depois delete from campanha dos mesmos nomes.
@@ -16,6 +17,7 @@
 
 begin;
 
+-- >>> corpo (os geradores de importação embutem só o trecho entre estes marcadores)
 create temporary table regra_campanha (
     prio  int  not null,
     fonte text not null,   -- demanda.source_system
@@ -81,6 +83,7 @@ from (
 ) m
 join campanha c on c.nome = m.nome
 where d.id = m.demanda_id;
+-- <<< corpo
 
 -- conferência
 select c.nome as campanha, count(d.id) as demandas

@@ -56,6 +56,7 @@ Diferenças em relação à HOUSE:
 ## Campanhas (depois da importação)
 As planilhas não trazem campanha. `vincular-campanhas.sql` cria as campanhas a partir do assunto que se repete nos títulos
 (por exemplo "BBCast Agro", "Desenrola Brasil", "BBBE Livelo") e vincula as demandas importadas. É idempotente e só
-preenche demanda ainda **sem** campanha, então não sobrescreve escolhas feitas no sistema. **Rode depois de qualquer
-reimportação**: reprocessar apaga e recria as demandas, e o vínculo se perde. Na House CRM, `CAM #n.n` é a squad, não a campanha.
+preenche demanda ainda **sem** campanha, então não sobrescreve escolhas feitas no sistema. **Os dois geradores já embutem
+este corpo no `02-importar.sql`** (na mesma transação), então reimportar devolve as campanhas sozinho; as campanhas em si
+não são apagadas na limpeza. Rode o arquivo à parte só para aplicar sem reimportar. Na House CRM, `CAM #n.n` é a squad, não a campanha.
 Para incluir uma campanha nova, acrescente uma linha na lista de regras do arquivo.

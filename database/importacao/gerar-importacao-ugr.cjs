@@ -556,8 +556,19 @@ const CONFERENCIA = `select (select count(*) from demanda where source_system = 
        (select count(*) from demanda where source_system = '${SS}' and demandante_id is null) as sem_demandante,
        (select count(*) from demanda) as demandas_total, (select count(*) from demandante) as demandantes,
        (select count(*) from tipo_peca) as tipos_peca, (select count(*) from pessoa) as pessoas;`;
-const importacao = `begin;\n${corpoImportacao}\ndrop table ${TABELAS.map((t) => `imp_ugr_${t}`).join(', ')};\n\n-- conferência: compare com relatorio-conferencia.md antes do COMMIT\n${CONFERENCIA}\n\ncommit;\n`;
-const ensaio = `begin;\n${corpoImportacao}\n${CONFERENCIA}\n\nrollback;\n`;
+
+// Vínculo de campanhas (vincular-campanhas.sql): o corpo roda dentro da mesma transação da importação,
+// então reprocessar a planilha não perde as campanhas das demandas.
+const CAMPANHAS = (() => {
+  const sql = fs.readFileSync(path.join(__dirname, 'vincular-campanhas.sql'), 'utf8').replace(/\r\n/g, '\n');
+  const i = sql.indexOf('-- >>> corpo');
+  const j = sql.indexOf('-- <<< corpo');
+  if (i < 0 || j < 0) throw new Error('marcadores de corpo ausentes em vincular-campanhas.sql');
+  return sql.slice(sql.indexOf('\n', i) + 1, j);
+})();
+
+const importacao = `begin;\n${corpoImportacao}\n${CAMPANHAS}\ndrop table ${TABELAS.map((t) => `imp_ugr_${t}`).join(', ')};\n\n-- conferência: compare com relatorio-conferencia.md antes do COMMIT\n${CONFERENCIA}\n\ncommit;\n`;
+const ensaio = `begin;\n${corpoImportacao}\n${CAMPANHAS}\n${CONFERENCIA}\n\nrollback;\n`;
 
 // ---------------------------------------------------------------- relatório de conferência
 const fmt = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
