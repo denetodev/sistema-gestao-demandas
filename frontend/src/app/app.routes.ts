@@ -75,6 +75,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'campanhas/:id',
+        loadComponent: () =>
+          import('./core/dados-mestres/campanha/campanha-detalhe/campanha-detalhe').then(
+            (m) => m.CampanhaDetalheComponent,
+          ),
+      },
+      {
         path: 'tipos-peca',
         loadComponent: () =>
           import('./core/dados-mestres/tipo-peca/tipo-peca-lista/tipo-peca-lista').then(

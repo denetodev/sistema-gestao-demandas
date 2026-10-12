@@ -1,0 +1,110 @@
+<app-barra-pagina titulo="Campanha">
+  <ng-container inicio>
+    <a routerLink="/campanhas" class="voltar"><i class="pi pi-arrow-left"></i> Voltar para Campanhas</a>
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo detalhe">
+  <app-ajuda chave="campanha-detalhe" />
+
+  @if (detalhe.error()) {
+    <p-message severity="error">Não foi possível carregar a campanha.</p-message>
+  } @else if (detalhe.value(); as d) {
+    <h1 class="nome">
+      {{ d.resumo.nome }}
+      @if (d.resumo.codigo) { <span class="codigo">{{ d.resumo.codigo }}</span> }
+    </h1>
+    @if (d.resumo.primeiraDemanda) {
+      <p class="periodo">
+        Demandas de {{ d.resumo.primeiraDemanda | date: 'dd/MM/yyyy' }} a {{ d.resumo.ultimaDemanda | date: 'dd/MM/yyyy' }}
+      </p>
+    }
+
+    @if (d.resumo.demandas === 0) {
+      <p-message severity="info">Esta campanha ainda não tem demandas. Escolha-a ao criar ou editar uma demanda.</p-message>
+    } @else {
+      <div class="indicadores">
+        <div class="indicador">
+          <span class="indicador__rotulo">Demandas</span>
+          <strong>{{ d.resumo.demandasAtivas }}</strong>
+          @if (d.resumo.demandas !== d.resumo.demandasAtivas) {
+            <small>de {{ d.resumo.demandas }} (as canceladas ficam de fora)</small>
+          }
+        </div>
+        <div class="indicador">
+          <span class="indicador__rotulo">Pessoas</span>
+          <strong>{{ d.resumo.pessoas }}</strong>
+        </div>
+        <div class="indicador">
+          <span class="indicador__rotulo">Valor gerado</span>
+          <strong>{{ d.resumo.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
+        </div>
+        <div class="indicador">
+          <span class="indicador__rotulo">Peças</span>
+          <strong>{{ d.resumo.pecas }}</strong>
+        </div>
+        <div class="indicador">
+          <span class="indicador__rotulo">Atividades</span>
+          <strong>{{ d.resumo.atividades }}</strong>
+        </div>
+      </div>
+
+      <div class="situacao">
+        @for (s of situacao(); track s.status) {
+          <p-tag [value]="s.quantidade + ' ' + s.rotulo.toLowerCase()" [severity]="severidade(s.status)" />
+        }
+      </div>
+
+      <section class="secao">
+        <h2>Quem participou</h2>
+        <p-table [value]="d.pessoas" [stripedRows]="true" dataKey="pessoaId">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Pessoa</th>
+              <th>Demandas</th>
+              <th>Atividades</th>
+              <th>Peças</th>
+              <th>Valor das peças</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-p>
+            <tr>
+              <td>{{ p.nome }}</td>
+              <td>{{ p.demandas }}</td>
+              <td>{{ p.atividades }}</td>
+              <td>{{ p.pecas }}</td>
+              <td>{{ p.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr><td colspan="5">Ninguém registrado nas demandas desta campanha.</td></tr>
+          </ng-template>
+        </p-table>
+      </section>
+
+      <section class="secao">
+        <h2>Demandas da campanha</h2>
+        <p-table [value]="d.demandas" [paginator]="d.demandas.length > 15" [rows]="15" [stripedRows]="true" dataKey="id">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Demanda</th>
+              <th>Situação</th>
+              <th>Criada em</th>
+              <th>Valor</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-dem>
+            <tr>
+              <td><a [routerLink]="['/demandas', dem.id]">{{ dem.titulo }}</a></td>
+              <td><p-tag [value]="rotuloStatus[dem.status]" [severity]="severidade(dem.status)" /></td>
+              <td>{{ dem.dataCriacao | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ dem.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </section>
+    }
+  } @else {
+    <p>Carregando...</p>
+  }
+</div>

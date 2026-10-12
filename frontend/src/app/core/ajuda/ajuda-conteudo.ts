@@ -24,6 +24,7 @@ export type ChaveAjuda =
   | 'demandantes'
   | 'projetos'
   | 'campanhas'
+  | 'campanha-detalhe'
   | 'tipos-peca'
   | 'pessoas'
   | 'relatorio';
@@ -168,6 +169,11 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
           'Para conseguir responder perguntas como: quantas pessoas participaram da campanha? Quantas demandas ela teve? Quanto trabalho ela gerou? Sem o vínculo, cada demanda aparece isolada.',
       },
       {
+        pergunta: 'O que mostram as colunas Demandas, Pessoas e Valor gerado?',
+        resposta:
+          'O que a campanha reuniu até agora: quantas demandas (sem as canceladas), quantas pessoas diferentes participaram e a soma do valor das peças. Clique no nome da campanha para ver o detalhe.',
+      },
+      {
         pergunta: 'O que é o código da campanha?',
         resposta:
           'Um identificador livre, se a sua área usa um (por exemplo BC2606CR). Não precisa ser único e nem todo setor usa.',
@@ -176,6 +182,32 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
         pergunta: 'Preciso informar uma campanha em toda demanda?',
         resposta:
           'Não. Só quando a demanda fizer parte de uma ação maior. Demandas avulsas ficam sem campanha.',
+      },
+    ],
+  },
+
+  'campanha-detalhe': {
+    titulo: 'Como ler a visão da campanha?',
+    itens: [
+      {
+        pergunta: 'Quantos funcionários participam desta campanha?',
+        resposta:
+          'O indicador Pessoas conta cada pessoa uma vez, mesmo que ela esteja em várias demandas da campanha. Quem só aparece em demanda cancelada não entra.',
+      },
+      {
+        pergunta: 'Quanto trabalho a campanha gerou?',
+        resposta:
+          'Valor gerado é a soma do valor das peças de todas as demandas da campanha, e Peças e Atividades mostram o volume. É uma referência de mercado, não um custo real.',
+      },
+      {
+        pergunta: 'Por que o número de demandas é menor que o total?',
+        resposta:
+          'As demandas canceladas aparecem na lista e na faixa de situação, mas não entram nos indicadores, para não inflar o resultado.',
+      },
+      {
+        pergunta: 'Como uma demanda entra nesta campanha?',
+        resposta:
+          'Escolha a campanha no campo Campanha ao criar ou editar a demanda. Demandas avulsas ficam sem campanha e não aparecem aqui.',
       },
     ],
   },

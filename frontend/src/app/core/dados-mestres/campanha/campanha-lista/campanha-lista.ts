@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
@@ -21,7 +22,7 @@ import { Ajuda } from '../../../ajuda/ajuda/ajuda';
 
 @Component({
   selector: 'app-campanha-lista',
-  imports: [Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, BarraPagina],
+  imports: [Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, CurrencyPipe, RouterLink, BarraPagina],
   templateUrl: './campanha-lista.html',
   styleUrl: './campanha-lista.scss',
 })
@@ -31,6 +32,11 @@ export class CampanhaLista {
   #confirmationService = inject(ConfirmationService);
 
   campanhas = this.#service.listar;
+  resumos = this.#service.resumos;
+  #resumoPorId = computed(() => new Map((this.resumos.value() ?? []).map((r) => [r.id, r])));
+  resumo(id: string) {
+    return this.#resumoPorId().get(id);
+  }
   projetos = inject(ProjetoService).listar;
 
   dialogAberto = signal(false);
