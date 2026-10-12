@@ -39,7 +39,7 @@ export class AppShell {
 
   perfilRotulo = computed(() => ROTULO_PERFIL[this.auth.pessoa()?.perfil ?? ''] ?? '');
 
-  /** Núcleo, equipe e cargo da pessoa: o trilho que aparece no rodapé do menu. */
+  /** Diretoria, equipe e cargo da pessoa: o trilho que aparece no rodapé do menu. */
   hierarquia = computed(() => {
     const p = this.auth.pessoa();
     return { nucleo: p?.diretoriaNome ?? '—', equipe: p?.areaNome ?? '—', cargo: p?.cargoNome ?? '—' };

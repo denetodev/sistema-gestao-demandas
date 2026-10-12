@@ -61,7 +61,7 @@ export interface DemandaFiltro {
   escopo: EscopoDemanda;
   busca: string;
   status: StatusDemanda | '';
-  /** Núcleo (a diretoria da demanda). */
+  /** Diretoria da demanda. */
   diretoriaId: string;
   /** Equipe (a área de alguém ativo do time). */
   areaId: string;

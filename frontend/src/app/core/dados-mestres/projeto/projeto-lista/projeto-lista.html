@@ -16,8 +16,8 @@
         <app-campo-busca class="filtros__busca" placeholder="Buscar por nome ou demandante..." descricao="Buscar projetos"
           [valor]="busca()" (valorChange)="busca.set($event)" />
         <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
-          placeholder="Núcleo" [showClear]="true" [ngModel]="nucleoFiltro()"
-          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por núcleo" />
+          placeholder="Diretoria" [showClear]="true" [ngModel]="nucleoFiltro()"
+          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por diretoria" />
         @if (filtrosAtivos()) {
           <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
             (onClick)="limparFiltros()" />
@@ -36,7 +36,7 @@
           <tr>
             <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
             <th>Demandante</th>
-            <th>Núcleo</th>
+            <th>Diretoria</th>
             <th>Situação</th>
             <th>Ações</th>
           </tr>
@@ -96,7 +96,7 @@
         [showClear]="true"
       />
 
-      <label for="diretoria">Núcleo</label>
+      <label for="diretoria">Diretoria</label>
       <p-select
         inputId="diretoria"
         formControlName="diretoriaId"

@@ -10,8 +10,8 @@
         <app-campo-busca class="filtros__busca" placeholder="Buscar por nome ou e-mail..." descricao="Buscar pessoas"
           [valor]="busca()" (valorChange)="busca.set($event)" />
         <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
-          placeholder="Núcleo" [showClear]="true" [ngModel]="nucleoFiltro()"
-          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por núcleo" />
+          placeholder="Diretoria" [showClear]="true" [ngModel]="nucleoFiltro()"
+          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por diretoria" />
         <p-select class="filtros__campo" [options]="opcoesEquipe()" optionLabel="rotulo" optionValue="valor"
           placeholder="Equipe" [showClear]="true" [filter]="true" filterBy="rotulo" [ngModel]="equipeFiltro()"
           (ngModelChange)="equipeFiltro.set($event)" ariaLabel="Filtrar por equipe" />

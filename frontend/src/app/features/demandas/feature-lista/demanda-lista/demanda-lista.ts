@@ -61,7 +61,7 @@ export class DemandaLista {
 
   ehGestao = computed(() => this.auth.temPerfil('ADMIN', 'GESTOR'));
 
-  /** Os botões de escopo mostram o nome real da equipe e do núcleo da pessoa. */
+  /** Os botões de escopo mostram o nome real da equipe e da diretoria da pessoa. */
   opcoesEscopo = computed<OpcaoPilula[]>(() => {
     const p = this.auth.pessoa();
     const opcoes: OpcaoPilula[] = [];
@@ -69,14 +69,14 @@ export class DemandaLista {
     if (p?.referenciaAreaId || p?.areaId) {
       opcoes.push({ valor: 'EQUIPE', rotulo: 'Minha equipe', detalhe: p.referenciaAreaNome ?? p.areaNome });
     }
-    opcoes.push({ valor: 'DIRETORIA', rotulo: 'Meu núcleo', detalhe: p?.diretoriaNome });
+    opcoes.push({ valor: 'DIRETORIA', rotulo: 'Minha diretoria', detalhe: p?.diretoriaNome });
     if (this.ehGestao()) opcoes.push({ valor: 'TODAS', rotulo: 'Todas' });
     return opcoes;
   });
 
   opcoesStatus = STATUS_VALIDOS.map((valor) => ({ valor, rotulo: ROTULO_STATUS[valor] }));
   opcoesNucleo = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
-  /** O mesmo nome de equipe existe em núcleos diferentes (Design em CRM e em UGR), então o núcleo vai junto. */
+  /** O mesmo nome de equipe existe em diretorias diferentes (Design em CRM e em UGR), então a diretoria vai junto. */
   opcoesEquipe = computed(() =>
     (this.#areas.value() ?? []).map((a) => ({
       valor: a.id,

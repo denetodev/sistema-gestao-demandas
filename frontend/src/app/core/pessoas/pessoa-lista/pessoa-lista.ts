@@ -71,7 +71,7 @@ export class PessoaLista {
   situacaoFiltro = signal<string | null>(null);
 
   opcoesNucleo = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
-  /** O mesmo nome de equipe existe em núcleos diferentes (Design em CRM e em UGR), então o núcleo vai junto. */
+  /** O mesmo nome de equipe existe em diretorias diferentes (Design em CRM e em UGR), então a diretoria vai junto. */
   opcoesEquipe = computed(() =>
     (this.areas.value() ?? []).map((a) => ({
       valor: a.id,
