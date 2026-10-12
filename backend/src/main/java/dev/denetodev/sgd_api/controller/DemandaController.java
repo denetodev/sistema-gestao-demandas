@@ -41,8 +41,8 @@ public class DemandaController {
     }
 
     @GetMapping("/{id}")
-    public DemandaResponse buscarPorId(@PathVariable UUID id) {
-        return demandaService.buscarPorId(id);
+    public DemandaResponse buscarPorId(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
+        return demandaService.buscarPorId(jwt, id);
     }
 
     @PostMapping

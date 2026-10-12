@@ -27,8 +27,8 @@ import { Ajuda } from '../../../../core/ajuda/ajuda/ajuda';
 
 @Component({
   selector: 'app-demanda-detalhe',
-  imports: [Ajuda, 
-    RouterLink, CurrencyPipe, DatePipe, FormsModule, TableModule, Button, Tag, Select, Message, BarraPagina, DemandaForm,
+  imports: [
+    Ajuda, RouterLink, CurrencyPipe, DatePipe, FormsModule, TableModule, Button, Tag, Select, Message, BarraPagina, DemandaForm,
     SecaoParticipantes, SecaoPecas, SecaoAtividades, SecaoEvidencias,
   ],
   templateUrl: './demanda-detalhe.html',
@@ -52,7 +52,27 @@ export class DemandaDetalhe {
   dialogAberto = signal(false);
 
   cancelada = computed(() => this.demanda.value()?.status === 'CANCELADA');
-  editavel = computed(() => this.auth.podeEditar() && !this.cancelada());
+  editavel = computed(() => !!this.demanda.value()?.podeAlterar && !this.cancelada());
+  /** Só Gestor, Admin ou o Responsável principal cancelam (o backend confere). */
+  podeCancelar = computed(() => {
+    if (this.auth.temPerfil('ADMIN', 'GESTOR')) return true;
+    const eu = this.auth.pessoa()?.id;
+    return (this.participantes.value() ?? []).some(
+      (p) => p.pessoaId === eu && !p.dataSaida && p.papel === 'RESPONSAVEL_PRINCIPAL',
+    );
+  });
+
+  async participar() {
+    const eu = this.auth.pessoa();
+    if (!eu) return;
+    try {
+      await firstValueFrom(this.#itens.adicionarParticipante(this.id(), { pessoaId: eu.id, papel: 'PARTICIPANTE' }));
+      this.demanda.reload();
+      this.participantes.reload();
+    } catch {
+      // o erro já aparece no aviso do interceptor
+    }
+  }
   atividadesLista = computed(() => this.atividades.value()?.content ?? []);
 
   opcoesStatus = (Object.keys(ROTULO_STATUS) as StatusDemanda[]).map((v) => ({

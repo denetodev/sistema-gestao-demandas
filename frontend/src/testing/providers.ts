@@ -8,6 +8,7 @@ import { providePrimeNG } from 'primeng/config';
 import { AuthService } from '../app/core/auth/auth.service';
 import type { Perfil, PessoaMe } from '../app/core/auth/auth.model';
 import { PRIMENG_PT_BR } from '../app/core/theme/primeng-pt-br';
+import { podeMexerNoItem } from '../app/core/auth/pode-mexer-no-item';
 
 export interface OpcoesTeste {
   perfil?: Perfil;
@@ -64,6 +65,7 @@ export function criarAuthFalso(opcoes: OpcoesTeste = {}) {
     temPerfil: (...perfis: Perfil[]) => perfis.includes(pessoa()!.perfil),
     ehReferenciaDa: (areaId: string | null | undefined) => !!areaId && pessoa()!.referenciaAreaId === areaId,
     podeEditar: () => pessoa()!.perfil !== 'VISUALIZADOR',
+    podeMexerNoItem: (pessoaIdDoItem: string | null) => podeMexerNoItem(pessoa(), pessoaIdDoItem),
     login: () => Promise.resolve(),
     cadastrar: () => Promise.resolve({ confirmado: true }),
     logout: () => Promise.resolve(),

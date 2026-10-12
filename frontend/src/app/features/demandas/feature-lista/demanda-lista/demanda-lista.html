@@ -47,7 +47,7 @@
         <td>{{ demanda.dataPrazo | date: 'dd/MM/yyyy' }}</td>
         <td>{{ demanda.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
         <td>
-          @if (auth.podeEditar()) {
+          @if (demanda.podeAlterar) {
             <p-button
               [text]="true"
               icon="pi pi-pencil"

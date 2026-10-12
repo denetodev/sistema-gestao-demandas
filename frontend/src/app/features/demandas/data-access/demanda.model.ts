@@ -30,6 +30,8 @@ export interface Demanda {
   linkExterno: string | null;
   createdAt: string;
   updatedAt: string;
+  /** A pessoa logada pode alterar esta demanda (participa, Referência da área do time, Gestor ou Admin). */
+  podeAlterar: boolean;
   valorCalculado: number | null;
 }
 

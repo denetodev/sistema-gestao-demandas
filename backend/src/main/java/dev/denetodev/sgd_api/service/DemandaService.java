@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -76,14 +77,19 @@ public class DemandaService {
             case TODAS -> demandaRepository.findAll(pageable);
         };
 
-        return pagina.map(this::paraResponse);
+        Map<UUID, List<PessoaDemanda>> times = pagina.isEmpty() ? Map.of()
+                : pessoaDemandaRepository.findByDemandaIdIn(pagina.getContent().stream().map(Demanda::getId).toList())
+                        .stream().collect(Collectors.groupingBy(v -> v.getDemanda().getId()));
+        return pagina.map(d -> paraResponse(d,
+                permissaoService.podeAlterarDemanda(usuario, times.getOrDefault(d.getId(), List.of()))));
     }
 
     @Transactional(readOnly = true)
-    public DemandaResponse buscarPorId(UUID id) {
+    public DemandaResponse buscarPorId(Jwt jwt, UUID id) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
         Demanda demanda = demandaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + id));
-        return paraResponse(demanda);
+        return paraResponse(demanda, permissaoService.podeAlterarDemanda(usuario, id));
     }
 
     public DemandaResponse criar(Jwt jwt, DemandaRequest request) {
@@ -127,7 +133,7 @@ public class DemandaService {
         vinculo.setPapel(PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL);
         pessoaDemandaRepository.save(vinculo);
 
-        return paraResponse(salva);
+        return paraResponse(salva, true); // quem cria entra como Responsável principal
     }
 
     public DemandaResponse atualizar(Jwt jwt, UUID id, DemandaRequest request) {
@@ -155,7 +161,7 @@ public class DemandaService {
         demanda.setProjeto(resolverOuNulo(request.projetoId(), projetoRepository, "Projeto"));
         demanda.setCampanha(resolverOuNulo(request.campanhaId(), campanhaRepository, "Campanha"));
 
-        return paraResponse(demanda);
+        return paraResponse(demanda, true);
     }
 
     public DemandaResponse atualizarStatus(Jwt jwt, UUID id, StatusDemanda novoStatus, String motivo) {
@@ -186,7 +192,7 @@ public class DemandaService {
             auditoriaRepository.save(registro);
         }
 
-        return paraResponse(demanda);
+        return paraResponse(demanda, true);
     }
 
     public void cancelar(Jwt jwt, UUID id) {
@@ -221,7 +227,7 @@ public class DemandaService {
                 .orElse(false);
     }
 
-    private DemandaResponse paraResponse(Demanda demanda) {
+    private DemandaResponse paraResponse(Demanda demanda, boolean podeAlterar) {
         Demandante demandante = demanda.getDemandante();
         Projeto projeto = demanda.getProjeto();
         Campanha campanha = demanda.getCampanha();
@@ -256,7 +262,8 @@ public class DemandaService {
                 demanda.getLinkExterno(),
                 valorCalculado,
                 demanda.getCreatedAt(),
-                demanda.getUpdatedAt()
+                demanda.getUpdatedAt(),
+                podeAlterar
         );
     }
 
