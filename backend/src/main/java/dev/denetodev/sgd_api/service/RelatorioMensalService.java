@@ -159,7 +159,7 @@ public class RelatorioMensalService {
             throw new AccessDeniedException("Resumo de relatórios restrito a Gestor/Admin");
         }
         List<Pessoa> profissionais = pessoaRepository.findAll().stream()
-                .filter(p -> p.getStatus() == StatusPessoa.ATIVO
+                .filter(p -> estavaAtivaNoMes(p, mes)
                         && p.getAprovadoEm() != null
                         && p.getPerfil() == PerfilPessoa.PROFISSIONAL)
                 .sorted(Comparator.comparing(Pessoa::getNome, String.CASE_INSENSITIVE_ORDER))
@@ -184,6 +184,16 @@ public class RelatorioMensalService {
                     atividades.getOrDefault(p.getId(), 0L),
                     r != null ? r.getAprovadoEm() : null);
         }).toList();
+    }
+
+    /** Ativa hoje, ou inativada depois do mês consultado (quem saiu em setembro ainda aparece até agosto). */
+    static boolean estavaAtivaNoMes(Pessoa p, YearMonth mes) {
+        if (p.getStatus() == StatusPessoa.ATIVO) {
+            return true;
+        }
+        return p.getStatus() == StatusPessoa.INATIVO
+                && p.getInativadoEm() != null
+                && mes.isBefore(YearMonth.from(p.getInativadoEm()));
     }
 
     // ---- montagem ----

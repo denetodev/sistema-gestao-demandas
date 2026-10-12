@@ -144,6 +144,21 @@ class RelatorioMensalServiceTest {
     }
 
     @Test
+    void pessoaInativadaAparecePenasAteOMesAnteriorAInativacao() {
+        Pessoa caio = new Pessoa("Caio", null);
+        caio.setStatus(StatusPessoa.INATIVO); // inativado hoje
+        YearMonth mesDaSaida = YearMonth.now();
+
+        assertTrue(RelatorioMensalService.estavaAtivaNoMes(caio, mesDaSaida.minusMonths(1)));
+        assertFalse(RelatorioMensalService.estavaAtivaNoMes(caio, mesDaSaida));
+        assertFalse(RelatorioMensalService.estavaAtivaNoMes(caio, mesDaSaida.plusMonths(1)));
+
+        caio.setStatus(StatusPessoa.ATIVO); // reativado: volta a aparecer e perde a data
+        assertTrue(RelatorioMensalService.estavaAtivaNoMes(caio, mesDaSaida));
+        assertNull(caio.getInativadoEm());
+    }
+
+    @Test
     void profissionalNaoVeRelatorioDeOutraPessoa() {
         Pessoa outra = pessoa("Bia", null, PerfilPessoa.PROFISSIONAL);
 
