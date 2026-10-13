@@ -81,7 +81,8 @@ public class DemandaService {
                 DemandaSpecs.escopo(escopo, usuario, permissaoService.areaDaEquipe(usuario)),
                 DemandaSpecs.busca(filtro.busca()),
                 DemandaSpecs.status(filtro.status()),
-                DemandaSpecs.nucleo(filtro.diretoriaId()),
+                DemandaSpecs.diretoria(filtro.diretoriaId()),
+                DemandaSpecs.nucleo(filtro.nucleoId()),
                 DemandaSpecs.equipe(filtro.areaId()));
         Page<Demanda> pagina = demandaRepository.findAll(consulta, OrdenacaoDemanda.sanear(pageable));
 

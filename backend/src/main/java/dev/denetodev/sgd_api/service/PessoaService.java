@@ -343,6 +343,8 @@ public class PessoaService {
         return new PessoaResponse(
                 pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), Cpf.mascarar(pessoa.getCpf()), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
+                pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getId() : null,
+                pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getNome() : null,
                 pessoa.getArea().getId(), pessoa.getArea().getNome(),
                 cargo != null ? cargo.getId() : null,
                 cargo != null ? cargo.getNome() : null,

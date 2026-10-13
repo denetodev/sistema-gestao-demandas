@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record AreaRequest(
         @NotBlank(message = "nome é obrigatório") String nome,
-        @NotNull(message = "diretoriaId é obrigatório") UUID diretoriaId
+        @NotNull(message = "diretoriaId é obrigatório") UUID diretoriaId,
+        UUID nucleoId
 ) {
 }

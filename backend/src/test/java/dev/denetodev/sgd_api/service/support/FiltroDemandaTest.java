@@ -1,6 +1,7 @@
 package dev.denetodev.sgd_api.service.support;
 
 import dev.denetodev.sgd_api.entity.Area;
+import dev.denetodev.sgd_api.entity.Nucleo;
 import dev.denetodev.sgd_api.entity.EscopoListagem;
 import dev.denetodev.sgd_api.entity.PerfilPessoa;
 import dev.denetodev.sgd_api.entity.Pessoa;
@@ -103,6 +104,19 @@ class FiltroDemandaTest {
         assertDoesNotThrow(() -> permissao.validarEscopo(comum, EscopoListagem.EQUIPE));
         assertDoesNotThrow(() -> permissao.validarEscopo(comum, EscopoListagem.DIRETORIA));
         assertDoesNotThrow(() -> permissao.validarEscopo(comum, EscopoListagem.MINHAS));
+    }
+
+    @Test
+    void nucleoExigeEquipeLigadaAUmNucleo() {
+        PermissaoService permissao = new PermissaoService(null);
+        Area semNucleo = area();
+        Area comNucleo = area();
+        when(comNucleo.getNucleo()).thenReturn(mock(Nucleo.class));
+
+        assertThrows(AccessDeniedException.class,
+                () -> permissao.validarEscopo(pessoa(PerfilPessoa.PROFISSIONAL, semNucleo, null), EscopoListagem.NUCLEO));
+        assertDoesNotThrow(
+                () -> permissao.validarEscopo(pessoa(PerfilPessoa.PROFISSIONAL, comNucleo, null), EscopoListagem.NUCLEO));
     }
 
     @Test

@@ -92,11 +92,14 @@ public class PermissaoService {
     }
 
     /** Valida se o perfil/função do usuário permite pedir esse escopo —
-     * lança 403 quando não permite. MINHAS, EQUIPE e DIRETORIA (o núcleo) são livres
+     * lança 403 quando não permite. MINHAS, EQUIPE, NUCLEO e DIRETORIA são livres
      * para qualquer vinculado; TODAS é de Gestor e Admin. */
     public void validarEscopo(Pessoa usuario, EscopoListagem escopo) {
         if (escopo == EscopoListagem.EQUIPE && areaDaEquipe(usuario) == null) {
             throw new AccessDeniedException("Escopo 'equipe' exige ter uma equipe (área) definida");
+        }
+        if (escopo == EscopoListagem.NUCLEO && (usuario.getArea() == null || usuario.getArea().getNucleo() == null)) {
+            throw new AccessDeniedException("Escopo 'núcleo' exige que a sua equipe esteja ligada a um núcleo");
         }
         if (escopo == EscopoListagem.TODAS && !ehAdminOuGestor(usuario)) {
             throw new AccessDeniedException("Escopo 'todas' restrito a ADMIN/GESTOR");

@@ -80,6 +80,7 @@ class MatrizDePermissoesTest {
     @MockitoBean DemandaService demandaService;
     @MockitoBean DemandanteService demandanteService;
     @MockitoBean DiretoriaService diretoriaService;
+    @MockitoBean NucleoService nucleoService;
     @MockitoBean EvidenciaService evidenciaService;
     @MockitoBean ParticipanteService participanteService;
     @MockitoBean PecaService pecaService;
@@ -119,7 +120,7 @@ class MatrizDePermissoesTest {
 
         // leitura: todo vinculado (inclusive Visualizador)
         for (String caminho : List.of("/demandas", "/demandas/" + ID, "/atividades", "/pecas", "/evidencias",
-                "/projetos", "/campanhas", "/campanhas/resumo", "/campanhas/" + ID + "/resumo", "/demandantes", "/tipos-peca", "/tipos-atividade", "/diretorias",
+                "/projetos", "/campanhas", "/campanhas/resumo", "/campanhas/" + ID + "/resumo", "/demandantes", "/tipos-peca", "/tipos-atividade", "/diretorias", "/nucleos",
                 "/pessoas", "/dashboard", "/relatorios/2026-10", "/demandas/" + ID + "/participantes")) {
             c.add(new Caso(G, caminho, TODOS_VINCULADOS));
         }
@@ -162,7 +163,7 @@ class MatrizDePermissoesTest {
         }
 
         // cadastros base: só Gestor e Admin escrevem
-        for (String base : List.of("/diretorias", "/areas", "/cargos", "/tipos-atividade", "/demandantes", "/projetos")) {
+        for (String base : List.of("/diretorias", "/nucleos", "/areas", "/cargos", "/tipos-atividade", "/demandantes", "/projetos")) {
             c.add(new Caso(P, base, GESTAO));
             c.add(new Caso(U, base + "/" + ID, GESTAO));
             c.add(new Caso(D, base + "/" + ID, GESTAO));
