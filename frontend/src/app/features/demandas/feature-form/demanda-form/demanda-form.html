@@ -16,6 +16,11 @@
     <label for="diretoria">Diretoria</label>
     <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
               optionLabel="nome" optionValue="id" placeholder="Selecione" />
+    @if (autor()?.nucleoNome || autor()?.areaNome) {
+      <small class="dica">
+        Você entra como responsável: núcleo {{ autor()?.nucleoNome ?? '—' }}, equipe {{ autor()?.areaNome ?? '—' }}.
+      </small>
+    }
 
     <label for="demandante">Demandante</label>
     <small class="dica">Quem pediu o trabalho.</small>

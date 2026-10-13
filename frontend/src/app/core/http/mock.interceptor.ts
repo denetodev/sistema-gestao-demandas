@@ -257,6 +257,10 @@ const dados: Record<string, unknown> = {
     { id: 'cp1', nome: 'Outubro das MPEs', projetoId: 'pr1', projetoNome: 'Plano Safra 2026', codigo: 'BC2609EV', dataInicio: '2026-10-01', dataFim: '2026-10-31', createdAt: '', updatedAt: '' },
     { id: 'cp2', nome: 'Centauro Day', projetoId: 'pr2', projetoNome: 'Consórcio BB', codigo: 'BC2509DY', dataInicio: '2026-09-22', dataFim: null, createdAt: '', updatedAt: '' },
   ],
+  '/campanhas/resumo': [
+    { id: 'cp1', nome: 'Outubro das MPEs', codigo: 'BC2609EV', demandas: 8, demandasAtivas: 5, pessoas: 4, valor: 18400, pecas: 22, atividades: 41, porStatus: { NAO_INICIADA: 1, EM_ANDAMENTO: 3, EM_APROVACAO: 1, CONCLUIDA: 3, CANCELADA: 0 }, primeiraDemanda: '2026-09-22', ultimaDemanda: '2026-10-09' },
+    { id: 'cp2', nome: 'Centauro Day', codigo: 'BC2509DY', demandas: 3, demandasAtivas: 0, pessoas: 2, valor: 5200, pecas: 7, atividades: 12, porStatus: { NAO_INICIADA: 0, EM_ANDAMENTO: 0, EM_APROVACAO: 0, CONCLUIDA: 3, CANCELADA: 0 }, primeiraDemanda: '2026-08-12', ultimaDemanda: '2026-09-02' },
+  ],
   '/tipos-peca': [
     { id: 'tp1', nome: 'Banner estático', descricao: null, areaId: 'a2', areaNome: 'Motion', valorReferencia: 800, ativo: true, createdAt: '', updatedAt: '' },
     { id: 'tp2', nome: 'Ajustes HTML e-mail marketing', descricao: null, areaId: 'a3', areaNome: 'HTML', valorReferencia: 6000, ativo: true, createdAt: '', updatedAt: '' },

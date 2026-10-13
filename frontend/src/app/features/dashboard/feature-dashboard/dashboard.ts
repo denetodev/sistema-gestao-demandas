@@ -76,6 +76,10 @@ export class Dashboard {
   );
   ano = computed(() => this.mesAtual().getFullYear());
 
+  totalDemandas(porStatus: Record<string, number>): number {
+    return Object.values(porStatus).reduce((soma, n) => soma + n, 0);
+  }
+
   mudarPessoa(pessoaId: string | null) {
     this.filtro.update((f) => ({ ...f, pessoaId }));
   }

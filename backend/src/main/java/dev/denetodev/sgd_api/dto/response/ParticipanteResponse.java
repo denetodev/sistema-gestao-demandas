@@ -9,6 +9,8 @@ public record ParticipanteResponse(
         UUID id,
         UUID pessoaId,
         String pessoaNome,
+        String equipeNome,
+        String nucleoNome,
         PapelPessoaDemanda papel,
         LocalDate dataEntrada,
         LocalDate dataSaida,

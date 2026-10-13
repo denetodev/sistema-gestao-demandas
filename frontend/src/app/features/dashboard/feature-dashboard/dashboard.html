@@ -22,65 +22,80 @@
   @if (dashboard.error()) {
     <p-message severity="error">Não foi possível carregar o dashboard.</p-message>
   } @else if (dashboard.value(); as d) {
-    <section class="caixa">
-      <h2>Atalhos</h2>
-      <div class="atalhos">
-        @if (ehVisualizador()) {
-          <p-button label="Ver demandas da diretoria" severity="secondary" (onClick)="irParaDemandas('DIRETORIA')" />
-        } @else {
-          <p-button label="Minhas demandas" severity="secondary" (onClick)="irParaDemandas('MINHAS')" />
-        }
-        @if (ehReferencia()) {
-          <p-button label="Demandas da minha equipe" severity="secondary" (onClick)="irParaDemandas('EQUIPE')" />
-        }
-        @if (ehGestorOuAdmin()) {
-          <p-button label="Aprovar cadastros" severity="secondary" (onClick)="irParaPessoas()" />
-        }
+    <section class="destaque" aria-label="Valor gerado">
+      <div class="destaque__principal">
+        <span class="destaque__rotulo">Valor gerado em {{ nomeMes() }}</span>
+        <strong class="destaque__valor">{{ d.resumo.valorNoMes | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
+        <span class="destaque__nota">{{ d.titulo }} · referência de mercado, canceladas ficam fora</span>
+      </div>
+      <div class="destaque__lado">
+        <div class="mini">
+          <span class="mini__rotulo">Valor em {{ ano() }}</span>
+          <span class="mini__valor">{{ d.resumo.valorNoAno | currency: 'BRL' : 'symbol' : '1.0-0' : 'pt-BR' }}</span>
+        </div>
+        <div class="mini">
+          <span class="mini__rotulo">Atividades em {{ nomeMes() }}</span>
+          <span class="mini__valor">{{ d.resumo.atividadesNoMes }}</span>
+        </div>
+        <div class="mini" [class.mini--alerta]="d.resumo.demandasAtrasadas > 0">
+          <span class="mini__rotulo">Demandas atrasadas</span>
+          <span class="mini__valor">{{ d.resumo.demandasAtrasadas }}</span>
+        </div>
       </div>
     </section>
 
-    <section class="caixa">
-      <h2>Atividade diária: {{ d.titulo }}</h2>
+    <section class="cartao bloco">
+      <div class="bloco__cabeca">
+        <h2 class="bloco__titulo">Demandas por situação</h2>
+        <div class="atalhos">
+          @if (ehVisualizador()) {
+            <p-button label="Ver demandas da diretoria" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+              (onClick)="irParaDemandas('DIRETORIA')" />
+          } @else {
+            <p-button label="Minhas demandas" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+              (onClick)="irParaDemandas('MINHAS')" />
+          }
+          @if (ehReferencia()) {
+            <p-button label="Minha equipe" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+              (onClick)="irParaDemandas('EQUIPE')" />
+          }
+          @if (ehGestorOuAdmin()) {
+            <p-button label="Aprovar cadastros" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+              (onClick)="irParaPessoas()" />
+          }
+        </div>
+      </div>
+      @let total = totalDemandas(d.resumo.demandasPorStatus);
+      @if (total > 0) {
+        <div class="barra-status" role="img" [attr.aria-label]="'Total de ' + total + ' demandas'">
+          @for (s of status; track s) {
+            @if (d.resumo.demandasPorStatus[s] > 0) {
+              <span class="barra-status__trecho barra-status__trecho--{{ s }}"
+                [style.flex-grow]="d.resumo.demandasPorStatus[s]"
+                [title]="rotuloStatus[s] + ': ' + d.resumo.demandasPorStatus[s]"></span>
+            }
+          }
+        </div>
+      }
+      <ul class="legenda">
+        @for (s of status; track s) {
+          <li class="legenda__item">
+            <span class="legenda__ponto barra-status__trecho--{{ s }}"></span>
+            <span class="legenda__rotulo">{{ rotuloStatus[s] }}</span>
+            <strong class="legenda__valor">{{ d.resumo.demandasPorStatus[s] }}</strong>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="cartao bloco">
+      <h2 class="bloco__titulo">Atividade diária</h2>
       <app-mapa-calor [dias]="d.calendario" />
     </section>
 
-    <section class="caixa">
-      <h2>Resumo: {{ d.titulo }}</h2>
-      <div class="kpis">
-        @for (s of status; track s) {
-          <div class="kpi">
-            <span class="kpi__rotulo">{{ rotuloStatus[s] }}</span>
-            <span class="kpi__valor">{{ d.resumo.demandasPorStatus[s] }}</span>
-          </div>
-        }
-        <div class="kpi">
-          <span class="kpi__rotulo">Atividades em {{ nomeMes() }}</span>
-          <span class="kpi__valor">{{ d.resumo.atividadesNoMes }}</span>
-        </div>
-        <div class="kpi kpi--alerta">
-          <span class="kpi__rotulo">Demandas atrasadas</span>
-          <span class="kpi__valor">{{ d.resumo.demandasAtrasadas }}</span>
-        </div>
-      </div>
-      <div class="kpis kpis--valor">
-        <div class="kpi kpi--destaque">
-          <span class="kpi__rotulo">Valor gerado em {{ nomeMes() }} (referência de mercado)</span>
-          <span class="kpi__valor">{{ d.resumo.valorNoMes | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</span>
-        </div>
-        <div class="kpi">
-          <span class="kpi__rotulo">Valor gerado em {{ ano() }}</span>
-          <span class="kpi__valor">{{ d.resumo.valorNoAno | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</span>
-        </div>
-      </div>
-      <p class="nota">
-        Valor gerado = soma de quantidade × valor unitário das peças produzidas (valor congelado no lançamento).
-        Demandas canceladas ficam fora.
-      </p>
-    </section>
-
     @if (d.porArea.length) {
-      <section class="caixa">
-        <h2>Por área</h2>
+      <section class="cartao cartao--tabela bloco">
+        <h2 class="bloco__titulo bloco__titulo--tabela">Por equipe</h2>
         <p-table [value]="d.porArea" dataKey="areaId" [stripedRows]="true">
           <ng-template pTemplate="header">
             <tr>
@@ -103,8 +118,8 @@
     }
 
     @if (d.porPessoa.length) {
-      <section class="caixa">
-        <h2>Por pessoa</h2>
+      <section class="cartao cartao--tabela bloco">
+        <h2 class="bloco__titulo bloco__titulo--tabela">Por pessoa</h2>
         <p-table [value]="d.porPessoa" dataKey="pessoaId" [stripedRows]="true">
           <ng-template pTemplate="header">
             <tr>

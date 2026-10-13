@@ -14,13 +14,13 @@
       <label for="email">E-mail</label>
       <input pInputText id="email" [value]="auth.emailSessao()" disabled />
 
-      <div class="somente-leitura">
-        <span><strong>E-mail:</strong> {{ auth.emailSessao() }}</span>
-        <span><strong>Diretoria:</strong> {{ auth.pessoa()?.diretoriaNome ?? '—' }}</span>
-        <span><strong>Área:</strong> {{ auth.pessoa()?.areaNome ?? '—' }}</span>
-        <span><strong>Cargo:</strong> {{ auth.pessoa()?.cargoNome ?? '—' }}</span>
-        <span><strong>Perfil:</strong> {{ auth.pessoa()?.perfil }}</span>
-      </div>
+      <dl class="hierarquia">
+        <div><dt>Diretoria</dt><dd>{{ auth.pessoa()?.diretoriaNome ?? '—' }}</dd></div>
+        <div><dt>Núcleo</dt><dd>{{ auth.pessoa()?.nucleoNome ?? '—' }}</dd></div>
+        <div><dt>Equipe</dt><dd>{{ auth.pessoa()?.areaNome ?? '—' }}</dd></div>
+        <div><dt>Cargo</dt><dd>{{ auth.pessoa()?.cargoNome ?? '—' }}</dd></div>
+        <div><dt>Perfil</dt><dd>{{ auth.pessoa()?.perfil }}</dd></div>
+      </dl>
 
       <p-button type="submit" [loading]="salvandoDados()" [disabled]="formDados.invalid"
         >Salvar</p-button

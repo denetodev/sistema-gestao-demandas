@@ -18,6 +18,8 @@ import { DiretoriaService } from '../../../../core/dados-mestres/diretoria/diret
 import { formatarData, paraData } from '../../../../core/util/data';
 import { filtrarCampanhas } from './opcoes-campanha';
 
+import { AuthService } from '../../../../core/auth/auth.service';
+
 @Component({
   selector: 'app-demanda-form',
   imports: [ReactiveFormsModule, Dialog, InputText, Select, DatePicker, Textarea, Button, Message],
@@ -32,6 +34,8 @@ export class DemandaForm {
   #fb = inject(FormBuilder);
   #demandaService = inject(DemandaService);
   diretorias = inject(DiretoriaService).listar;
+  /** Quem cria entra como responsável: o núcleo e a equipe dela são o ponto de partida da demanda. */
+  autor = inject(AuthService).pessoa;
   #demandantes = inject(DemandanteService).listar;
   #projetos = inject(ProjetoService).listar;
   #campanhas = inject(CampanhaService).listar;

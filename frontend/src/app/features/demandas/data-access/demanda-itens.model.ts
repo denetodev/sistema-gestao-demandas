@@ -23,6 +23,8 @@ export interface Participante {
   id: string;
   pessoaId: string;
   pessoaNome: string;
+  equipeNome: string | null;
+  nucleoNome: string | null;
   papel: PapelParticipante;
   dataEntrada: string | null;
   dataSaida: string | null;

@@ -17,7 +17,7 @@
 
   &__quem {
     margin-left: 0.75rem;
-    color: var(--p-text-muted-color);
+    color: var(--sgd-muted);
     font-size: 0.85rem;
   }
 
@@ -29,8 +29,10 @@
 }
 
 .caixa {
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-md, 6px);
+  background: var(--sgd-cartao);
+  box-shadow: var(--sgd-sombra);
+  border: 1px solid var(--sgd-borda);
+  border-radius: var(--sgd-raio);
   padding: 1rem;
   min-width: 0;
 
@@ -48,7 +50,7 @@
 .dica {
   margin: 0 0 0.75rem;
   font-size: 0.85rem;
-  color: var(--p-text-muted-color);
+  color: var(--sgd-muted);
 }
 
 .obs {
@@ -63,8 +65,8 @@
 .doc {
   background: #fff;
   color: #111;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-md, 6px);
+  border: 1px solid var(--sgd-borda);
+  border-radius: var(--sgd-raio);
   padding: 2rem 2.5rem;
   max-width: 900px;
   width: 100%;
