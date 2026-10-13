@@ -204,6 +204,20 @@ class PessoaServiceVinculoPorChaveCTest {
     }
 
     @Test
+    void importadoJaComOMesmoEmailDaContaNaoEstouraAUnicidadeDoEmail() {
+        Pessoa importada = importada(CHAVE);
+        importada.setEmail("klebson@bb.com.br"); // o Gestor preencheu o e-mail antes de a pessoa se cadastrar
+        when(pessoaRepository.existsByEmailIgnoreCase("klebson@bb.com.br")).thenReturn(true);
+        UUID authId = UUID.randomUUID();
+
+        cadastrar(authId, CHAVE);
+
+        Pessoa pendente = daConta(authId);
+        assertNull(pendente.getEmail()); // e-mail é único: a pendente nasce sem ele
+        assertEquals(importada, pendente.getVinculoSugerido());
+    }
+
+    @Test
     void chaveEmMinusculaComEspacosEAceita_eFormatoInvalidoERecusado() {
         UUID authId = UUID.randomUUID();
         cadastrar(authId, "  c1000001 ");
