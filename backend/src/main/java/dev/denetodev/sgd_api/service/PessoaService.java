@@ -184,6 +184,8 @@ public class PessoaService {
         String chaveC = pendente.getChaveC();
         String email = pendente.getEmail();
 
+        // a conta pendente já deixou rastro na auditoria (o pedido de vínculo); sem repassar a autoria, a FK barra o delete
+        auditoriaRepository.transferirAutoria(pendenteId, existenteId);
         // remove o duplicado primeiro: auth_user_id e chaveC são únicos e vão para a pessoa existente
         pessoaRepository.delete(pendente);
         pessoaRepository.flush();
