@@ -41,6 +41,11 @@
       <a routerLink="/campanhas" routerLinkActive="ativo" class="app-nav__item" title="Campanhas">
         <i class="pi pi-megaphone"></i><span class="app-nav__rotulo">Campanhas</span>
       </a>
+      @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+      <a routerLink="/estrutura" routerLinkActive="ativo" class="app-nav__item" title="Núcleos e equipes">
+        <i class="pi pi-sitemap"></i><span class="app-nav__rotulo">Núcleos e equipes</span>
+      </a>
+      }
 
       <span class="app-nav__secao"><span>Produção</span></span>
       <a routerLink="/tipos-peca" routerLinkActive="ativo" class="app-nav__item" title="Tipos de peça">
@@ -55,11 +60,15 @@
       }
     </nav>
 
-    <div class="app-hierarquia" aria-label="Sua diretoria, equipe e cargo">
+    <div class="app-hierarquia" aria-label="Sua diretoria, núcleo, equipe e cargo">
       <span class="app-hierarquia__titulo">Você está em</span>
       <ol class="app-trilho">
         <li>
           <small>Diretoria</small>
+          <strong>{{ hierarquia().diretoria }}</strong>
+        </li>
+        <li>
+          <small>Núcleo</small>
           <strong>{{ hierarquia().nucleo }}</strong>
         </li>
         <li>

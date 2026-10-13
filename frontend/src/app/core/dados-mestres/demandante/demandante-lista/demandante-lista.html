@@ -16,9 +16,9 @@
         <p-select class="filtros__campo" [options]="opcoesTipo" optionLabel="label" optionValue="value"
           placeholder="Tipo" [showClear]="true" [ngModel]="tipoFiltro()"
           (ngModelChange)="tipoFiltro.set($event)" ariaLabel="Filtrar por tipo" />
-        <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
-          placeholder="Diretoria" [showClear]="true" [ngModel]="nucleoFiltro()"
-          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por diretoria" />
+        <p-select class="filtros__campo" [options]="opcoesDiretoria()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Diretoria" [showClear]="true" [ngModel]="diretoriaFiltro()"
+          (ngModelChange)="diretoriaFiltro.set($event)" ariaLabel="Filtrar por diretoria" />
         @if (filtrosAtivos()) {
           <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
             (onClick)="limparFiltros()" />

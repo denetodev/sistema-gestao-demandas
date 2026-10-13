@@ -61,6 +61,12 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'estrutura',
+        canActivate: [perfilGuard('ADMIN', 'GESTOR')],
+        loadComponent: () =>
+          import('./core/dados-mestres/estrutura/estrutura').then((m) => m.Estrutura),
+      },
+      {
         path: 'projetos',
         loadComponent: () =>
           import('./core/dados-mestres/projeto/projeto-lista/projeto-lista').then(

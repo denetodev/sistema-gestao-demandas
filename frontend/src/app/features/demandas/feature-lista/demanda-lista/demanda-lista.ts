@@ -22,6 +22,7 @@ import {
 import { ROTULO_STATUS } from '../../data-access/demanda-itens.model';
 import { separarCodigo } from '../../data-access/demanda-apresentacao';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NucleoService } from '../../../../core/dados-mestres/nucleo/nucleo.service';
 import { AreaService } from '../../../../core/dados-mestres/area/area.service';
 import { DiretoriaService } from '../../../../core/dados-mestres/diretoria/diretoria.service';
 import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
@@ -54,6 +55,7 @@ export class DemandaLista {
   demandaEditandoId = signal<string | null>(null);
 
   #diretorias = inject(DiretoriaService).listar;
+  #nucleos = inject(NucleoService).listar;
   #areas = inject(AreaService).listar;
 
   rotuloStatus: Record<string, string> = ROTULO_STATUS;
@@ -69,13 +71,20 @@ export class DemandaLista {
     if (p?.referenciaAreaId || p?.areaId) {
       opcoes.push({ valor: 'EQUIPE', rotulo: 'Minha equipe', detalhe: p.referenciaAreaNome ?? p.areaNome });
     }
+    if (p?.nucleoId) opcoes.push({ valor: 'NUCLEO', rotulo: 'Meu núcleo', detalhe: p.nucleoNome });
     opcoes.push({ valor: 'DIRETORIA', rotulo: 'Minha diretoria', detalhe: p?.diretoriaNome });
     if (this.ehGestao()) opcoes.push({ valor: 'TODAS', rotulo: 'Todas' });
     return opcoes;
   });
 
   opcoesStatus = STATUS_VALIDOS.map((valor) => ({ valor, rotulo: ROTULO_STATUS[valor] }));
-  opcoesNucleo = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  opcoesDiretoria = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  opcoesNucleo = computed(() =>
+    (this.#nucleos.value() ?? []).map((n) => ({
+      valor: n.id,
+      rotulo: n.diretoriaNome ? `${n.nome} · ${n.diretoriaNome}` : n.nome,
+    })),
+  );
   /** O mesmo nome de equipe existe em diretorias diferentes (Design em CRM e em UGR), então a diretoria vai junto. */
   opcoesEquipe = computed(() =>
     (this.#areas.value() ?? []).map((a) => ({
@@ -86,7 +95,7 @@ export class DemandaLista {
 
   filtrosAtivos = computed(() => {
     const f = this.filtro();
-    return !!(f.busca || f.status || f.diretoriaId || f.areaId);
+    return !!(f.busca || f.status || f.diretoriaId || f.nucleoId || f.areaId);
   });
 
   constructor() {
@@ -106,7 +115,8 @@ export class DemandaLista {
       escopo: (doUrl && permitidos.includes(doUrl) ? doUrl : this.#escopoPadrao()) as EscopoDemanda,
       busca: p.get('busca') ?? '',
       status: status && STATUS_VALIDOS.includes(status) ? status : ('' as const),
-      diretoriaId: p.get('nucleo') ?? '',
+      diretoriaId: p.get('diretoria') ?? '',
+      nucleoId: p.get('nucleo') ?? '',
       areaId: p.get('equipe') ?? '',
     };
     const atual = this.filtro();
@@ -115,7 +125,7 @@ export class DemandaLista {
   }
 
   /** Muda um ou mais filtros: vai para a URL, que por sua vez atualiza a lista. */
-  mudar(parcial: Partial<Pick<DemandaFiltro, 'escopo' | 'busca' | 'status' | 'diretoriaId' | 'areaId'>>) {
+  mudar(parcial: Partial<Pick<DemandaFiltro, 'escopo' | 'busca' | 'status' | 'diretoriaId' | 'nucleoId' | 'areaId'>>) {
     const f = { ...this.filtro(), ...parcial };
     this.#router.navigate([], {
       relativeTo: this.#route,
@@ -124,14 +134,15 @@ export class DemandaLista {
         escopo: f.escopo !== this.#escopoPadrao() ? f.escopo : null,
         busca: f.busca || null,
         status: f.status || null,
-        nucleo: f.diretoriaId || null,
+        diretoria: f.diretoriaId || null,
+        nucleo: f.nucleoId || null,
         equipe: f.areaId || null,
       },
     });
   }
 
   limparFiltros() {
-    this.mudar({ busca: '', status: '', diretoriaId: '', areaId: '' });
+    this.mudar({ busca: '', status: '', diretoriaId: '', nucleoId: '', areaId: '' });
   }
 
   apresentar(d: Demanda) {

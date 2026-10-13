@@ -5,7 +5,7 @@ export type StatusDemanda =
   | 'CONCLUIDA'
   | 'CANCELADA';
 export type Prioridade = 'BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE';
-export type EscopoDemanda = 'MINHAS' | 'EQUIPE' | 'DIRETORIA' | 'TODAS';
+export type EscopoDemanda = 'MINHAS' | 'EQUIPE' | 'NUCLEO' | 'DIRETORIA' | 'TODAS';
 
 export interface Demanda {
   id: string;
@@ -63,6 +63,8 @@ export interface DemandaFiltro {
   status: StatusDemanda | '';
   /** Diretoria da demanda. */
   diretoriaId: string;
+  /** Núcleo (alguém ativo de uma equipe desse núcleo está no time). */
+  nucleoId: string;
   /** Equipe (a área de alguém ativo do time). */
   areaId: string;
   page: number;
@@ -75,6 +77,7 @@ export const FILTRO_PADRAO: DemandaFiltro = {
   busca: '',
   status: '',
   diretoriaId: '',
+  nucleoId: '',
   areaId: '',
   page: 0,
   size: 10,

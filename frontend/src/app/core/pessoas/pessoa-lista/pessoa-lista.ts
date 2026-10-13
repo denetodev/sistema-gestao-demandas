@@ -24,6 +24,7 @@ import type { Perfil } from '../../../core/auth/auth.model';
 import { CampoBusca } from '../../ui/campo-busca/campo-busca';
 import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
 import { contemTexto } from '../../util/listas';
+import { NucleoService } from '../../dados-mestres/nucleo/nucleo.service';
 import { DiretoriaService } from '../../dados-mestres/diretoria/diretoria.service';
 
 
@@ -65,12 +66,20 @@ export class PessoaLista {
   // ---- filtros da lista (a busca e os selects estreitam o que veio do servidor) ----
   #diretorias = inject(DiretoriaService).listar;
   busca = signal('');
+  diretoriaFiltro = signal<string | null>(null);
   nucleoFiltro = signal<string | null>(null);
+  #nucleos = inject(NucleoService).listar;
+  opcoesNucleo = computed(() =>
+    (this.#nucleos.value() ?? []).map((n) => ({
+      valor: n.id,
+      rotulo: n.diretoriaNome ? `${n.nome} · ${n.diretoriaNome}` : n.nome,
+    })),
+  );
   equipeFiltro = signal<string | null>(null);
   perfilFiltro = signal<string | null>(null);
   situacaoFiltro = signal<string | null>(null);
 
-  opcoesNucleo = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  opcoesDiretoria = computed(() => (this.#diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
   /** O mesmo nome de equipe existe em diretorias diferentes (Design em CRM e em UGR), então a diretoria vai junto. */
   opcoesEquipe = computed(() =>
     (this.areas.value() ?? []).map((a) => ({
@@ -100,7 +109,8 @@ export class PessoaLista {
         const situacao = this.situacaoFiltro();
         return (
           contemTexto([p.nome, p.nomeExibicao, p.email], this.busca()) &&
-          (!this.nucleoFiltro() || p.diretoriaId === this.nucleoFiltro()) &&
+          (!this.diretoriaFiltro() || p.diretoriaId === this.diretoriaFiltro()) &&
+          (!this.nucleoFiltro() || p.nucleoId === this.nucleoFiltro()) &&
           (!this.equipeFiltro() || p.areaId === this.equipeFiltro()) &&
           (!this.perfilFiltro() || p.perfil === this.perfilFiltro()) &&
           (!situacao || (situacao === 'AGUARDANDO' ? aguardando : !aguardando && p.status === situacao))
@@ -109,11 +119,12 @@ export class PessoaLista {
   );
 
   filtrosAtivos = computed(
-    () => !!(this.busca() || this.nucleoFiltro() || this.equipeFiltro() || this.perfilFiltro() || this.situacaoFiltro()),
+    () => !!(this.busca() || this.diretoriaFiltro() || this.nucleoFiltro() || this.equipeFiltro() || this.perfilFiltro() || this.situacaoFiltro()),
   );
 
   limparFiltros() {
     this.busca.set('');
+    this.diretoriaFiltro.set(null);
     this.nucleoFiltro.set(null);
     this.equipeFiltro.set(null);
     this.perfilFiltro.set(null);

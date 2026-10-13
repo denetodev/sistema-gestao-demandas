@@ -8,6 +8,8 @@ export interface PessoaMe {
   email: string | null;
   diretoriaId: string | null;
   diretoriaNome: string | null;
+  nucleoId: string | null;
+  nucleoNome: string | null;
   areaId: string | null;
   areaNome: string | null;
   cargoId: string | null;

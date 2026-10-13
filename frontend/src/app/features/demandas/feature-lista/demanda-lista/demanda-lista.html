@@ -23,9 +23,12 @@
           (ngModelChange)="mudar({ status: $event ?? '' })" ariaLabel="Filtrar por situação" />
 
         @if (ehGestao()) {
-          <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
+          <p-select class="filtros__campo" [options]="opcoesDiretoria()" optionLabel="rotulo" optionValue="valor"
             placeholder="Diretoria" [showClear]="true" [ngModel]="filtro().diretoriaId || null"
             (ngModelChange)="mudar({ diretoriaId: $event ?? '' })" ariaLabel="Filtrar por diretoria" />
+          <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
+            placeholder="Núcleo" [showClear]="true" [ngModel]="filtro().nucleoId || null"
+            (ngModelChange)="mudar({ nucleoId: $event ?? '' })" ariaLabel="Filtrar por núcleo" />
           <p-select class="filtros__campo" [options]="opcoesEquipe()" optionLabel="rotulo" optionValue="valor"
             placeholder="Equipe" [showClear]="true" [filter]="true" filterBy="rotulo" [ngModel]="filtro().areaId || null"
             (ngModelChange)="mudar({ areaId: $event ?? '' })" ariaLabel="Filtrar por equipe" />

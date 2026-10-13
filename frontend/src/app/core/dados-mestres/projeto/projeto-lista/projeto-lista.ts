@@ -55,29 +55,29 @@ export class ProjetoLista {
   // filtros da lista: os últimos cadastrados primeiro, 10 por página
   busca = signal('');
   situacaoFiltro = signal('');
-  nucleoFiltro = signal<string | null>(null);
+  diretoriaFiltro = signal<string | null>(null);
   opcoesSituacao: OpcaoPilula[] = [{ valor: '', rotulo: 'Todos' }, ...[
     { valor: 'ATIVO', rotulo: 'Ativos' },
     { valor: 'PAUSADO', rotulo: 'Pausados' },
     { valor: 'ENCERRADO', rotulo: 'Encerrados' },
   ]];
-  opcoesNucleo = computed(() => (this.diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  opcoesDiretoria = computed(() => (this.diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
 
   filtrados = computed(() =>
     maisRecentesPrimeiro(this.projetos.value() ?? []).filter(
       (p) =>
         contemTexto([p.nome, p.demandanteNome, p.descricao], this.busca()) &&
         (!this.situacaoFiltro() || p.status === this.situacaoFiltro()) &&
-        (!this.nucleoFiltro() || p.diretoriaId === this.nucleoFiltro()),
+        (!this.diretoriaFiltro() || p.diretoriaId === this.diretoriaFiltro()),
     ),
   );
 
-  filtrosAtivos = computed(() => !!(this.busca() || this.situacaoFiltro() || this.nucleoFiltro()));
+  filtrosAtivos = computed(() => !!(this.busca() || this.situacaoFiltro() || this.diretoriaFiltro()));
 
   limparFiltros() {
     this.busca.set('');
     this.situacaoFiltro.set('');
-    this.nucleoFiltro.set(null);
+    this.diretoriaFiltro.set(null);
   }
 
   rotuloStatus(status: StatusProjeto): string {

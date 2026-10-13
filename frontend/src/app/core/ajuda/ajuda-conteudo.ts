@@ -27,6 +27,7 @@ export type ChaveAjuda =
   | 'campanha-detalhe'
   | 'tipos-peca'
   | 'pessoas'
+  | 'estrutura'
   | 'relatorio';
 
 export const AJUDA: Record<ChaveAjuda, Ajuda> = {
@@ -65,9 +66,9 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
           'Um pedido de trabalho que chegou até você ou sua equipe: um e-mail marketing, um podcast, uma sessão de fotos. Tudo o que você faz (atividades) e entrega (peças) fica registrado dentro de uma demanda.',
       },
       {
-        pergunta: 'Qual a diferença entre Minhas, Minha equipe, Minha diretoria e Todas?',
+        pergunta: 'Qual a diferença entre Minhas, Minha equipe, Meu núcleo, Minha diretoria e Todas?',
         resposta:
-          'Minhas: demandas em que você participa. Minha equipe: as da sua área (só para quem é Referência de equipe). Minha diretoria: todas da sua diretoria. Todas: o sistema inteiro (só Gestor e Admin).',
+          'Minhas: demandas em que você participa. Minha equipe: as que têm alguém da sua equipe no time. Meu núcleo: as que têm alguém do seu núcleo. Minha diretoria: todas da sua diretoria. Todas: o sistema inteiro (só Gestor e Admin).',
       },
       {
         pergunta: 'O que significam os status?',
@@ -114,6 +115,22 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
         pergunta: 'Onde vejo quem mudou o status e quando?',
         resposta:
           'No histórico da demanda. Cada mudança de status registra quem fez, quando e o motivo informado.',
+      },
+    ],
+  },
+
+  estrutura: {
+    titulo: 'Como a estrutura se organiza?',
+    itens: [
+      {
+        pergunta: 'Qual a diferença entre diretoria, núcleo e equipe?',
+        resposta:
+          'Diretoria é a área do banco que pede ou recebe o trabalho (UGR, CRM, COMIN...). Núcleo é o grupo de produção dentro dela (House-CRM, Multimídia...). Equipe é a especialidade dentro do núcleo (Design, HTML, Videomaker, Motion...).',
+      },
+      {
+        pergunta: 'Para que serve ligar a equipe a um núcleo?',
+        resposta:
+          'É o que faz o botão Meu núcleo e o filtro por núcleo funcionarem. Equipe sem núcleo fica de fora deles.',
       },
     ],
   },
