@@ -1,4 +1,6 @@
-# Sistema de Gestão de Demandas — Aristocrata / Banco do Brasil
+# SGP Aristocrata: Plataforma de Gestão da Produção Criativa (Banco do Brasil)
+
+> Nome de produto desde 13/10/2026 (antes "Sistema de Gestão de Demandas"). A sigla técnica interna continua `sgd` no repositório, no pacote `dev.denetodev.sgd_api`, nas migrations e nos serviços de deploy, de propósito: renomear isso quebraria deploy, CI, CORS e redirects do Supabase Auth sem ganho para o usuário. A entidade de domínio "Demanda" continua existindo.
 
 Plataforma para centralizar a gestão da produção criativa da Aristocrata
 (COE/CRM + UGR) no Banco do Brasil, substituindo a planilha

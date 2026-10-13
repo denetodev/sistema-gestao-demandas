@@ -2,7 +2,7 @@ import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
 /**
- * Tema do SGD: laranja da marca como única cor de ação.
+ * Tema do SGP: laranja da marca como única cor de ação.
  * No claro o laranja é o 600 (contraste com texto branco nos botões); no escuro, o 500.
  */
 export const AristocrataPreset = definePreset(Aura, {

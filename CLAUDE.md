@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Sistema de Gestão de Demandas (SGD) da Aristocrata no Banco do Brasil. Monorepo: `backend/`, `frontend/`, `database/`, `docs/`.
+SGP Aristocrata, Plataforma de Gestão da Produção Criativa (sigla técnica interna: SGD) da Aristocrata no Banco do Brasil. Monorepo: `backend/`, `frontend/`, `database/`, `docs/`.
 Quem desenvolve é o Neto (full stack). Responda em português, informal e objetivo. Não use travessão nem hífen no meio de frases (use dois pontos, vírgula ou reticências).
 
 ## Stack
