@@ -144,6 +144,25 @@
         <span><strong>Cadastrado em:</strong> {{ pessoa.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
     </div>
 
+    @if (sugestao(); as s) {
+    <div class="sugestao" role="status">
+        <h3><i class="pi pi-shield"></i> Pediu para assumir um cadastro importado</h3>
+        <small class="dica">Quem criou a conta informou o CPF deste cadastro. Confirme que é a mesma pessoa
+            (nome, e-mail, equipe) antes de vincular: ao confirmar, a conta passa a ver todo o histórico dele.</small>
+        <span><strong>Cadastro importado:</strong> {{ s.nome }}{{ s.nomeExibicao ? ' (' + s.nomeExibicao + ')' : '' }}</span>
+        <span><strong>CPF:</strong> {{ s.cpfMascarado ?? '—' }}</span>
+        <span><strong>Equipe e cargo:</strong> {{ s.equipe ?? '—' }}{{ s.cargo ? ' › ' + s.cargo : '' }}</span>
+        <span><strong>Histórico:</strong> {{ s.demandas }} demandas, {{ s.atividades }} atividades, {{ s.pecas }} peças</span>
+        <span><strong>Nome digitado agora:</strong> {{ s.nomeInformado }}</span>
+        @if (s.impedimento) {
+        <p-message severity="warn">{{ s.impedimento }}</p-message>
+        }
+        <p-button type="button" label="Confirmar vínculo" icon="pi pi-link" [disabled]="!!s.impedimento"
+            [loading]="salvando()" (onClick)="confirmarSugestao()" />
+        <small class="dica">Se não for a mesma pessoa, rejeite o cadastro ou aprove como pessoa nova abaixo.</small>
+    </div>
+    }
+
     <div class="vinculo">
         <h3>Esta pessoa já existe no sistema?</h3>
         <small class="dica">Se ela já aparece na lista (por exemplo, importada da planilha), vincule esta conta ao cadastro

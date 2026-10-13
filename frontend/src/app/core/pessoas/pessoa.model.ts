@@ -28,6 +28,27 @@ export interface Pessoa {
   aprovadoEm: string | null;
   createdAt: string;
   updatedAt: string;
+  /** A conta pediu para assumir um cadastro importado pelo CPF (o resumo vem de /vinculo-sugerido). */
+  temVinculoSugerido: boolean;
+}
+
+/** Cadastro importado que uma conta nova pediu para assumir. Só Admin e Gestor recebem. */
+export interface VinculoSugerido {
+  pessoaId: string;
+  nome: string;
+  nomeExibicao: string | null;
+  equipe: string | null;
+  cargo: string | null;
+  cpfMascarado: string | null;
+  status: StatusPessoa;
+  jaTemConta: boolean;
+  demandas: number;
+  atividades: number;
+  pecas: number;
+  nomeInformado: string;
+  emailConta: string | null;
+  /** Motivo de não poder confirmar agora; nulo quando pode. */
+  impedimento: string | null;
 }
 
 export interface PessoaPayload {

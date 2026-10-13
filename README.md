@@ -69,6 +69,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V12 | `pessoa.nome_exibicao` e `pessoa.cpf` (único, validado) |
 | V13 | `pessoa.inativado_em`: o resumo do relatório mensal só lista quem estava ativo no mês |
 | V14 | `nucleo` (diretoria > núcleo > equipe) e `area.nucleo_id` |
+| V15 | `pessoa.vinculo_sugerido_id`: conta nova que informou o CPF de um cadastro importado fica pendente com a sugestão; só a aprovação de Gestor/Admin passa o login para o cadastro |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

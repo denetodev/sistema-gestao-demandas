@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { Pessoa, PessoaPayload, AprovarPayload, RejeitarPayload } from './pessoa.model';
+import { Pessoa, PessoaPayload, AprovarPayload, RejeitarPayload, VinculoSugerido } from './pessoa.model';
 
 @Injectable({ providedIn: 'root' })
 export class PessoaService {
@@ -20,6 +20,16 @@ export class PessoaService {
     /** Liga a conta pendente {pendenteId} ao cadastro que já existe; o cadastro pendente é removido. */
     vincularAPessoaExistente(pendenteId: string, pessoaExistenteId: string) {
         return this.#http.post<Pessoa>(`${this.#base}/${pendenteId}/vincular-a`, { pessoaExistenteId });
+    }
+
+    /** Resumo do cadastro importado que a conta pendente pediu para assumir pelo CPF. */
+    vinculoSugerido(pendenteId: string) {
+        return this.#http.get<VinculoSugerido>(`${this.#base}/${pendenteId}/vinculo-sugerido`);
+    }
+
+    /** Aprova o vínculo sugerido: o login passa para o cadastro importado e a conta pendente sai. */
+    confirmarVinculoSugerido(pendenteId: string) {
+        return this.#http.post<Pessoa>(`${this.#base}/${pendenteId}/confirmar-vinculo`, {});
     }
 
     atualizar(id: string, payload: PessoaPayload) {
