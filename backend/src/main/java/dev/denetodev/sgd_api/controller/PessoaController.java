@@ -91,7 +91,7 @@ public class PessoaController {
         return pessoaService.vincularContaAPessoaExistente(jwt, id, request.pessoaExistenteId());
     }
 
-    /** Resumo do cadastro importado que a conta pendente pediu para assumir pelo CPF. */
+    /** Resumo do cadastro importado que a conta pendente pediu para assumir pelo chave C. */
     @GetMapping("/{id}/vinculo-sugerido")
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
     public VinculoSugeridoResponse vinculoSugerido(@PathVariable UUID id) {

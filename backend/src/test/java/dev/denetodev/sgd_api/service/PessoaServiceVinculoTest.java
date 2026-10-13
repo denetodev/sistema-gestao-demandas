@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
  */
 class PessoaServiceVinculoTest {
 
-    private static final String CPF = "52998224725";
+    private static final String CHAVE = "C1000001";
 
     private PessoaRepository pessoaRepository;
     private AuditoriaRepository auditoriaRepository;
@@ -63,7 +63,7 @@ class PessoaServiceVinculoTest {
         pendente = pessoa("Klebson de Oliveira Santos", PerfilPessoa.PROFISSIONAL);
         pendente.setAuthUserId(authId);
         pendente.setEmail("klebson@bb.com.br");
-        pendente.setCpf(CPF);
+        pendente.setChaveC(CHAVE);
         pendente.setAprovadoEm(null);
 
         importada = pessoa("Klebson", PerfilPessoa.PROFISSIONAL);
@@ -90,25 +90,25 @@ class PessoaServiceVinculoTest {
         assertEquals("Klebson", r.nome()); // o cadastro importado é o que vale
         InOrder ordem = inOrder(pessoaRepository);
         ordem.verify(pessoaRepository).delete(pendente);
-        ordem.verify(pessoaRepository).flush(); // libera auth_user_id e cpf (únicos) antes de usar na importada
+        ordem.verify(pessoaRepository).flush(); // libera auth_user_id e chaveC (únicos) antes de usar na importada
     }
 
     @Test
-    void cpfEEmailInformadosNoCadastroPassamParaAPessoaImportadaQuandoElaNaoTem() {
+    void chaveEEmailInformadosNoCadastroPassamParaAPessoaImportadaQuandoElaNaoTem() {
         service.vincularContaAPessoaExistente(jwt, pendente.getId(), importada.getId());
 
-        assertEquals(CPF, importada.getCpf());
+        assertEquals(CHAVE, importada.getChaveC());
         assertEquals("klebson@bb.com.br", importada.getEmail());
     }
 
     @Test
-    void cpfDaImportadaNaoESobrescritoMasOEmailPassaAserODaContaDeLogin() {
-        importada.setCpf("11144477735");
+    void chaveDaImportadaNaoESobrescritoMasOEmailPassaAserODaContaDeLogin() {
+        importada.setChaveC("C1000002");
         importada.setEmail("antigo@bb.com.br");
 
         service.vincularContaAPessoaExistente(jwt, pendente.getId(), importada.getId());
 
-        assertEquals("11144477735", importada.getCpf());
+        assertEquals("C1000002", importada.getChaveC());
         assertEquals("klebson@bb.com.br", importada.getEmail());
         verify(auditoriaRepository).save(argThat((Auditoria a) -> "email".equals(a.getCampo())
                 && "antigo@bb.com.br".equals(a.getValorAnterior()) && "klebson@bb.com.br".equals(a.getValorNovo())));

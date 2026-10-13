@@ -22,7 +22,7 @@ export class PessoaService {
         return this.#http.post<Pessoa>(`${this.#base}/${pendenteId}/vincular-a`, { pessoaExistenteId });
     }
 
-    /** Resumo do cadastro importado que a conta pendente pediu para assumir pelo CPF. */
+    /** Resumo do cadastro importado que a conta pendente pediu para assumir pela chave C. */
     vinculoSugerido(pendenteId: string) {
         return this.#http.get<VinculoSugerido>(`${this.#base}/${pendenteId}/vinculo-sugerido`);
     }

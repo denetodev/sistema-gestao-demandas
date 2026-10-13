@@ -35,13 +35,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Quem cria conta e informa o CPF de uma pessoa importada (sem login) não assume o cadastro sozinho:
+ * Quem cria conta e informa o CHAVE de uma pessoa importada (sem login) não assume o cadastro sozinho:
  * nasce como conta pendente, sem histórico e sem permissão, com a sugestão de vínculo. Só a confirmação
  * de um Gestor/Admin passa o login para o cadastro importado. O "banco" aqui é uma lista em memória.
  */
-class PessoaServiceVinculoPorCpfTest {
+class PessoaServiceVinculoPorChaveCTest {
 
-    private static final String CPF = "52998224725";
+    private static final String CHAVE = "C1000001";
 
     private final List<Pessoa> banco = new ArrayList<>();
     private AuditoriaRepository auditoriaRepository;
@@ -75,8 +75,8 @@ class PessoaServiceVinculoPorCpfTest {
         // repositório em memória
         when(pessoaRepository.findByAuthUserId(any())).thenAnswer(inv ->
                 banco.stream().filter(p -> inv.getArgument(0).equals(p.getAuthUserId())).findFirst());
-        when(pessoaRepository.findByCpf(any())).thenAnswer(inv ->
-                banco.stream().filter(p -> inv.getArgument(0).equals(p.getCpf())).findFirst());
+        when(pessoaRepository.findByChaveC(any())).thenAnswer(inv ->
+                banco.stream().filter(p -> inv.getArgument(0).equals(p.getChaveC())).findFirst());
         when(pessoaRepository.findById(any(UUID.class))).thenAnswer(inv ->
                 banco.stream().filter(p -> inv.getArgument(0).equals(p.getId())).findFirst());
         when(pessoaRepository.save(any(Pessoa.class))).thenAnswer(inv -> {
@@ -108,10 +108,10 @@ class PessoaServiceVinculoPorCpfTest {
         return p;
     }
 
-    /** Pessoa que veio da planilha: aprovada, sem login, com CPF preenchido por um Admin. */
-    private Pessoa importada(String cpf) {
+    /** Pessoa que veio da planilha: aprovada, sem login, com CHAVE preenchido por um Admin. */
+    private Pessoa importada(String chaveC) {
         Pessoa p = pessoa("Klebson de Oliveira", PerfilPessoa.PROFISSIONAL);
-        p.setCpf(cpf);
+        p.setChaveC(chaveC);
         p.setAprovadoEm(OffsetDateTime.now());
         banco.add(p);
         return p;
@@ -124,8 +124,8 @@ class PessoaServiceVinculoPorCpfTest {
         return jwt;
     }
 
-    private PessoaResponse cadastrar(UUID authId, String cpf) {
-        return service.autoCadastro(jwtDaConta(authId), new AutoCadastroRequest("Klebson de Oliveira Santos", cpf, "Kle", areaId, null));
+    private PessoaResponse cadastrar(UUID authId, String chaveC) {
+        return service.autoCadastro(jwtDaConta(authId), new AutoCadastroRequest("Klebson de Oliveira Santos", chaveC, "Kle", areaId, null));
     }
 
     private Pessoa daConta(UUID authId) {
@@ -140,29 +140,29 @@ class PessoaServiceVinculoPorCpfTest {
     // ------------------------------------------------------------------ cadastro
 
     @Test
-    void cpfNovoCriaRegistroNovoComOCpf() {
+    void chaveNovoCriaRegistroNovoComOChaveC() {
         UUID authId = UUID.randomUUID();
-        cadastrar(authId, CPF);
+        cadastrar(authId, CHAVE);
 
         Pessoa nova = daConta(authId);
-        assertEquals(CPF, nova.getCpf());
+        assertEquals(CHAVE, nova.getChaveC());
         assertNull(nova.getVinculoSugerido());
         assertNull(nova.getAprovadoEm());
         assertEquals(2, banco.size()); // admin + a nova
     }
 
     @Test
-    void cpfDeImportadoSemLoginCriaContaPendenteComSugestaoSemDuplicarNemTocarNoImportado() {
-        Pessoa importada = importada(CPF);
+    void chaveDeImportadoSemLoginCriaContaPendenteComSugestaoSemDuplicarNemTocarNoImportado() {
+        Pessoa importada = importada(CHAVE);
         UUID idDoImportado = importada.getId();
         UUID authId = UUID.randomUUID();
 
-        PessoaResponse r = cadastrar(authId, CPF);
+        PessoaResponse r = cadastrar(authId, CHAVE);
 
         Pessoa pendente = daConta(authId);
         assertNotEquals(idDoImportado, pendente.getId());
         assertEquals(importada, pendente.getVinculoSugerido());
-        assertNull(pendente.getCpf());          // o CPF continua só no cadastro importado (é único)
+        assertNull(pendente.getChaveC());          // o CHAVE continua só no cadastro importado (é único)
         assertNull(pendente.getAprovadoEm());   // pendente de verdade
         assertTrue(r.temVinculoSugerido());
         assertNull(importada.getAuthUserId());  // o login NÃO foi gravado no importado
@@ -172,25 +172,25 @@ class PessoaServiceVinculoPorCpfTest {
     }
 
     @Test
-    void cpfDePessoaQueJaTemLoginERecusadoComMensagemNeutraSemVazarDados() {
-        Pessoa dona = importada(CPF);
+    void chaveDePessoaQueJaTemLoginERecusadoComMensagemNeutraSemVazarDados() {
+        Pessoa dona = importada(CHAVE);
         dona.setAuthUserId(UUID.randomUUID());
         int antes = banco.size();
 
-        EstadoInvalidoException e = assertThrows(EstadoInvalidoException.class, () -> cadastrar(UUID.randomUUID(), CPF));
+        EstadoInvalidoException e = assertThrows(EstadoInvalidoException.class, () -> cadastrar(UUID.randomUUID(), CHAVE));
 
         assertEquals(PessoaService.MSG_CADASTRO_NAO_CONCLUIDO, e.getMessage());
         assertFalse(e.getMessage().contains("Klebson"));
-        assertFalse(e.getMessage().contains(CPF));
+        assertFalse(e.getMessage().contains(CHAVE));
         assertEquals(antes, banco.size());
     }
 
     @Test
     void contaJaLigadaAOutraPessoaERecusada() {
         UUID authId = UUID.randomUUID();
-        cadastrar(authId, CPF);
+        cadastrar(authId, CHAVE);
 
-        assertThrows(EstadoInvalidoException.class, () -> cadastrar(authId, "11144477735"));
+        assertThrows(EstadoInvalidoException.class, () -> cadastrar(authId, "C1000002"));
         assertEquals(2, banco.size());
     }
 
@@ -199,18 +199,18 @@ class PessoaServiceVinculoPorCpfTest {
         UUID authId = UUID.randomUUID();
         when(confirmacaoEmail.confirmado(authId)).thenReturn(false);
 
-        assertThrows(EstadoInvalidoException.class, () -> cadastrar(authId, CPF));
+        assertThrows(EstadoInvalidoException.class, () -> cadastrar(authId, CHAVE));
         assertEquals(1, banco.size());
     }
 
     @Test
-    void cpfComMascaraEEspacosEAceito_eInvalidoERecusado() {
+    void chaveEmMinusculaComEspacosEAceita_eFormatoInvalidoERecusado() {
         UUID authId = UUID.randomUUID();
-        cadastrar(authId, "  529.982.247-25 ");
-        assertEquals(CPF, daConta(authId).getCpf());
+        cadastrar(authId, "  c1000001 ");
+        assertEquals(CHAVE, daConta(authId).getChaveC());
 
-        assertThrows(IllegalArgumentException.class, () -> cadastrar(UUID.randomUUID(), "529.982.247-26"));
-        assertThrows(IllegalArgumentException.class, () -> cadastrar(UUID.randomUUID(), "111.111.111-11"));
+        assertThrows(IllegalArgumentException.class, () -> cadastrar(UUID.randomUUID(), "C100000"));
+        assertThrows(IllegalArgumentException.class, () -> cadastrar(UUID.randomUUID(), "X1000001"));
     }
 
     @Test
@@ -220,21 +220,21 @@ class PessoaServiceVinculoPorCpfTest {
         when(confirmacaoEmail.confirmado(authId)).thenReturn(false); // cada envio falha, mas conta como tentativa
 
         for (int i = 0; i < 3; i++) {
-            assertThrows(EstadoInvalidoException.class, () -> cadastrar(authId, CPF));
+            assertThrows(EstadoInvalidoException.class, () -> cadastrar(authId, CHAVE));
         }
-        assertThrows(TentativasExcedidasException.class, () -> cadastrar(authId, CPF));
+        assertThrows(TentativasExcedidasException.class, () -> cadastrar(authId, CHAVE));
         // outra conta não é afetada
         UUID outra = UUID.randomUUID();
-        assertDoesNotThrow(() -> cadastrar(outra, "11144477735"));
+        assertDoesNotThrow(() -> cadastrar(outra, "C1000002"));
     }
 
     // ------------------------------------------------------------------ acesso e aprovação
 
     @Test
     void contaVinculadaPorSugestaoMasNaoAprovadaNaoTemNenhumaPermissao() {
-        importada(CPF);
+        importada(CHAVE);
         UUID authId = UUID.randomUUID();
-        cadastrar(authId, CPF);
+        cadastrar(authId, CHAVE);
 
         assertTrue(permissoes(authId).isEmpty(), "pendente não pode ter VINCULADO nem ROLE_*");
     }
@@ -243,10 +243,10 @@ class PessoaServiceVinculoPorCpfTest {
     void gestorEAdminConfirmamOVinculo_eALoginPassaParaOCadastroImportadoComOMesmoId() {
         for (PerfilPessoa perfil : List.of(PerfilPessoa.GESTOR, PerfilPessoa.ADMIN)) {
             banco.removeIf(p -> p != admin);
-            Pessoa importada = importada(CPF);
+            Pessoa importada = importada(CHAVE);
             UUID idDoImportado = importada.getId();
             UUID authId = UUID.randomUUID();
-            cadastrar(authId, CPF);
+            cadastrar(authId, CHAVE);
             Pessoa pendente = daConta(authId);
 
             Pessoa aprovador = pessoa("Aprovador", perfil);
@@ -269,9 +269,9 @@ class PessoaServiceVinculoPorCpfTest {
 
     @Test
     void profissionalEVisualizadorNaoConfirmamVinculo() {
-        Pessoa importada = importada(CPF);
+        Pessoa importada = importada(CHAVE);
         UUID authId = UUID.randomUUID();
-        cadastrar(authId, CPF);
+        cadastrar(authId, CHAVE);
         UUID pendenteId = daConta(authId).getId();
 
         for (PerfilPessoa perfil : List.of(PerfilPessoa.PROFISSIONAL, PerfilPessoa.VISUALIZADOR)) {
@@ -287,13 +287,13 @@ class PessoaServiceVinculoPorCpfTest {
     @Test
     void naoConfirmaContaSemSugestaoNemComEmailNaoConfirmado() {
         UUID semSugestao = UUID.randomUUID();
-        cadastrar(semSugestao, "11144477735");
+        cadastrar(semSugestao, "C1000002");
         assertThrows(EstadoInvalidoException.class,
                 () -> service.confirmarVinculo(mock(Jwt.class), daConta(semSugestao).getId()));
 
-        importada(CPF);
+        importada(CHAVE);
         UUID comSugestao = UUID.randomUUID();
-        cadastrar(comSugestao, CPF);
+        cadastrar(comSugestao, CHAVE);
         when(confirmacaoEmail.confirmado(comSugestao)).thenReturn(false);
         assertThrows(EstadoInvalidoException.class,
                 () -> service.confirmarVinculo(mock(Jwt.class), daConta(comSugestao).getId()));
@@ -301,9 +301,9 @@ class PessoaServiceVinculoPorCpfTest {
 
     @Test
     void aprovarComoPessoaNovaLimpaASugestaoERegistraNaAuditoria() {
-        Pessoa importada = importada(CPF);
+        Pessoa importada = importada(CHAVE);
         UUID authId = UUID.randomUUID();
-        cadastrar(authId, CPF);
+        cadastrar(authId, CHAVE);
         Pessoa pendente = daConta(authId);
 
         service.aprovar(pendente.getId(), mock(Jwt.class), new AprovarRequest(PerfilPessoa.PROFISSIONAL, null, null, null));
@@ -318,7 +318,7 @@ class PessoaServiceVinculoPorCpfTest {
 
     @Test
     void vincularAuthDiretoConfereContaLivrePessoaSemContaEEmailConfirmado() {
-        Pessoa importada = importada(CPF);
+        Pessoa importada = importada(CHAVE);
         UUID authId = UUID.randomUUID();
 
         service.vincularAuth(mock(Jwt.class), importada.getId(), authId);
@@ -330,7 +330,7 @@ class PessoaServiceVinculoPorCpfTest {
         assertThrows(EstadoInvalidoException.class,
                 () -> service.vincularAuth(mock(Jwt.class), importada.getId(), UUID.randomUUID()));
         // conta que já é de outra pessoa
-        Pessoa outra = importada("11144477735");
+        Pessoa outra = importada("C1000002");
         assertThrows(EstadoInvalidoException.class, () -> service.vincularAuth(mock(Jwt.class), outra.getId(), authId));
         // e-mail não confirmado
         UUID naoConfirmada = UUID.randomUUID();
@@ -341,13 +341,13 @@ class PessoaServiceVinculoPorCpfTest {
     // ------------------------------------------------------------------ caminho completo
 
     @Test
-    void caminhoCompleto_importadoSemLogin_contaCriada_cpfInformado_aprovacao_pessoaVeOMesmoCadastro() {
-        Pessoa importada = importada(CPF);
+    void caminhoCompleto_importadoSemLogin_contaCriada_chaveInformado_aprovacao_pessoaVeOMesmoCadastro() {
+        Pessoa importada = importada(CHAVE);
         UUID idDoImportado = importada.getId();
         UUID authId = UUID.randomUUID();
 
-        // 1) cria conta e informa o CPF: continua sem acesso
-        PessoaResponse pedido = cadastrar(authId, CPF);
+        // 1) cria conta e informa o chave C: continua sem acesso
+        PessoaResponse pedido = cadastrar(authId, CHAVE);
         assertTrue(pedido.temVinculoSugerido());
         assertTrue(permissoes(authId).isEmpty());
         assertFalse(service.buscarStatusPorAuthUserId(authId).vinculado());

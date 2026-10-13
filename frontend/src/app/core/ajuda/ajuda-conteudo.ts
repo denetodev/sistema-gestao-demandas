@@ -271,12 +271,12 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
       {
         pergunta: 'Alguém já está no sistema mas criou uma conta nova. O que faço?',
         resposta:
-          'Abra o cadastro pendente da conta nova e use "Esta pessoa já existe no sistema?": escolha o cadastro que já existe (por exemplo, importado da planilha) e vincule. A conta passa a ser dessa pessoa, com todo o histórico, e o cadastro novo é removido. Se você aprovar sem vincular, a pessoa fica duplicada. Quando a pessoa informa o CPF de um cadastro importado, a conta já chega com um aviso "Pediu para assumir um cadastro importado": confira nome, e-mail e equipe e use Confirmar vínculo. Só depois disso ela enxerga o histórico.',
+          'Abra o cadastro pendente da conta nova e use "Esta pessoa já existe no sistema?": escolha o cadastro que já existe (por exemplo, importado da planilha) e vincule. A conta passa a ser dessa pessoa, com todo o histórico, e o cadastro novo é removido. Se você aprovar sem vincular, a pessoa fica duplicada. Quando a pessoa informa a chave C de um cadastro importado, a conta já chega com um aviso "Pediu para assumir um cadastro importado": confira nome, e-mail e equipe e use Confirmar vínculo. Só depois disso ela enxerga o histórico.',
       },
       {
-        pergunta: 'Para que serve o CPF?',
+        pergunta: 'Para que serve a chave C?',
         resposta:
-          'Para ligar a conta de quem se cadastra ao registro que já existe (pessoas importadas da planilha). Se o CPF já existir, um Gestor ou Admin faz o vínculo manualmente.',
+          'Para ligar a conta de quem se cadastra ao registro que já existe (pessoas importadas da planilha). A chave C é a matrícula: C seguida de 7 números para contratados, F seguida de 7 números para funcionários do Banco. Se a chave já estiver num cadastro importado, um Gestor ou Admin confirma o vínculo.',
       },
     ],
   },

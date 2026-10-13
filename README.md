@@ -20,7 +20,7 @@ Feito (backend + frontend + testes):
 - Atividade, Peça (valor unitário congelado), Evidência (upload JPEG/PNG até 5 MB no bucket privado do Supabase Storage, URL assinada de 5 min, ou link externo)
 - Dashboard (mapa de calor, resumo e valor gerado por escopo, sem demandas canceladas) e Relatório mensal (snapshot ao aprovar, exportação em DOCX; só Gestor/Admin reabrem)
 - Telas de "Acesso negado" e "Conta aguardando aprovação"
-- Nome de exibição da pessoa (`nome_exibicao`) e CPF (V12): cadastro da conta pede nome completo + CPF validado (único, nunca devolvido por inteiro); Gestor/Admin edita o CPF e vincula a conta a uma pessoa importada
+- Nome de exibição da pessoa (`nome_exibicao`) e chave C (V16): cadastro da conta pede nome completo + chave C (única); Gestor/Admin edita a chave C e vincula a conta a uma pessoa importada
 - Importação das planilhas House CRM (472 demandas) e Multimídia UGR (607 demandas): o banco tem hoje 36 pessoas, 1.079 demandas, 1.985 atividades e 1.682 peças
 - CI no GitHub Actions (build + testes de backend e frontend)
 - Mock do frontend isolado atrás de `environment.usarMock` (só com `ng serve -c mock`)
@@ -28,7 +28,7 @@ Feito (backend + frontend + testes):
 Pendente:
 - Projeto e Campanha estão vazios (as planilhas não os trazem): definir como popular
 - Especialidade, PessoaEspecialidade e PessoaCargoHistorico existem como tabelas sem entidade JPA
-- Cadastrar o CPF de quem foi importado (tela de Pessoas) para vincular com a conta de login
+- Cadastrar a chave C de quem foi importado (tela de Pessoas) para vincular com a conta de login
 - Publicar backend (Railway) e frontend (Vercel) e ajustar `environment.ts` e `CORS_ALLOWED_ORIGINS`
 - Testes ponta a ponta de GESTOR, VISUALIZADOR e Referência de Equipe com a API real
 
@@ -66,16 +66,16 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V9 | Relatório mensal |
 | V10 | RLS habilitado em todas as tabelas (a segurança vive no backend, que acessa o banco com role própria) |
 | V11 | Evidência com arquivo (Storage) |
-| V12 | `pessoa.nome_exibicao` e `pessoa.cpf` (único, validado) |
+| V12 | `pessoa.nome_exibicao` e `pessoa.cpf` (único, validado; o CPF foi substituído pela chave C na V16/V17) |
 | V13 | `pessoa.inativado_em`: o resumo do relatório mensal só lista quem estava ativo no mês |
 | V14 | `nucleo` (diretoria > núcleo > equipe) e `area.nucleo_id` |
-| V15 | `pessoa.vinculo_sugerido_id`: conta nova que informou o CPF de um cadastro importado fica pendente com a sugestão; só a aprovação de Gestor/Admin passa o login para o cadastro |
+| V15 | `pessoa.vinculo_sugerido_id`: conta nova que informou a chave C de um cadastro importado fica pendente com a sugestão; só a aprovação de Gestor/Admin passa o login para o cadastro |
+| V16 | `pessoa.chave_c` (única, C ou F + 7 dígitos): substitui o CPF como identidade do vínculo. A coluna `cpf` sai numa V17, depois do deploy do backend novo |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 
 ## Segurança
 - **A segurança vive no backend.** O frontend só esconde botões.
-- O CPF nunca é devolvido por inteiro pela API.
 
 ## Como trabalhamos
 

@@ -8,11 +8,11 @@
     <label for="cc-nome">Nome completo</label>
     <input pInputText id="cc-nome" formControlName="nome" autocomplete="name" />
 
-    <label for="cc-cpf">CPF</label>
-    <input pInputText id="cc-cpf" formControlName="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"
-      (input)="mascararCpf()" />
-    @if (form.controls.cpf.touched && form.controls.cpf.errors?.['cpfInvalido']) {
-      <small class="cartao__erro">CPF inválido.</small>
+    <label for="cc-chave">Chave C (matrícula)</label>
+    <input pInputText id="cc-chave" formControlName="chaveC" maxlength="8" placeholder="C0000000" autocomplete="off"
+      (input)="mascararChaveC()" />
+    @if (form.controls.chaveC.touched && form.controls.chaveC.errors?.['chaveCInvalida']) {
+      <small class="cartao__erro">Chave C inválida: use C ou F seguido de 7 números.</small>
     }
 
     <label for="cc-exibicao">Como quer ser chamado(a) <span class="cartao__opcional">(opcional)</span></label>

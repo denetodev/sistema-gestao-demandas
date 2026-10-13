@@ -6,8 +6,8 @@ export interface Pessoa {
   id: string;
   nome: string;
   nomeExibicao: string | null;
-  /** Ex.: ***.982.247-** — a API nunca devolve o CPF inteiro. */
-  cpfMascarado: string | null;
+  /** Chave C (matrícula), ex.: C1349864. */
+  chaveC: string | null;
   email: string | null;
   diretoriaId: string | null;
   diretoriaNome: string | null;
@@ -28,7 +28,7 @@ export interface Pessoa {
   aprovadoEm: string | null;
   createdAt: string;
   updatedAt: string;
-  /** A conta pediu para assumir um cadastro importado pelo CPF (o resumo vem de /vinculo-sugerido). */
+  /** A conta pediu para assumir um cadastro importado pela chave C (o resumo vem de /vinculo-sugerido). */
   temVinculoSugerido: boolean;
 }
 
@@ -39,7 +39,7 @@ export interface VinculoSugerido {
   nomeExibicao: string | null;
   equipe: string | null;
   cargo: string | null;
-  cpfMascarado: string | null;
+  chaveC: string | null;
   status: StatusPessoa;
   jaTemConta: boolean;
   demandas: number;
@@ -54,8 +54,8 @@ export interface VinculoSugerido {
 export interface PessoaPayload {
   nome: string;
   email: string | null;
-  /** Só escrita; vazio mantém o atual. */
-  cpf: string | null;
+  /** Vazio mantém o atual. */
+  chaveC: string | null;
   areaId: string;
   cargoId: string | null;
   status: StatusPessoa | null;

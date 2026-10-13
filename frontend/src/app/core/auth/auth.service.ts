@@ -104,7 +104,7 @@ export class AuthService {
   }
 
   /** Cria o cadastro de pessoa da conta logada; fica aguardando aprovação de Gestor/Admin. */
-  completarCadastro(payload: { nome: string; cpf: string; nomeExibicao: string | null; areaId: string; cargoId: string | null }) {
+  completarCadastro(payload: { nome: string; chaveC: string; nomeExibicao: string | null; areaId: string; cargoId: string | null }) {
     return this.#http.post<PessoaMe>(`${environment.apiUrl}/pessoas/auto-cadastro`, payload);
   }
 

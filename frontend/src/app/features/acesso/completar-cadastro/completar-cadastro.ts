@@ -10,7 +10,7 @@ import { Message } from 'primeng/message';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AreaService } from '../../../core/dados-mestres/area/area.service';
 import { CargoService } from '../../../core/dados-mestres/cargo/cargo.service';
-import { cpfValidator, formatarCpf } from '../../../core/util/cpf';
+import { chaveCValidator, normalizarChaveC } from '../../../core/util/chave-c';
 
 /**
  * Tela cheia para quem criou a conta (e-mail/senha) mas ainda não tem cadastro de pessoa.
@@ -44,7 +44,7 @@ export class CompletarCadastro {
 
   form = this.#fb.nonNullable.group({
     nome: ['', [Validators.required, Validators.maxLength(180)]],
-    cpf: ['', [Validators.required, cpfValidator]],
+    chaveC: ['', [Validators.required, chaveCValidator]],
     nomeExibicao: ['', Validators.maxLength(80)],
     areaId: this.#fb.control<string | null>(null, Validators.required),
     cargoId: this.#fb.control<string | null>(null),
@@ -53,10 +53,10 @@ export class CompletarCadastro {
   enviando = signal(false);
   erro = signal<string | null>(null);
 
-  mascararCpf() {
-    const c = this.form.controls.cpf;
-    const formatado = formatarCpf(c.value);
-    if (formatado !== c.value) c.setValue(formatado);
+  mascararChaveC() {
+    const c = this.form.controls.chaveC;
+    const maiuscula = c.value.toUpperCase();
+    if (maiuscula !== c.value) c.setValue(maiuscula);
   }
 
   async enviar() {
@@ -67,7 +67,7 @@ export class CompletarCadastro {
     try {
       await firstValueFrom(this.#auth.completarCadastro({
         nome: v.nome.trim(),
-        cpf: v.cpf,
+        chaveC: normalizarChaveC(v.chaveC),
         nomeExibicao: v.nomeExibicao.trim() || null,
         areaId: v.areaId!,
         cargoId: v.cargoId,

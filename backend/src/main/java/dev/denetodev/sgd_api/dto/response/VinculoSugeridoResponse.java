@@ -11,7 +11,7 @@ public record VinculoSugeridoResponse(
         String nomeExibicao,
         String equipe,
         String cargo,
-        String cpfMascarado,
+        String chaveC,
         StatusPessoa status,
         boolean jaTemConta,
         long demandas,
