@@ -70,7 +70,8 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V13 | `pessoa.inativado_em`: o resumo do relatório mensal só lista quem estava ativo no mês |
 | V14 | `nucleo` (diretoria > núcleo > equipe) e `area.nucleo_id` |
 | V15 | `pessoa.vinculo_sugerido_id`: conta nova que informou a chave C de um cadastro importado fica pendente com a sugestão; só a aprovação de Gestor/Admin passa o login para o cadastro |
-| V16 | `pessoa.chave_c` (única, C ou F + 7 dígitos): substitui o CPF como identidade do vínculo. A coluna `cpf` sai numa V17, depois do deploy do backend novo |
+| V16 | `pessoa.chave_c` (única, C ou F + 7 dígitos): substitui o CPF como identidade do vínculo. A coluna `cpf` saiu na V17 |
+| V17 | remove `pessoa.cpf` (e as constraints dele) |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 
