@@ -14,6 +14,8 @@ public record DemandaRequest(
 
         String descricao,
 
+        /** Código de controle livre (ex.: BC2609AX), a critério de quem cria. Em branco vira nulo. */
+        @Size(max = 40, message = "codigo deve ter no máximo 40 caracteres")
         String codigo,
 
         @NotNull(message = "diretoriaId é obrigatório")

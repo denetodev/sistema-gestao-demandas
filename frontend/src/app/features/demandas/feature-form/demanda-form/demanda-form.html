@@ -9,6 +9,10 @@
     <small class="dica">Um nome que outra pessoa entenda sem abrir a demanda: o que é e, se couber, para quem.</small>
     <input pInputText id="titulo" formControlName="titulo" />
 
+    <label for="codigo">Código (opcional)</label>
+    <small class="dica">Um código de controle seu, como BC2609AX. Aparece como etiqueta na lista.</small>
+    <input pInputText id="codigo" formControlName="codigo" maxlength="40" />
+
     <label for="descricao">Descrição</label>
     <small class="dica">O que foi pedido, em poucas linhas.</small>
     <textarea pTextarea id="descricao" formControlName="descricao" rows="2"></textarea>

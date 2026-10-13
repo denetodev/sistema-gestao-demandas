@@ -107,7 +107,7 @@ public class DemandaService {
 
         Demanda demanda = new Demanda(request.titulo(), diretoria);
         demanda.setDescricao(request.descricao());
-        demanda.setCodigo(request.codigo());
+        demanda.setCodigo(normalizarCodigo(request.codigo()));
         demanda.setDataPrazo(request.dataPrazo());
         demanda.setObservacoes(request.observacoes());
         demanda.setLinkExterno(normalizarLink(request.linkExterno()));
@@ -159,7 +159,7 @@ public class DemandaService {
 
         demanda.setTitulo(request.titulo());
         demanda.setDescricao(request.descricao());
-        demanda.setCodigo(request.codigo());
+        demanda.setCodigo(normalizarCodigo(request.codigo()));
         demanda.setDiretoria(diretoria);
         demanda.setDataPrazo(request.dataPrazo());
         demanda.setObservacoes(request.observacoes());
@@ -277,6 +277,15 @@ public class DemandaService {
     }
 
     /** Link para Planner/ClickUp: vazio vira nulo; só aceita http(s). */
+    /** Código livre: tira espaços das pontas e trata vazio como ausente. */
+    static String normalizarCodigo(String codigo) {
+        if (codigo == null) {
+            return null;
+        }
+        String limpo = codigo.trim();
+        return limpo.isEmpty() ? null : limpo;
+    }
+
     private String normalizarLink(String link) {
         if (link == null || link.isBlank()) {
             return null;

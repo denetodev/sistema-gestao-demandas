@@ -54,6 +54,7 @@ export class DemandaForm {
 
   form = this.#fb.nonNullable.group({
     titulo: ['', Validators.required],
+    codigo: ['', Validators.maxLength(40)],
     descricao: [''],
     diretoriaId: ['', Validators.required],
     demandanteId: this.#fb.control<string | null>(null),
@@ -124,6 +125,7 @@ export class DemandaForm {
       const d = await firstValueFrom(this.#demandaService.buscarPorId(id));
       this.form.reset({
         titulo: d.titulo,
+        codigo: d.codigo ?? '',
         descricao: d.descricao ?? '',
         diretoriaId: d.diretoriaId,
         demandanteId: d.demandanteId,
@@ -149,6 +151,7 @@ export class DemandaForm {
     const id = this.demandaId();
     const payload = {
       titulo: v.titulo,
+      codigo: v.codigo.trim() || null,
       descricao: v.descricao || null,
       diretoriaId: v.diretoriaId,
       demandanteId: v.demandanteId,
