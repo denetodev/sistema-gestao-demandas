@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SGP Aristocrata</title>
+<meta name="description" content="Plataforma de Gestão da Produção Criativa da Aristocrata: demandas, peças, evidências, relatório mensal e dashboard num só lugar.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#07090d">
+<meta property="og:title" content="SGP Aristocrata">
+<meta property="og:description" content="Toda a produção criativa num só lugar.">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  /* Conceito: landing escura em seções largas, com brilho laranja da identidade do app (tema Orange, menu slate). Mockup animado no hero, abas interativas por função, números reais da plataforma. */
+  :root{
+    --bg:#07090d;
+    --bg-2:#0b0f15;
+    --surface:#10151c;
+    --surface-2:#161d27;
+    --line:rgba(255,255,255,.09);
+    --line-strong:rgba(255,255,255,.16);
+    --ink:#f3f5f8;
+    --ink-soft:#a5afbc;
+    --ink-faint:#6f7b8a;
+    --accent:#f97316;
+    --accent-2:#fbbf24;
+    --accent-ink:#1b0e03;
+    --glow:rgba(249,115,22,.30);
+    --ok:#4ade80;
+    --font-display:"Schibsted Grotesk","Segoe UI",system-ui,sans-serif;
+    --font-mono:"IBM Plex Mono",ui-monospace,monospace;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;scroll-padding-top:90px;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-display);
+    line-height:1.55;
+    padding-inline:20px;
+    padding-block:0;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;}
+  :focus-visible{outline:2px solid var(--accent-2);outline-offset:3px;border-radius:8px;}
+  .mono{font-family:var(--font-mono);}
+  .wrap{max-width:1120px;margin-inline:auto;}
+  .grad{background:linear-gradient(95deg,var(--accent) 10%,var(--accent-2) 90%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+  /* fundo ambiente */
+  .ambient{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .ambient::before,.ambient::after{content:"";position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;}
+  .ambient::before{width:620px;height:620px;left:-180px;top:-120px;background:radial-gradient(circle,rgba(249,115,22,.22),transparent 65%);}
+  .ambient::after{width:720px;height:720px;right:-260px;top:240px;background:radial-gradient(circle,rgba(251,191,36,.10),transparent 65%);}
+  main,header.nav,footer{position:relative;z-index:1;}
+
+  /* botões */
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:12px 22px;border-radius:99px;
+    font-weight:600;font-size:.95rem;cursor:pointer;border:1px solid transparent;
+    transition:transform .2s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent),#fb8a3c);
+    color:var(--accent-ink);
+    box-shadow:0 8px 30px -8px var(--glow), inset 0 1px 0 rgba(255,255,255,.35);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 36px -8px rgba(249,115,22,.55), inset 0 1px 0 rgba(255,255,255,.4);}
+  .btn-ghost{background:rgba(255,255,255,.03);border-color:var(--line-strong);color:var(--ink);}
+  .btn-ghost:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.28);}
+  .btn .ic{
+    width:26px;height:26px;border-radius:50%;background:var(--accent-ink);color:var(--accent-2);
+    display:inline-grid;place-items:center;font-size:.9rem;line-height:1;
+  }
+
+  /* nav */
+  header.nav{
+    position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);z-index:20;
+    max-width:1120px;margin:12px auto 0;
+  }
+  .nav-pill{
+    display:flex;align-items:center;gap:18px;justify-content:space-between;
+    padding:10px 12px 10px 20px;border-radius:99px;
+    background:rgba(15,20,28,.72);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em;}
+  .brand small{display:block;font-family:var(--font-mono);font-size:.62rem;font-weight:400;color:var(--ink-faint);letter-spacing:.08em;text-transform:uppercase;line-height:1.1;}
+  .brand b{font-size:1.02rem;line-height:1.1;}
+  .nav-links{display:flex;gap:22px;font-size:.9rem;color:var(--ink-soft);}
+  .nav-links a{padding:6px 2px;transition:color .2s;}
+  .nav-links a:hover{color:var(--ink);}
+  .nav-actions{display:flex;gap:8px;align-items:center;}
+  .nav-actions .btn{padding:9px 20px;font-size:.9rem;}
+  @media (max-width:860px){.nav-links{display:none;}.nav-actions .btn-ghost.hide-sm{display:none;}}
+
+  /* hero */
+  .hero{
+    display:grid;grid-template-columns:1.02fr 1fr;gap:40px;align-items:center;
+    padding-block:72px 40px;min-height:560px;
+  }
+  @media (max-width:940px){.hero{grid-template-columns:1fr;padding-block:48px 24px;}}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-soft);padding:6px 12px;border-radius:99px;border:1px solid var(--line);background:rgba(255,255,255,.03);
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:pulse 2s infinite;}
+  @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(74,222,128,0);}100%{box-shadow:0 0 0 0 rgba(74,222,128,0);}}
+  h1{
+    font-size:clamp(2.4rem,5.6vw,4.1rem);line-height:1.03;letter-spacing:-.035em;font-weight:700;
+    margin:22px 0 20px;text-wrap:balance;
+  }
+  .hero p.lede{font-size:1.15rem;color:var(--ink-soft);max-width:48ch;margin:0 0 30px;text-wrap:pretty;}
+  .hero p.lede b{color:var(--ink);font-weight:600;}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;}
+  .hero-note{margin-top:22px;font-size:.84rem;color:var(--ink-faint);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  /* palco do mockup */
+  .stage{position:relative;min-height:600px;min-width:0;}
+  .rings{position:absolute;right:-30px;top:-10px;width:300px;height:300px;pointer-events:none;}
+  .rings i{position:absolute;inset:0;border-radius:50%;border:1px solid var(--line);}
+  .rings i:nth-child(2){inset:34px;border-color:rgba(249,115,22,.22);}
+  .rings i:nth-child(3){inset:70px;border-style:dashed;border-color:rgba(251,191,36,.18);animation:spin 40s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .ex-tag{
+    position:absolute;right:6px;bottom:-6px;z-index:3;
+    font-family:var(--font-mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);
+  }
+  .m-card{
+    position:absolute;background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    border:1px solid var(--line-strong);border-radius:16px;padding:16px 18px;
+    box-shadow:0 24px 60px -24px rgba(0,0,0,.8);
+    transition:transform .5s ease, opacity .5s ease, border-color .5s ease;
+  }
+  .m-demand{left:0;top:30px;width:min(360px,88%);animation:floaty 7s ease-in-out infinite;}
+  .m-people{right:0;top:190px;width:min(285px,74%);animation:floaty 8s ease-in-out -2s infinite;}
+  .m-value{left:6%;bottom:0;width:min(300px,80%);animation:floaty 9s ease-in-out -4s infinite;}
+  @keyframes floaty{50%{transform:translateY(-8px);}}
+  .m-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px;}
+  .m-code{font-family:var(--font-mono);font-size:.72rem;color:var(--ink-faint);}
+  .m-title{font-weight:600;font-size:1.02rem;margin:0 0 12px;}
+  .pill{
+    font-family:var(--font-mono);font-size:.68rem;padding:3px 10px;border-radius:99px;border:1px solid var(--line-strong);
+    color:var(--ink-soft);transition:all .4s ease;white-space:nowrap;
+  }
+  .pill[data-s="0"]{color:#fbbf24;border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08);}
+  .pill[data-s="1"]{color:#7dd3fc;border-color:rgba(125,211,252,.4);background:rgba(125,211,252,.08);}
+  .pill[data-s="2"],.pill[data-s="3"]{color:var(--ok);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.08);}
+  .pieces{display:flex;flex-wrap:wrap;gap:7px;}
+  .piece{
+    font-size:.78rem;padding:5px 10px 5px 8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    color:var(--ink-faint);display:inline-flex;gap:6px;align-items:center;transition:all .4s ease;
+  }
+  .piece::before{content:"";width:12px;height:12px;border-radius:50%;border:1.5px solid var(--ink-faint);transition:all .4s ease;}
+  .piece.on{color:var(--ink);border-color:rgba(249,115,22,.4);}
+  .piece.on::before{background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='%231b0e03' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;border-color:var(--accent);}
+  .m-label{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 10px;}
+  .person{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:.86rem;}
+  .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;font-weight:700;color:var(--accent-ink);}
+  .av.a{background:#fb923c;}.av.b{background:#fbbf24;}.av.c{background:#fdba74;}
+  .person span.r{margin-left:auto;font-family:var(--font-mono);font-size:.68rem;color:var(--ink-faint);}
+  .m-foot{margin-top:8px;padding-top:9px;border-top:1px dashed var(--line-strong);font-size:.76rem;color:var(--ink-soft);}
+  .m-foot b{color:var(--ink);font-family:var(--font-mono);font-weight:500;}
+  .big{font-family:var(--font-mono);font-size:1.9rem;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;}
+  .spark{display:flex;align-items:flex-end;gap:5px;height:34px;margin-top:10px;}
+  .spark i{flex:1;background:linear-gradient(180deg,var(--accent),rgba(249,115,22,.25));border-radius:3px 3px 1px 1px;transition:height .6s ease;}
+  .toast-chip{
+    position:absolute;right:2%;top:2px;z-index:4;display:flex;align-items:center;gap:9px;
+    padding:9px 16px 9px 10px;border-radius:99px;background:var(--surface-2);border:1px solid rgba(74,222,128,.4);
+    font-size:.82rem;font-weight:600;opacity:0;transform:translateY(8px) scale(.96);transition:all .5s ease;
+    box-shadow:0 12px 40px -12px rgba(74,222,128,.35);
+  }
+  .toast-chip.show{opacity:1;transform:none;}
+  .toast-chip .ck{width:22px;height:22px;border-radius:50%;background:var(--ok);color:#06210f;display:grid;place-items:center;font-size:.8rem;}
+  @media (max-width:940px){.stage{min-height:620px;}.rings{right:0;}}
+  @media (max-width:430px){.stage{min-height:660px;}.m-people{top:200px;}}
+
+  /* faixa de áreas */
+  .strip{margin-block:30px 10px;border-block:1px solid var(--line);padding-block:16px;overflow:hidden;
+    mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+  .strip-track{display:flex;gap:12px;width:max-content;animation:slide 36s linear infinite;}
+  .strip:hover .strip-track{animation-play-state:paused;}
+  @keyframes slide{to{transform:translateX(-50%);}}
+  .tagc{font-family:var(--font-mono);font-size:.8rem;color:var(--ink-soft);padding:7px 16px;border:1px solid var(--line);border-radius:99px;background:rgba(255,255,255,.02);white-space:nowrap;}
+  .strip-label{text-align:center;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 12px;}
+
+  /* seções */
+  section.block{padding-block:84px 0;}
+  .sec-head{text-align:center;max-width:720px;margin-inline:auto;margin-bottom:44px;}
+  .sec-head h2{font-size:clamp(1.8rem,3.8vw,2.7rem);line-height:1.1;letter-spacing:-.03em;margin:0 0 14px;font-weight:700;text-wrap:balance;}
+  .sec-head p{color:var(--ink-soft);font-size:1.05rem;margin:0;text-wrap:pretty;}
+  .kicker{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 12px;}
+
+  /* spotlight em cards */
+  .card{position:relative;background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);border-radius:18px;padding:24px;overflow:hidden;min-width:0;transition:border-color .3s, transform .3s;}
+  .card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;
+    background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(249,115,22,.16),transparent 70%);}
+  .card:hover{border-color:rgba(249,115,22,.35);transform:translateY(-3px);}
+  .card:hover::before{opacity:1;}
+
+  /* abas por função */
+  .tabs{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:28px;align-items:stretch;}
+  @media (max-width:860px){.tabs{grid-template-columns:1fr;}}
+  .tab-list{display:flex;flex-direction:column;gap:8px;}
+  @media (max-width:860px){.tab-list{flex-direction:row;overflow-x:auto;padding-bottom:6px;}.tab{min-width:210px;}}
+  .tab{
+    position:relative;text-align:left;cursor:pointer;background:transparent;border:1px solid transparent;border-radius:16px;padding:14px 18px;
+    color:var(--ink-soft);transition:all .25s ease;overflow:hidden;
+  }
+  .tab:hover{background:rgba(255,255,255,.03);}
+  .tab b{display:block;font-size:1.02rem;color:var(--ink-soft);transition:color .25s;}
+  .tab span{font-size:.84rem;color:var(--ink-faint);}
+  .tab[aria-selected="true"]{background:linear-gradient(135deg,rgba(249,115,22,.14),rgba(249,115,22,.04));border-color:rgba(249,115,22,.4);}
+  .tab[aria-selected="true"] b{color:var(--ink);}
+  .tab .bar{position:absolute;left:16px;right:16px;bottom:0;height:2px;background:transparent;}
+  .tab .bar i{display:block;height:100%;width:0;background:var(--accent);}
+  .tab[aria-selected="true"].run .bar i{animation:fill 5.5s linear forwards;}
+  .tab[aria-selected="true"]:not(.run) .bar i{width:100%;}
+  @keyframes fill{to{width:100%;}}
+  .panel{
+    border:1px solid var(--line-strong);border-radius:20px;background:linear-gradient(180deg,var(--surface-2),var(--bg-2));
+    padding:0;display:flex;flex-direction:column;min-height:400px;overflow:hidden;
+  }
+  .panel-top{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);}
+  .panel-top .ico{width:34px;height:34px;border-radius:10px;background:rgba(249,115,22,.14);color:var(--accent);display:grid;place-items:center;font-family:var(--font-mono);font-size:.78rem;font-weight:600;}
+  .panel-top b{font-size:.98rem;display:block;line-height:1.2;}
+  .panel-top small{font-size:.74rem;color:var(--ink-faint);font-family:var(--font-mono);}
+  .panel-top .ex{margin-left:auto;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);border:1px solid var(--line);border-radius:99px;padding:3px 9px;}
+  .panel-body{padding:20px;display:flex;flex-direction:column;gap:16px;animation:swap .45s ease;}
+  @keyframes swap{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+  .field{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025);min-width:0;}
+  .field small{display:block;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:3px;}
+  .field span{font-size:.95rem;overflow-wrap:anywhere;}
+  .evid-label{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 8px;}
+  .evids{display:flex;gap:8px;flex-wrap:wrap;}
+  .evid{font-size:.8rem;padding:6px 12px;border-radius:99px;border:1px dashed rgba(249,115,22,.45);color:var(--accent-2);background:rgba(249,115,22,.06);}
+  .panel-note{margin-top:auto;padding:14px 20px;border-top:1px solid var(--line);font-size:.84rem;color:var(--ink-soft);}
+
+  /* números */
+  .before-after{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;margin-bottom:26px;}
+  @media (max-width:820px){.before-after{grid-template-columns:1fr;}.ba-arrow{transform:rotate(90deg);justify-self:center;}}
+  .ba{border-radius:18px;padding:22px;border:1px solid var(--line);min-width:0;}
+  .ba.before{background:rgba(255,255,255,.02);}
+  .ba.after{background:linear-gradient(135deg,rgba(249,115,22,.14),rgba(249,115,22,.03));border-color:rgba(249,115,22,.4);box-shadow:0 20px 60px -30px var(--glow);}
+  .ba h3{margin:0 0 12px;font-size:.72rem;font-family:var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;}
+  .ba.after h3{color:var(--accent-2);}
+  .ba ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;}
+  .ba li{display:flex;gap:10px;align-items:baseline;font-size:.96rem;}
+  .ba.before li{color:var(--ink-faint);}
+  .ba.before li::before{content:"×";color:var(--ink-faint);font-family:var(--font-mono);}
+  .ba.after li::before{content:"✓";color:var(--accent);font-family:var(--font-mono);}
+  .ba-arrow{width:44px;height:44px;border-radius:50%;border:1px solid var(--line-strong);display:grid;place-items:center;color:var(--accent);font-family:var(--font-mono);}
+  .stats-card{border:1px solid var(--line-strong);border-radius:22px;background:linear-gradient(180deg,var(--surface-2),var(--bg-2));overflow:hidden;}
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));}
+  .stat{padding:30px 26px;border-right:1px solid var(--line);min-width:0;}
+  .stat:last-child{border-right:0;}
+  @media (max-width:760px){.stat{border-right:0;border-bottom:1px solid var(--line);}.stat:last-child{border-bottom:0;}}
+  .stat .n{font-size:clamp(2.4rem,5vw,3.4rem);font-weight:500;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;color:#ffe4cc;}
+  .stat .rule{height:3px;width:60%;border-radius:3px;background:linear-gradient(90deg,var(--accent),transparent);margin:14px 0 12px;}
+  .stat p{margin:0;font-size:.88rem;color:var(--ink-soft);}
+  .stats-foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;padding:18px 26px;border-top:1px solid var(--line);}
+  .stats-foot b{font-size:1.02rem;}
+
+  /* como funciona */
+  .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;position:relative;}
+  @media (max-width:980px){.steps{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media (max-width:560px){.steps{grid-template-columns:1fr;}}
+  .card .step-n{font-family:var(--font-mono);font-size:.72rem;color:var(--accent);margin:0 0 14px;display:flex;align-items:center;gap:10px;}
+  .card .step-n::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(249,115,22,.5),transparent);}
+  .card h3{font-size:1.15rem;margin:0 0 8px;letter-spacing:-.01em;line-height:1.25;}
+  .card p{margin:0;font-size:.92rem;color:var(--ink-soft);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+  .chips span{font-family:var(--font-mono);font-size:.68rem;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--ink-faint);}
+
+  /* para quem */
+  .who{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;}
+  @media (max-width:980px){.who{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media (max-width:560px){.who{grid-template-columns:1fr;}}
+  .who .badge{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:rgba(249,115,22,.12);color:var(--accent);font-family:var(--font-mono);font-weight:600;margin-bottom:16px;border:1px solid rgba(249,115,22,.3);}
+  .who .perm{margin-top:14px;font-family:var(--font-mono);font-size:.68rem;color:var(--ink-faint);}
+
+  /* confiança */
+  .trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
+  @media (max-width:860px){.trust{grid-template-columns:1fr;}}
+
+  /* roadmap */
+  .road{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;}
+  @media (max-width:860px){.road{grid-template-columns:1fr;}}
+  .road .when{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;color:var(--ink-faint);}
+  .road .now .when{color:var(--ok);}
+  .road .next .when{color:var(--accent-2);}
+  .road ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .road li{font-size:.92rem;color:var(--ink-soft);padding-left:18px;position:relative;}
+  .road li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--line-strong);}
+  .road .now li::before{background:var(--ok);}
+  .road .next li::before{background:var(--accent);}
+
+  /* faq */
+  .faq{max-width:780px;margin-inline:auto;display:flex;flex-direction:column;gap:10px;}
+  details{border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02);transition:border-color .25s, background .25s;}
+  details[open]{border-color:rgba(249,115,22,.4);background:linear-gradient(135deg,rgba(249,115,22,.08),transparent);}
+  summary{cursor:pointer;list-style:none;padding:18px 22px;font-weight:600;display:flex;justify-content:space-between;gap:16px;align-items:center;}
+  summary::-webkit-details-marker{display:none;}
+  summary::after{content:"+";font-family:var(--font-mono);color:var(--accent);font-size:1.3rem;line-height:1;transition:transform .25s;}
+  details[open] summary::after{transform:rotate(45deg);}
+  details p{margin:0;padding:0 22px 20px;color:var(--ink-soft);font-size:.95rem;max-width:64ch;}
+
+  /* cta final */
+  .final{
+    margin-block:90px 40px;text-align:center;padding:60px 24px;border-radius:28px;border:1px solid rgba(249,115,22,.35);
+    background:radial-gradient(600px 260px at 50% 0%,rgba(249,115,22,.22),transparent 70%),linear-gradient(180deg,var(--surface),var(--bg-2));
+  }
+  .final h2{font-size:clamp(1.9rem,4.2vw,3rem);letter-spacing:-.03em;line-height:1.08;margin:0 0 14px;text-wrap:balance;}
+  .final p{color:var(--ink-soft);max-width:52ch;margin:0 auto 28px;}
+  footer{max-width:1120px;margin-inline:auto;padding-block:26px 40px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--ink-faint);}
+
+  #notice{
+    position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translate(-50%,20px);z-index:50;
+    background:var(--surface-2);border:1px solid var(--line-strong);border-radius:99px;padding:11px 20px;font-size:.88rem;opacity:0;pointer-events:none;transition:all .3s;max-width:calc(100vw - 32px);
+  }
+  #notice.show{opacity:1;transform:translate(-50%,0);}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="nav-pill">
+    <a class="brand" href="#topo" aria-label="SGP Aristocrata, início">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs><rect width="34" height="34" rx="10" fill="url(#lg)"/><rect x="8" y="17" width="4.5" height="9" rx="1.6" fill="#1b0e03"/><rect x="14.8" y="12" width="4.5" height="14" rx="1.6" fill="#1b0e03"/><rect x="21.6" y="7" width="4.5" height="19" rx="1.6" fill="#1b0e03"/></svg>
+      <span><b>SGP</b><small>Aristocrata</small></span>
+    </a>
+    <nav class="nav-links" aria-label="Seções">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#funcoes">Por função</a>
+      <a href="#para-quem">Para quem é</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn btn-ghost hide-sm" href="#como-funciona">Ver como funciona</a>
+      <a class="btn btn-primary" href="#" data-login>Entrar</a>
+    </div>
+  </div>
+</header>
+
+<main id="topo" class="wrap">
+
+  <section class="hero">
+    <div>
+      <span class="eyebrow"><span class="live-dot"></span>No ar · em teste com a House CRM</span>
+      <h1>Toda a produção criativa num <span class="grad">só lugar</span>.</h1>
+      <p class="lede">Registre <b>quem fez o quê, em qual demanda e com que resultado</b>. O relatório mensal e os indicadores da operação saem do próprio registro, sem reconstruir o mês de memória.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#" data-login>Entrar na plataforma <span class="ic">→</span></a>
+        <a class="btn btn-ghost" href="#como-funciona">Ver como funciona</a>
+      </div>
+      <p class="hero-note">Plataforma de Gestão da Produção Criativa · Aristocrata</p>
+    </div>
+
+    <div class="stage" aria-label="Exemplo animado de uma demanda sendo registrada e entregue">
+      <div class="rings" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <div class="toast-chip" id="toast"><span class="ck">✓</span>Relatório do mês aprovado</div>
+
+      <div class="m-card m-demand">
+        <div class="m-head"><span class="m-code">BC2606CR</span><span class="pill" id="pill" data-s="0">Em produção</span></div>
+        <p class="m-title">Campanha Plano Safra</p>
+        <div class="pieces" id="pieces">
+          <span class="piece">E-mail Varejo</span>
+          <span class="piece">Banner Mobile</span>
+          <span class="piece">Vídeo 30s</span>
+          <span class="piece">Card</span>
+        </div>
+      </div>
+
+      <div class="m-card m-people">
+        <p class="m-label">Participação</p>
+        <div class="person"><span class="av a">A</span>HTML<span class="r">principal</span></div>
+        <div class="person"><span class="av b">B</span>Design<span class="r">participante</span></div>
+        <div class="person"><span class="av c">C</span>Motion<span class="r">participante</span></div>
+        <div class="m-foot"><b>1</b> demanda no volume · <b>3</b> participações</div>
+      </div>
+
+      <div class="m-card m-value">
+        <p class="m-label">Peças entregues no mês</p>
+        <div class="big" id="big">124</div>
+        <div class="spark" id="spark"></div>
+      </div>
+
+      <span class="ex-tag">Exemplo ilustrativo</span>
+    </div>
+  </section>
+
+  <div class="strip" aria-label="Áreas atendidas">
+    <p class="strip-label">Uma plataforma para todas as áreas criativas</p>
+    <div class="strip-track" id="track"></div>
+  </div>
+
+  <section class="block" id="funcoes">
+    <div class="sec-head">
+      <p class="kicker">Por função</p>
+      <h2>Cada profissional registra do seu jeito. A plataforma <span class="grad">entende</span>.</h2>
+      <p>Um designer não relata como um videomaker. O registro acompanha o que cada função realmente produz, sem forçar um formulário único.</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tab-list" role="tablist" aria-label="Funções" id="tablist"></div>
+      <div class="panel" id="panel" role="tabpanel" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="block" id="numeros">
+    <div class="sec-head">
+      <p class="kicker">Antes e depois</p>
+      <h2>Não deixe a produção <span class="grad">espalhada</span></h2>
+      <p>O que estava em planilhas, arquivos e conversas passa a viver num registro com histórico e permissões.</p>
+    </div>
+
+    <div class="before-after">
+      <div class="ba before">
+        <h3>Antes</h3>
+        <ul>
+          <li>Planilhas e abas por trimestre</li>
+          <li>ZIPs, imagens e mockups soltos</li>
+          <li>Relatório montado à mão todo mês</li>
+          <li>Histórico na cabeça de quem produziu</li>
+        </ul>
+      </div>
+      <div class="ba-arrow" aria-hidden="true">→</div>
+      <div class="ba after">
+        <h3>Com a plataforma</h3>
+        <ul>
+          <li>Um registro por demanda, atividade e peça</li>
+          <li>Evidência anexada ou linkada ao trabalho</li>
+          <li>Relatório gerado do registro, revisado pela pessoa</li>
+          <li>Histórico e auditoria de quem alterou o quê</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stats-card">
+      <div class="stats-row">
+        <div class="stat"><div class="n mono" data-count="1079" data-fmt="pt">1.079</div><div class="rule"></div><p>demandas reais importadas das planilhas do CRM e da UGR</p></div>
+        <div class="stat"><div class="n mono" data-count="2">2</div><div class="rule"></div><p>núcleos já cadastrados: House-CRM e Multimídia</p></div>
+        <div class="stat"><div class="n mono" data-count="4">4</div><div class="rule"></div><p>perfis de acesso: Admin, Gestor, Profissional e Visualizador</p></div>
+        <div class="stat"><div class="n mono" data-count="645">645</div><div class="rule"></div><p>testes automatizados passando a cada alteração</p></div>
+      </div>
+      <div class="stats-foot">
+        <b>O que foi produzido deixa de se perder.</b>
+        <a class="btn btn-primary" href="#como-funciona">Ver na prática <span class="ic">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="como-funciona">
+    <div class="sec-head">
+      <p class="kicker">Como funciona</p>
+      <h2>Do pedido ao relatório, <span class="grad">no mesmo fluxo</span></h2>
+      <p>Quatro passos que usam o mesmo registro. Ninguém digita a mesma informação duas vezes.</p>
+    </div>
+
+    <div class="steps">
+      <article class="card">
+        <p class="step-n">01</p>
+        <h3>Registra</h3>
+        <p>A demanda nasce com diretoria, núcleo e equipe. Atividades e peças entram com quantidade e valor, e o valor da demanda é a soma das peças.</p>
+        <div class="chips"><span>Demanda</span><span>Atividade</span><span>Peça</span></div>
+      </article>
+      <article class="card">
+        <p class="step-n">02</p>
+        <h3>Comprova</h3>
+        <p>Imagem, link, código ou observação manual. Alguns trabalhos só existem em plataformas externas, e o registro aceita isso.</p>
+        <div class="chips"><span>Imagem</span><span>Link</span><span>Observação</span></div>
+      </article>
+      <article class="card">
+        <p class="step-n">03</p>
+        <h3>Revisa</h3>
+        <p>O relatório do mês é montado a partir do que foi registrado. A pessoa confere, aprova e o mês trava. Só Gestor ou Admin reabrem.</p>
+        <div class="chips"><span>PDF</span><span>DOCX</span><span>Aprovação</span></div>
+      </article>
+      <article class="card">
+        <p class="step-n">04</p>
+        <h3>Enxerga</h3>
+        <p>O dashboard mostra valor gerado, demandas por situação e produção por equipe e por pessoa, respeitando o escopo de cada perfil.</p>
+        <div class="chips"><span>Dashboard</span><span>Escopos</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="para-quem">
+    <div class="sec-head">
+      <p class="kicker">Para quem é</p>
+      <h2>Cada perfil vê o que <span class="grad">importa para o seu papel</span></h2>
+      <p>O acesso é definido no servidor, e não apenas na tela.</p>
+    </div>
+
+    <div class="who">
+      <article class="card">
+        <div class="badge">P</div>
+        <h3>Profissional</h3>
+        <p>Registra o que produziu, anexa evidências e fecha o relatório do mês sem reconstruir tudo de memória.</p>
+        <p class="perm">escopo: Minhas</p>
+      </article>
+      <article class="card">
+        <div class="badge">G</div>
+        <h3>Gestor</h3>
+        <p>Acompanha produção e valor por núcleo, equipe e pessoa, aprova cadastros e reabre relatórios quando necessário.</p>
+        <p class="perm">escopo: equipe, núcleo, diretoria, todas</p>
+      </article>
+      <article class="card">
+        <div class="badge">A</div>
+        <h3>Admin</h3>
+        <p>Mantém a estrutura de diretorias, núcleos, equipes e cargos, e vincula contas às pessoas importadas.</p>
+        <p class="perm">escopo: todas</p>
+      </article>
+      <article class="card">
+        <div class="badge">V</div>
+        <h3>Visualizador</h3>
+        <p>Acompanha a operação em visão de leitura, sem alterar nada. Pensado para quem decide e precisa enxergar.</p>
+        <p class="perm">somente leitura</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="sec-head">
+      <p class="kicker">Confiança</p>
+      <h2>Rastreável e <span class="grad">controlado</span></h2>
+    </div>
+    <div class="trust">
+      <article class="card">
+        <h3>Permissão no servidor</h3>
+        <p>As regras de acesso vivem no backend e têm matriz de permissões testada. Esconder um botão não é a segurança.</p>
+      </article>
+      <article class="card">
+        <h3>Histórico de mudanças</h3>
+        <p>Mudanças de status da demanda ficam registradas com histórico, e o relatório aprovado fica travado.</p>
+      </article>
+      <article class="card">
+        <h3>Evidências protegidas</h3>
+        <p>Arquivos ficam em armazenamento privado e são entregues por link assinado de curta duração.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="roadmap">
+    <div class="sec-head">
+      <p class="kicker">Roadmap</p>
+      <h2>O que já funciona e <span class="grad">o que vem agora</span></h2>
+    </div>
+    <div class="road">
+      <article class="card now">
+        <p class="when"><span class="live-dot"></span>Funcionando hoje</p>
+        <ul>
+          <li>Demandas, atividades, peças e evidências</li>
+          <li>Hierarquia de diretoria, núcleo e equipe</li>
+          <li>Relatório mensal com aprovação e PDF ou DOCX</li>
+          <li>Dashboard por equipe e por pessoa</li>
+          <li>Dados reais importados de CRM e UGR</li>
+        </ul>
+      </article>
+      <article class="card next">
+        <p class="when">Próximo</p>
+        <ul>
+          <li>Validação com a House CRM</li>
+          <li>Demais núcleos da UGR</li>
+          <li>Relatórios por função</li>
+          <li>Controle de equipamentos audiovisuais</li>
+        </ul>
+      </article>
+      <article class="card">
+        <p class="when">Depois</p>
+        <ul>
+          <li>IA como apoio de redação e organização, sempre sobre dados registrados</li>
+          <li>Power BI sobre a mesma base</li>
+          <li>Integrações com Planner, ClickUp, Sheets e Excel</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <div class="sec-head">
+      <p class="kicker">Perguntas frequentes</p>
+      <h2>O que costumam <span class="grad">perguntar</span></h2>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>É só para HTML ou só para o CRM?</summary>
+        <p>Não. A plataforma modela diretorias, núcleos e equipes, e atende design, desenvolvimento HTML, vídeo, redação, motion e operação, cada função com o seu jeito de registrar.</p>
+      </details>
+      <details>
+        <summary>Quando uma demanda tem várias pessoas, ela conta várias vezes?</summary>
+        <p>Não. A demanda conta uma vez no volume geral, e cada pessoa aparece na participação. Volume e participação são medidos separadamente.</p>
+      </details>
+      <details>
+        <summary>Quem vê o meu trabalho?</summary>
+        <p>Depende do perfil e do escopo: Minhas, Minha equipe, Meu núcleo, Minha diretoria ou Todas. As visões executivas podem usar agregações em vez de expor pessoas individualmente.</p>
+      </details>
+      <details>
+        <summary>A IA escreve o relatório?</summary>
+        <p>A IA ainda não está ativa no sistema. Hoje o relatório vem do registro e a pessoa revisa e aprova. Quando a IA entrar, será apoio de redação e organização, sem inventar dados que não estejam registrados.</p>
+      </details>
+      <details>
+        <summary>Posso corrigir um relatório depois de aprovado?</summary>
+        <p>O relatório aprovado trava. Se algo precisar mudar, um Gestor ou Admin reabre o mês.</p>
+      </details>
+      <details>
+        <summary>Substitui a planilha?</summary>
+        <p>Gradualmente. O histórico das planilhas já foi importado, e a plataforma passa a ser o registro de referência daqui para frente.</p>
+      </details>
+      <details>
+        <summary>Como faço para entrar?</summary>
+        <p>Pelo botão Entrar. Quem se cadastra pela primeira vez aguarda a aprovação de um Gestor ou Admin antes de acessar.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="final">
+    <h2>Pronto para registrar a <span class="grad">produção do mês</span>?</h2>
+    <p>Entre com a sua conta e acompanhe demandas, peças e relatório num só lugar.</p>
+    <a class="btn btn-primary" href="#" data-login>Entrar na plataforma <span class="ic">→</span></a>
+  </section>
+
+</main>
+
+<footer>
+  <span>SGP · Plataforma de Gestão da Produção Criativa · Aristocrata</span>
+  <span>Em desenvolvimento · posição de 12/10/2026</span>
+</footer>
+
+<div id="notice" role="status"></div>
+
+<script>
+  // Endereço do sistema. Quem não está logado cai na tela de login pelo guard do app.
+  var LOGIN_URL = "https://sistema-gestao-demandas-eta.vercel.app/";
+
+  (function(){
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* login */
+    var notice = document.getElementById("notice"), nt;
+    document.querySelectorAll("[data-login]").forEach(function(a){
+      if(LOGIN_URL){ a.setAttribute("href", LOGIN_URL);  }
+      else a.addEventListener("click", function(e){
+        e.preventDefault();
+        notice.textContent = "O endereço do login ainda não foi configurado nesta página.";
+        notice.classList.add("show"); clearTimeout(nt); nt = setTimeout(function(){notice.classList.remove("show");}, 3200);
+      });
+    });
+
+    /* faixa de áreas */
+    var areas = ["Desenvolvimento HTML","Design","Videomaker","Redação","Motion","Operação","Edição","Cobertura","Captação"];
+    var track = document.getElementById("track");
+    track.innerHTML = areas.concat(areas).map(function(t){return '<span class="tagc">'+t+'</span>';}).join("");
+
+    /* spotlight */
+    document.querySelectorAll(".card").forEach(function(c){
+      c.addEventListener("pointermove", function(e){
+        var r = c.getBoundingClientRect();
+        c.style.setProperty("--mx", (e.clientX-r.left)+"px");
+        c.style.setProperty("--my", (e.clientY-r.top)+"px");
+      });
+    });
+
+    /* mockup do hero */
+    var pill = document.getElementById("pill"), pieces = Array.prototype.slice.call(document.querySelectorAll("#pieces .piece"));
+    var toast = document.getElementById("toast"), big = document.getElementById("big"), spark = document.getElementById("spark");
+    var heights = [38,52,44,66,58,74,62];
+    spark.innerHTML = heights.map(function(h){return '<i style="height:'+h+'%"></i>';}).join("");
+    var bars = spark.querySelectorAll("i");
+    var labels = ["Em produção","Em revisão","Entregue","Entregue"];
+    var base = 124, state = 0;
+    function render(s){
+      pill.dataset.s = s; pill.textContent = labels[s];
+      pieces.forEach(function(p,i){ p.classList.toggle("on", s===0 ? i<1 : s===1 ? i<3 : true); });
+      toast.classList.toggle("show", s===3);
+      big.textContent = String(base + (s>=2 ? 4 : 0));
+      bars[bars.length-1].style.height = (s>=2 ? 92 : 62)+"%";
+    }
+    render(2); // estado completo no primeiro quadro
+    if(!reduce){
+      setTimeout(function(){ render(0); state = 0; setInterval(function(){ state = (state+1)%4; render(state); }, 2400); }, 1800);
+    } else { render(3); }
+
+    /* abas por função */
+    var data = [
+      {k:"HTML",n:"Desenvolvimento HTML",d:"E-mails e peças web",ico:"</>",f:[["Peça","E-mail Varejo"],["Segmentos","Varejo, Estilo"],["Plataforma","Salesforce Marketing Cloud"],["Ajustes","2 rodadas"]],e:["Print do e-mail","Código HTML","Link da plataforma"],note:"Campanhas, segmentos e plataformas ficam ligados à mesma demanda."},
+      {k:"DS",n:"Design",d:"KV, banners e adaptações",ico:"Ds",f:[["Peça","KV e Banner Desktop"],["Formato","1200 × 628"],["Versões","3"],["Adaptações","Mobile e stories"]],e:["Mockup","Arquivo da peça"],note:"Versões e adaptações aparecem como peças, cada uma com quantidade e valor."},
+      {k:"VD",n:"Videomaker",d:"Captação, edição e entrega",ico:"▶",f:[["Atividade","Captação e edição"],["Formatos","16:9 e 9:16"],["Versões","2"],["Duração","00:30"]],e:["Link do vídeo","Print da timeline"],note:"Captação e edição são atividades diferentes dentro da mesma demanda."},
+      {k:"RD",n:"Redator",d:"Textos, roteiros e revisões",ico:"Aa",f:[["Peça","Copy do e-mail e roteiro"],["Revisões","2"],["Adaptações","Push e banner"],["Tom","Institucional"]],e:["Texto aprovado","Observação manual"],note:"Textos entram como peça, e a revisão pode ser registrada sem anexo."},
+      {k:"MT",n:"Motion Designer",d:"Animações e versões",ico:"◐",f:[["Peça","Animação de abertura"],["Duração","00:15"],["Formatos","9:16 e 1:1"],["Versões","2"]],e:["Arquivo exportado","Link de revisão"],note:"Duração e formato ficam no registro, e não só na conversa."}
+    ];
+    var list = document.getElementById("tablist"), panel = document.getElementById("panel");
+    var cur = 0, timer = null, auto = !reduce;
+    list.innerHTML = data.map(function(t,i){
+      return '<button class="tab" role="tab" id="tab'+i+'" aria-selected="false" aria-controls="panel"><b>'+t.n+'</b><span>'+t.d+'</span><div class="bar"><i></i></div></button>';
+    }).join("");
+    var tabs = Array.prototype.slice.call(list.querySelectorAll(".tab"));
+    function show(i, run){
+      cur = i;
+      tabs.forEach(function(b,j){ b.setAttribute("aria-selected", j===i ? "true":"false"); b.classList.remove("run"); });
+      void tabs[i].offsetWidth;
+      if(run) tabs[i].classList.add("run");
+      var t = data[i];
+      panel.setAttribute("aria-labelledby","tab"+i);
+      panel.innerHTML =
+        '<div class="panel-top"><div class="ico">'+t.ico+'</div><div><b>'+t.n+'</b><small>Atividade registrada</small></div><span class="ex">Exemplo</span></div>'+
+        '<div class="panel-body"><div class="fields">'+t.f.map(function(x){return '<div class="field"><small>'+x[0]+'</small><span>'+x[1]+'</span></div>';}).join("")+'</div>'+
+        '<div><p class="evid-label">Evidências</p><div class="evids">'+t.e.map(function(x){return '<span class="evid">'+x+'</span>';}).join("")+'</div></div></div>'+
+        '<div class="panel-note">'+t.note+'</div>';
+    }
+    function schedule(){
+      clearTimeout(timer);
+      if(!auto) return;
+      timer = setTimeout(function(){ show((cur+1)%data.length, true); schedule(); }, 5500);
+    }
+    tabs.forEach(function(b,i){
+      b.addEventListener("click", function(){ auto = false; clearTimeout(timer); show(i,false); });
+    });
+    show(0, auto); schedule();
+
+    /* contadores */
+    var counters = document.querySelectorAll("[data-count]");
+    function fmt(v, el){ return el.dataset.fmt==="pt" ? v.toLocaleString("pt-BR") : String(v); }
+    if("IntersectionObserver" in window && !reduce){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if(!en.isIntersecting) return;
+          var el = en.target, end = +el.dataset.count, t0 = null; io.unobserve(el);
+          function tick(ts){
+            if(!t0) t0 = ts;
+            var p = Math.min(1,(ts-t0)/1100), e = 1-Math.pow(1-p,3);
+            el.textContent = fmt(Math.round(end*e), el);
+            if(p<1) requestAnimationFrame(tick); else el.textContent = fmt(end, el);
+          }
+          requestAnimationFrame(tick);
+        });
+      }, {threshold:.5});
+      counters.forEach(function(c){ io.observe(c); });
+    }
+  })();
+</script>
+</body>
+</html>
