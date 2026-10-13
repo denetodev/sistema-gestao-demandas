@@ -25,11 +25,11 @@ describe('AppShell', () => {
     expect(component).toBeTruthy();
   });
 
-  it('mostra no rodape do menu o nucleo, a equipe e o cargo da pessoa', () => {
-    expect(component.hierarquia()).toEqual({ nucleo: 'COE/CRM', equipe: 'Design', cargo: '—' });
+  it('mostra no rodape do menu a diretoria, o nucleo, a equipe e o cargo da pessoa', () => {
+    expect(component.hierarquia()).toEqual({ diretoria: 'COE/CRM', nucleo: 'House-CRM', equipe: 'Design', cargo: '—' });
     const itens = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.app-trilho strong'))
       .map((e) => e.textContent?.trim());
-    expect(itens).toEqual(['COE/CRM', 'Design', '—']);
+    expect(itens).toEqual(['COE/CRM', 'House-CRM', 'Design', '—']);
   });
 
   it('mostra o perfil por extenso, nao em maiusculas de sistema', () => {

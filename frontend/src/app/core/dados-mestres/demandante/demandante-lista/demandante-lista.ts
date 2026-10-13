@@ -48,24 +48,24 @@ export class DemandanteLista {
   // filtros da lista: as últimas cadastradas primeiro, 10 por página
   busca = signal('');
   tipoFiltro = signal<string | null>(null);
-  nucleoFiltro = signal<string | null>(null);
-  opcoesNucleo = computed(() => (this.diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
+  diretoriaFiltro = signal<string | null>(null);
+  opcoesDiretoria = computed(() => (this.diretorias.value() ?? []).map((d) => ({ valor: d.id, rotulo: d.nome })));
 
   filtrados = computed(() =>
     maisRecentesPrimeiro(this.demandantes.value() ?? []).filter(
       (d) =>
         contemTexto([d.nome, d.observacao], this.busca()) &&
         (!this.tipoFiltro() || d.tipo === this.tipoFiltro()) &&
-        (!this.nucleoFiltro() || d.diretoriaId === this.nucleoFiltro()),
+        (!this.diretoriaFiltro() || d.diretoriaId === this.diretoriaFiltro()),
     ),
   );
 
-  filtrosAtivos = computed(() => !!(this.busca() || this.tipoFiltro() || this.nucleoFiltro()));
+  filtrosAtivos = computed(() => !!(this.busca() || this.tipoFiltro() || this.diretoriaFiltro()));
 
   limparFiltros() {
     this.busca.set('');
     this.tipoFiltro.set(null);
-    this.nucleoFiltro.set(null);
+    this.diretoriaFiltro.set(null);
   }
 
   rotuloTipo(tipo: TipoDemandante): string {

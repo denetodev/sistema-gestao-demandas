@@ -60,6 +60,7 @@ public class AtividadeService {
         Page<Atividade> pagina = switch (escopo) {
             case MINHAS -> atividadeRepository.findByPessoa_Id(usuario.getId(), pageable);
             case EQUIPE -> atividadeRepository.findByPessoa_AreaId(permissaoService.areaDaEquipe(usuario).getId(), pageable);
+            case NUCLEO -> atividadeRepository.findByPessoa_Area_NucleoId(usuario.getArea().getNucleo().getId(), pageable);
             case DIRETORIA -> atividadeRepository.findByPessoaAreaDiretoriaId(usuario.getArea().getDiretoria().getId(), pageable);
             case TODAS -> atividadeRepository.findAll(pageable);
         };

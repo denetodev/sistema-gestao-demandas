@@ -66,6 +66,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V11 | Evidência com arquivo (Storage) |
 | V12 | `pessoa.nome_exibicao` e `pessoa.cpf` (único, validado) |
 | V13 | `pessoa.inativado_em`: o resumo do relatório mensal só lista quem estava ativo no mês |
+| V14 | `nucleo` (diretoria > núcleo > equipe) e `area.nucleo_id` |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

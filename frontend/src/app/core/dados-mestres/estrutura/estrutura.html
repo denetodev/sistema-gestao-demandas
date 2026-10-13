@@ -1,0 +1,91 @@
+<app-barra-pagina titulo="Núcleos e equipes" subtitulo="Diretoria, núcleo e equipe: de onde vem cada demanda e quem trabalha nela.">
+  <ng-container fim>
+    <p-button icon="pi pi-plus" label="Novo núcleo" (onClick)="novoNucleo()" />
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  <app-ajuda chave="estrutura" />
+
+  <section class="cartao cartao--tabela">
+    <h2 class="secao-titulo">Núcleos</h2>
+    <div class="tabela-rolagem">
+      <p-table [value]="nucleosAtivos()" [loading]="nucleos.isLoading()" dataKey="id">
+        <ng-template pTemplate="header">
+          <tr><th>Núcleo</th><th>Diretoria</th><th class="col-numero">Equipes</th><th class="col-acoes"></th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-n>
+          <tr>
+            <td>{{ n.nome }}</td>
+            <td>{{ n.diretoriaNome ?? '—' }}</td>
+            <td class="col-numero">{{ qtdEquipes(n.id) }}</td>
+            <td class="col-acoes">
+              <p-button [text]="true" icon="pi pi-pencil" ariaLabel="Editar núcleo" (onClick)="editarNucleo(n)" />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">
+              <div class="vazio"><strong>Nenhum núcleo cadastrado</strong>Crie o primeiro núcleo para agrupar as equipes.</div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+
+  <section class="cartao cartao--tabela">
+    <h2 class="secao-titulo">Equipes</h2>
+    @if (equipesSemNucleo() > 0) {
+      <p-message severity="warn" class="aviso">
+        {{ equipesSemNucleo() }} equipe(s) ainda sem núcleo. Elas não entram no botão Meu núcleo nem no filtro por núcleo.
+      </p-message>
+    }
+    <div class="tabela-rolagem">
+      <p-table [value]="equipes()" [loading]="areas.isLoading()" dataKey="id">
+        <ng-template pTemplate="header">
+          <tr><th>Equipe</th><th>Núcleo</th><th>Diretoria</th><th class="col-acoes"></th></tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-a>
+          <tr>
+            <td>{{ a.nome }}</td>
+            <td>{{ a.nucleoNome ?? '—' }}</td>
+            <td>{{ a.diretoriaNome ?? '—' }}</td>
+            <td class="col-acoes">
+              <p-button [text]="true" icon="pi pi-pencil" ariaLabel="Mudar núcleo da equipe" (onClick)="editarEquipe(a)" />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+</div>
+
+<p-dialog [(visible)]="nucleoAberto" [header]="nucleoEditando() ? 'Editar núcleo' : 'Novo núcleo'" [modal]="true" [style]="{ width: '400px' }">
+  <form [formGroup]="formNucleo" (ngSubmit)="salvarNucleo()" class="dialog-form">
+    <label for="nome">Nome</label>
+    <input pInputText id="nome" formControlName="nome" />
+
+    <label for="diretoria">Diretoria</label>
+    <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
+      optionLabel="nome" optionValue="id" placeholder="Selecione" [filter]="true" filterBy="nome" />
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+    <p-button type="submit" [loading]="salvando()" [disabled]="formNucleo.invalid">Salvar</p-button>
+  </form>
+</p-dialog>
+
+<p-dialog [(visible)]="equipeAberta" [header]="'Núcleo da equipe ' + (equipeEditando()?.nome ?? '')" [modal]="true" [style]="{ width: '400px' }">
+  <div class="dialog-form">
+    <label for="nucleo-equipe">Núcleo ({{ equipeEditando()?.diretoriaNome }})</label>
+    <p-select inputId="nucleo-equipe" [formControl]="nucleoDaEquipe" [options]="nucleosDaEquipe()"
+      optionLabel="nome" optionValue="id" placeholder="Sem núcleo" [showClear]="true" />
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+    <p-button [loading]="salvando()" (onClick)="salvarEquipe()">Salvar</p-button>
+  </div>
+</p-dialog>

@@ -22,6 +22,7 @@ export class DemandaService {
         ...(f.busca ? { busca: f.busca } : {}),
         ...(f.status ? { status: f.status } : {}),
         ...(f.diretoriaId ? { diretoriaId: f.diretoriaId } : {}),
+        ...(f.nucleoId ? { nucleoId: f.nucleoId } : {}),
         ...(f.areaId ? { areaId: f.areaId } : {}),
         ...(f.sort ? { sort: f.sort } : {}),
       },

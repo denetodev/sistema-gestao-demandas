@@ -16,6 +16,10 @@ public class Area {
     @JoinColumn(name = "diretoria_id", nullable = false)
     private Diretoria diretoria;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "nucleo_id")
+    private Nucleo nucleo;
+
     @Column(name = "nome", nullable = false, length = 120)
     private String nome;
 
@@ -39,6 +43,8 @@ public class Area {
     public UUID getId() { return id; }
     public Diretoria getDiretoria() { return diretoria; }
     public void setDiretoria(Diretoria diretoria) { this.diretoria = diretoria; }
+    public Nucleo getNucleo() { return nucleo; }
+    public void setNucleo(Nucleo nucleo) { this.nucleo = nucleo; }
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
     public boolean isAtivo() { return ativo; }

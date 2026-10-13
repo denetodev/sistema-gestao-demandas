@@ -30,6 +30,8 @@ public final class DemandaSpecs {
             case MINHAS -> comParticipanteAtivo((pd, cb) -> cb.equal(pd.get("pessoa").get("id"), usuario.getId()));
             case EQUIPE -> comParticipanteAtivo(
                     (pd, cb) -> cb.equal(pd.get("pessoa").get("area").get("id"), areaDaEquipe.getId()));
+            case NUCLEO -> comParticipanteAtivo(
+                    (pd, cb) -> cb.equal(pd.get("pessoa").get("area").get("nucleo").get("id"), usuario.getArea().getNucleo().getId()));
             case DIRETORIA -> (root, query, cb) ->
                     cb.equal(root.get("diretoria").get("id"), usuario.getArea().getDiretoria().getId());
             case TODAS -> Specification.unrestricted();
@@ -51,10 +53,16 @@ public final class DemandaSpecs {
         return status == null ? Specification.unrestricted() : (root, query, cb) -> cb.equal(root.get("status"), status);
     }
 
-    /** Núcleo (a diretoria da demanda). */
-    public static Specification<Demanda> nucleo(UUID diretoriaId) {
+    /** Diretoria da demanda. */
+    public static Specification<Demanda> diretoria(UUID diretoriaId) {
         return diretoriaId == null ? Specification.unrestricted()
                 : (root, query, cb) -> cb.equal(root.get("diretoria").get("id"), diretoriaId);
+    }
+
+    /** Núcleo: alguém ativo de uma equipe desse núcleo está no time da demanda. */
+    public static Specification<Demanda> nucleo(UUID nucleoId) {
+        return nucleoId == null ? Specification.unrestricted()
+                : comParticipanteAtivo((pd, cb) -> cb.equal(pd.get("pessoa").get("area").get("nucleo").get("id"), nucleoId));
     }
 
     /** Equipe: alguém ativo dessa área está no time da demanda. */

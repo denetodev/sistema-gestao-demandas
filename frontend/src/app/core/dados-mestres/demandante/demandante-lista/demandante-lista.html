@@ -16,9 +16,9 @@
         <p-select class="filtros__campo" [options]="opcoesTipo" optionLabel="label" optionValue="value"
           placeholder="Tipo" [showClear]="true" [ngModel]="tipoFiltro()"
           (ngModelChange)="tipoFiltro.set($event)" ariaLabel="Filtrar por tipo" />
-        <p-select class="filtros__campo" [options]="opcoesNucleo()" optionLabel="rotulo" optionValue="valor"
-          placeholder="Núcleo" [showClear]="true" [ngModel]="nucleoFiltro()"
-          (ngModelChange)="nucleoFiltro.set($event)" ariaLabel="Filtrar por núcleo" />
+        <p-select class="filtros__campo" [options]="opcoesDiretoria()" optionLabel="rotulo" optionValue="valor"
+          placeholder="Diretoria" [showClear]="true" [ngModel]="diretoriaFiltro()"
+          (ngModelChange)="diretoriaFiltro.set($event)" ariaLabel="Filtrar por diretoria" />
         @if (filtrosAtivos()) {
           <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary"
             (onClick)="limparFiltros()" />
@@ -37,7 +37,7 @@
           <tr>
             <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
             <th pSortableColumn="tipo">Tipo <p-sortIcon field="tipo" /></th>
-            <th>Núcleo</th>
+            <th>Diretoria</th>
             <th>Situação</th>
             <th>Ações</th>
           </tr>
@@ -100,7 +100,7 @@
       placeholder="Selecione"
     />
 
-    <label for="diretoria">Núcleo</label>
+    <label for="diretoria">Diretoria</label>
     <p-select
       inputId="diretoria"
       formControlName="diretoriaId"

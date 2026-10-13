@@ -32,6 +32,7 @@ public interface AtividadeRepository extends JpaRepository<Atividade, UUID> {
 
     Page<Atividade> findByPessoa_Id(UUID pessoaId, Pageable pageable);
     Page<Atividade> findByPessoa_AreaId(UUID areaId, Pageable pageable);
+    Page<Atividade> findByPessoa_Area_NucleoId(UUID nucleoId, Pageable pageable);
 
     // atividade sem pessoa (avulsa) continua nunca aparecendo no escopo
     // DIRETORIA, só em TODAS — mesma limitação já registrada antes.

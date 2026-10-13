@@ -15,6 +15,8 @@ const ADMIN = {
   fotoUrl: null,
   diretoriaId: 'd1',
   diretoriaNome: 'COE/CRM',
+  nucleoId: 'n1',
+  nucleoNome: 'House-CRM',
   areaId: 'a3',
   areaNome: 'HTML',
   cargoId: null,
@@ -95,10 +97,14 @@ const DIRETORIAS = [
   { id: 'd1', nome: 'COE/CRM' },
   { id: 'd2', nome: 'UGR' },
 ];
+const NUCLEOS = [
+  { id: 'n1', nome: 'House-CRM', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', ativo: true, createdAt: '', updatedAt: '' },
+  { id: 'n2', nome: 'Multimídia', diretoriaId: 'd2', diretoriaNome: 'UGR', nucleoId: 'n2', nucleoNome: 'Multimídia', ativo: true, createdAt: '', updatedAt: '' },
+];
 const AREAS = [
-  { id: 'a1', nome: 'Design', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', ativo: true, createdAt: '', updatedAt: '' },
-  { id: 'a2', nome: 'Motion', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', ativo: true, createdAt: '', updatedAt: '' },
-  { id: 'a3', nome: 'HTML', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', ativo: true, createdAt: '', updatedAt: '' },
+  { id: 'a1', nome: 'Design', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', nucleoId: 'n1', nucleoNome: 'House-CRM', ativo: true, createdAt: '', updatedAt: '' },
+  { id: 'a2', nome: 'Motion', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', nucleoId: 'n1', nucleoNome: 'House-CRM', ativo: true, createdAt: '', updatedAt: '' },
+  { id: 'a3', nome: 'HTML', diretoriaId: 'd1', diretoriaNome: 'COE/CRM', nucleoId: 'n1', nucleoNome: 'House-CRM', ativo: true, createdAt: '', updatedAt: '' },
   { id: 'a4', nome: 'Audiovisual', diretoriaId: 'd2', diretoriaNome: 'UGR', ativo: true, createdAt: '', updatedAt: '' },
 ];
 const DEMANDANTES_REF = [
@@ -188,12 +194,12 @@ function responderDemandas(req: HttpRequest<unknown>) {
     filtradas = TODAS_DEMANDAS.filter((_, i) => i % 7 === 0);
   } else if (escopo === 'EQUIPE') {
     filtradas = TODAS_DEMANDAS.filter((_, i) => i % 3 === 0);
-  } else if (escopo === 'DIRETORIA') {
+  } else if (escopo === 'DIRETORIA' || escopo === 'NUCLEO') {
     filtradas = TODAS_DEMANDAS.filter((d) => d.diretoriaId === PESSOA_ATUAL.diretoriaId);
   }
   // TODAS: sem filtro
 
-  // busca, situação, núcleo e equipe só estreitam o escopo (como na API)
+  // busca, situação, diretoria e equipe só estreitam o escopo (como na API)
   const semAcento = (t: string) => t.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
   const busca = req.params.get('busca');
   if (busca) {
@@ -202,8 +208,8 @@ function responderDemandas(req: HttpRequest<unknown>) {
   }
   const status = req.params.get('status');
   if (status) filtradas = filtradas.filter((d: any) => d.status === status);
-  const nucleo = req.params.get('diretoriaId');
-  if (nucleo) filtradas = filtradas.filter((d: any) => d.diretoriaId === nucleo);
+  const diretoria = req.params.get('diretoriaId');
+  if (diretoria) filtradas = filtradas.filter((d: any) => d.diretoriaId === diretoria);
 
   const [campoOrdenacao, direcao] = (sort ?? 'dataCriacao,desc').split(',');
   filtradas = [...filtradas].sort((a, b) =>
@@ -234,6 +240,7 @@ function responderDemandas(req: HttpRequest<unknown>) {
 const dados: Record<string, unknown> = {
   '/pessoas/me': { vinculado: !!PESSOA_ATUAL.aprovadoEm, pessoa: PESSOA_ATUAL },
   '/diretorias': DIRETORIAS,
+  '/nucleos': NUCLEOS,
   '/areas': AREAS,
   '/demandantes': [
     { id: 'c1', nome: 'DIMAC', tipo: 'AREA', observacao: null, ativo: true, createdAt: '', updatedAt: '' },
@@ -326,6 +333,7 @@ const dados: Record<string, unknown> = {
       ['p11', 'Gabriela Reis', 'd2', 'UGR', 'a4', 'Audiovisual'],
     ].map(([id, nome, diretoriaId, diretoriaNome, areaId, areaNome]) => ({
       id, nome, email: `${id}@exemplo.com`, diretoriaId, diretoriaNome, areaId, areaNome,
+      nucleoId: diretoriaId === 'd1' ? 'n1' : 'n2', nucleoNome: diretoriaId === 'd1' ? 'House-CRM' : 'Multimídia',
       cargoId: null, cargoNome: null,
       referenciaAreaId: null, referenciaAreaNome: null, fotoUrl: null,
       status: 'ATIVO', perfil: 'PROFISSIONAL', authUserId: `auth-${id}`,
@@ -335,7 +343,7 @@ const dados: Record<string, unknown> = {
 
     {
       id: 'p6', nome: 'Tentativa Indevida', email: 'estranho@exemplo.com',
-      diretoriaId: null, diretoriaNome: null, areaId: 'a1', areaNome: 'HTML',
+      diretoriaId: null, diretoriaNome: null, nucleoId: null, nucleoNome: null, areaId: 'a1', areaNome: 'HTML',
       cargoId: null, cargoNome: null,
       referenciaAreaId: null, referenciaAreaNome: null, fotoUrl: null,
       status: 'REJEITADO', perfil: 'PROFISSIONAL', authUserId: 'auth-6',

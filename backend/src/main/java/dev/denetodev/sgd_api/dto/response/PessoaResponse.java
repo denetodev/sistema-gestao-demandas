@@ -9,6 +9,7 @@ import java.util.UUID;
 public record PessoaResponse(
         UUID id, String nome, String nomeExibicao, String cpfMascarado, String email, String fotoUrl,
         UUID diretoriaId, String diretoriaNome,
+        UUID nucleoId, String nucleoNome,
         UUID areaId, String areaNome,
         UUID cargoId, String cargoNome,
         StatusPessoa status, PerfilPessoa perfil,

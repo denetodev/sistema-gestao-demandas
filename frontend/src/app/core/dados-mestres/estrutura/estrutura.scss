@@ -1,0 +1,17 @@
+.secao-titulo {
+  margin: 0;
+  padding: 1rem 1.25rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.aviso {
+  display: block;
+  margin: 0 1.25rem 0.75rem;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

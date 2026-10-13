@@ -183,11 +183,11 @@ class AlteracaoDeDemandaServicosTest {
                 .thenReturn(new PageImpl<>(List.of(d), PageRequest.of(0, 20), 1));
 
         when(vinculos.findByDemandaIdIn(any())).thenReturn(List.of());
-        Page<DemandaResponse> foraDoTime = demandaService.listarComEscopo(jwt, new FiltroDemanda(EscopoListagem.DIRETORIA, null, null, null, null), PageRequest.of(0, 20));
+        Page<DemandaResponse> foraDoTime = demandaService.listarComEscopo(jwt, new FiltroDemanda(EscopoListagem.DIRETORIA, null, null, null, null, null), PageRequest.of(0, 20));
         assertFalse(foraDoTime.getContent().get(0).podeAlterar());
 
         when(vinculos.findByDemandaIdIn(any())).thenReturn(List.of(new PessoaDemanda(ana, d)));
-        Page<DemandaResponse> noTime = demandaService.listarComEscopo(jwt, new FiltroDemanda(EscopoListagem.DIRETORIA, null, null, null, null), PageRequest.of(0, 20));
+        Page<DemandaResponse> noTime = demandaService.listarComEscopo(jwt, new FiltroDemanda(EscopoListagem.DIRETORIA, null, null, null, null, null), PageRequest.of(0, 20));
         assertTrue(noTime.getContent().get(0).podeAlterar());
     }
 }

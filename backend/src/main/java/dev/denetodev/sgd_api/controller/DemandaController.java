@@ -40,10 +40,11 @@ public class DemandaController {
             @RequestParam(required = false) String busca,
             @RequestParam(required = false) StatusDemanda status,
             @RequestParam(required = false) UUID diretoriaId,
+            @RequestParam(required = false) UUID nucleoId,
             @RequestParam(required = false) UUID areaId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        return demandaService.listarComEscopo(jwt, new FiltroDemanda(escopo, busca, status, diretoriaId, areaId), pageable);
+        return demandaService.listarComEscopo(jwt, new FiltroDemanda(escopo, busca, status, diretoriaId, nucleoId, areaId), pageable);
     }
 
     @GetMapping("/{id}")

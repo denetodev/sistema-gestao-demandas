@@ -22,7 +22,7 @@ public class SecurityConfig {
             HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE };
 
     private static final String[] CADASTROS_BASE = {
-            "/diretorias/**", "/areas/**", "/cargos/**", "/tipos-atividade/**", "/demandantes/**", "/projetos/**" };
+            "/diretorias/**", "/nucleos/**", "/areas/**", "/cargos/**", "/tipos-atividade/**", "/demandantes/**", "/projetos/**" };
 
     @Bean
     public SecurityFilterChain filterChain(

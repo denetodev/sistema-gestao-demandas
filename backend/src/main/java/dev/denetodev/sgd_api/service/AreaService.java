@@ -4,6 +4,8 @@ import dev.denetodev.sgd_api.dto.request.AreaRequest;
 import dev.denetodev.sgd_api.dto.response.AreaResponse;
 import dev.denetodev.sgd_api.entity.Area;
 import dev.denetodev.sgd_api.entity.Diretoria;
+import dev.denetodev.sgd_api.entity.Nucleo;
+import dev.denetodev.sgd_api.repository.NucleoRepository;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.DiretoriaRepository;
@@ -19,8 +21,11 @@ public class AreaService {
 
     private final AreaRepository areaRepository;
     private final DiretoriaRepository diretoriaRepository;
+    private final NucleoRepository nucleoRepository;
 
-    public AreaService(AreaRepository areaRepository, DiretoriaRepository diretoriaRepository) {
+    public AreaService(AreaRepository areaRepository, DiretoriaRepository diretoriaRepository,
+                       NucleoRepository nucleoRepository) {
+        this.nucleoRepository = nucleoRepository;
         this.areaRepository = areaRepository;
         this.diretoriaRepository = diretoriaRepository;
     }
@@ -36,23 +41,41 @@ public class AreaService {
     }
 
     public AreaResponse criar(AreaRequest request) {
-        Diretoria diretoria = diretoriaRepository.findById(request.diretoriaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Diretoria não encontrada: " + request.diretoriaId()));
-        Area area = new Area(diretoria, request.nome());
+        Nucleo nucleo = buscarNucleo(request);
+        Area area = new Area(diretoriaDe(request, nucleo), request.nome());
+        area.setNucleo(nucleo);
         return paraResponse(areaRepository.save(area));
     }
 
     public AreaResponse atualizar(UUID id, AreaRequest request) {
         Area area = buscarEntidade(id);
-        Diretoria diretoria = diretoriaRepository.findById(request.diretoriaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Diretoria não encontrada: " + request.diretoriaId()));
+        Nucleo nucleo = buscarNucleo(request);
         area.setNome(request.nome());
-        area.setDiretoria(diretoria);
+        area.setDiretoria(diretoriaDe(request, nucleo));
+        area.setNucleo(nucleo);
         return paraResponse(area);
     }
 
     public void desativar(UUID id) {
         buscarEntidade(id).setAtivo(false);
+    }
+
+    private Nucleo buscarNucleo(AreaRequest request) {
+        if (request.nucleoId() == null) {
+            return null;
+        }
+        return nucleoRepository.findById(request.nucleoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Núcleo não encontrado: " + request.nucleoId()));
+    }
+
+    /** A equipe fica na diretoria do núcleo; diretoria diferente da do núcleo é pedido inválido. */
+    private Diretoria diretoriaDe(AreaRequest request, Nucleo nucleo) {
+        Diretoria diretoria = diretoriaRepository.findById(request.diretoriaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Diretoria não encontrada: " + request.diretoriaId()));
+        if (nucleo != null && !nucleo.getDiretoria().getId().equals(diretoria.getId())) {
+            throw new IllegalArgumentException("O núcleo escolhido não pertence a essa diretoria");
+        }
+        return diretoria;
     }
 
     private Area buscarEntidade(UUID id) {
@@ -64,6 +87,8 @@ public class AreaService {
         return new AreaResponse(
                 a.getId(), a.getNome(),
                 a.getDiretoria().getId(), a.getDiretoria().getNome(),
+                a.getNucleo() != null ? a.getNucleo().getId() : null,
+                a.getNucleo() != null ? a.getNucleo().getNome() : null,
                 a.isAtivo(), a.getCreatedAt(), a.getUpdatedAt()
         );
     }

@@ -55,7 +55,7 @@ export function dashboardMock(req: HttpRequest<unknown>, ctx: ContextoMock, e: E
     diretoriaId = eu.perfil === 'VISUALIZADOR' ? eu.diretoriaId : diretoriaParam;
     alvo = elegiveis.filter((p) => !diretoriaId || p.diretoriaId === diretoriaId);
     const nome = (ctx.dados['/diretorias'] as any[]).find((d) => d.id === diretoriaId)?.nome;
-    titulo = diretoriaId ? `Núcleo ${nome} (agregado)` : 'Todos os núcleos (agregado)';
+    titulo = diretoriaId ? `Diretoria ${nome} (agregado)` : 'Todas as diretorias (agregado)';
   }
   const ids = new Set(alvo.map((p) => p.id));
 

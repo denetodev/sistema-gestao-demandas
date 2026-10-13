@@ -47,7 +47,7 @@ export class Dashboard {
   );
 
   opcoesDiretoria = computed(() => [
-    { id: null, nome: 'Todos os núcleos' },
+    { id: null, nome: 'Todas as diretorias' },
     ...(this.diretorias.value() ?? []),
   ]);
 
