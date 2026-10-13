@@ -16,7 +16,7 @@ import { AreaService } from '../../../core/dados-mestres/area/area.service';
 import { CargoService } from '../../../core/dados-mestres/cargo/cargo.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
-import { cpfValidator, formatarCpf } from '../../../core/util/cpf';
+import { chaveCValidator, normalizarChaveC } from '../../../core/util/chave-c';
 import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { candidatosAVinculo } from '../candidatos-vinculo';
 import type { Pessoa, StatusPessoa, VinculoSugerido } from '../../../core/pessoas/pessoa.model';
@@ -165,7 +165,7 @@ export class PessoaLista {
 
   pendente = computed(() => this.pessoaSelecionada()?.aprovadoEm === null);
 
-  // vínculo sugerido pelo CPF: a conta nova informou o CPF de um cadastro importado e o Gestor/Admin decide
+  // vínculo sugerido pela chave C: a conta nova informou a chave C de um cadastro importado e o Gestor/Admin decide
   sugestao = signal<VinculoSugerido | null>(null);
 
   async #carregarSugestao(pessoa: Pessoa) {
@@ -184,7 +184,7 @@ export class PessoaLista {
     const s = this.sugestao();
     if (!pessoa || !s || s.impedimento) return;
     this.#confirmationService.confirm({
-      header: 'Confirmar vínculo pelo CPF',
+      header: 'Confirmar vínculo pela chave C',
       message: `Você confirma que a conta de ${pessoa.nome} (${pessoa.email ?? 'sem e-mail'}) é mesmo ${s.nome}? A conta passa a ver as ${s.demandas} demandas, ${s.atividades} atividades e ${s.pecas} peças desse cadastro. Este cadastro novo será removido e isso não pode ser desfeito.`,
       icon: 'pi pi-shield',
       acceptLabel: 'Confirmar vínculo',
@@ -270,7 +270,7 @@ export class PessoaLista {
       this.formEdicao.setValue({
         nome: pessoa.nome,
         email: pessoa.email ?? '',
-        cpf: '',
+        chaveC: pessoa.chaveC ?? '',
         areaId: pessoa.areaId,
         cargoId: pessoa.cargoId,
         status: pessoa.status,
@@ -291,7 +291,7 @@ export class PessoaLista {
       await firstValueFrom(this.#service.atualizar(pessoa.id, {
         nome: v.nome,
         email: v.email || null,
-        cpf: v.cpf || null,
+        chaveC: normalizarChaveC(v.chaveC) || null,
         areaId: v.areaId!,
         cargoId: v.cargoId,
         status: v.status,
@@ -376,7 +376,7 @@ export class PessoaLista {
   formEdicao = this.#fb.nonNullable.group({
     nome: ['', Validators.required],
     email: [''],
-    cpf: ['', cpfValidator],
+    chaveC: ['', chaveCValidator],
     areaId: this.#fb.control<string | null>(null, Validators.required),
     cargoId: this.#fb.control<string | null>(null),
     status: this.#fb.control<StatusPessoa | null>(null),
@@ -384,10 +384,10 @@ export class PessoaLista {
     referenciaAreaId: this.#fb.control<string | null>(null),
   });
 
-  mascararCpf() {
-    const c = this.formEdicao.controls.cpf;
-    const formatado = formatarCpf(c.value);
-    if (formatado !== c.value) c.setValue(formatado);
+  mascararChaveC() {
+    const c = this.formEdicao.controls.chaveC;
+    const maiuscula = c.value.toUpperCase();
+    if (maiuscula !== c.value) c.setValue(maiuscula);
   }
 
   opcoesStatus = [

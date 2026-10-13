@@ -12,7 +12,7 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
 
     Optional<Pessoa> findByAuthUserId(UUID authUserId);
 
-    Optional<Pessoa> findByCpf(String cpf);
+    Optional<Pessoa> findByChaveC(String chaveC);
 
     List<Pessoa> findByAprovadoEmIsNullAndStatus(StatusPessoa status);
 }

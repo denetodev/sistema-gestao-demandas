@@ -20,9 +20,9 @@ public class Pessoa {
     @Column(name = "nome_exibicao", length = 80)
     private String nomeExibicao;
 
-    /** Só dígitos, único. Nunca devolvido por inteiro pela API (ver Cpf.mascarar). */
-    @Column(name = "cpf", length = 11)
-    private String cpf;
+    /** Chave C (matrícula): C ou F + 7 dígitos, maiúscula, única. */
+    @Column(name = "chave_c", length = 8)
+    private String chaveC;
 
     @Column(name = "email", length = 180)
     private String email;
@@ -63,7 +63,7 @@ public class Pessoa {
     @JoinColumn(name = "aprovado_por")
     private Pessoa aprovadoPor;
 
-    /** Cadastro importado (sem login) que esta conta pediu para assumir pelo CPF. Só a aprovação de Gestor/Admin concretiza. */
+    /** Cadastro importado (sem login) que esta conta pediu para assumir pelo chave C. Só a aprovação de Gestor/Admin concretiza. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vinculo_sugerido_id")
     private Pessoa vinculoSugerido;
@@ -89,8 +89,8 @@ public class Pessoa {
     public String getNomeExibicao() { return nomeExibicao; }
     public void setNomeExibicao(String nomeExibicao) { this.nomeExibicao = nomeExibicao; }
 
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
+    public String getChaveC() { return chaveC; }
+    public void setChaveC(String chaveC) { this.chaveC = chaveC; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

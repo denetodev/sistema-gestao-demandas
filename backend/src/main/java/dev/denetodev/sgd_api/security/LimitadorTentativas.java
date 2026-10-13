@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Limite simples de tentativas por chave (por exemplo, a conta que envia o cadastro com CPF), em janela deslizante.
+ * Limite simples de tentativas por chave (por exemplo, a conta que envia o cadastro com chave C), em janela deslizante.
  * Fica em memória: vale para uma instância só (Railway com um serviço). Se o backend passar a ter várias
  * instâncias, o limite vira por instância e este componente deve ir para o banco ou um cache compartilhado.
  */

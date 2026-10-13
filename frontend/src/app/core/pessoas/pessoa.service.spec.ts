@@ -3,7 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { PessoaService } from './pessoa.service';
 
-describe('PessoaService (vínculo sugerido pelo CPF)', () => {
+describe('PessoaService (vínculo sugerido pela chave C)', () => {
   let service: PessoaService;
   let http: HttpTestingController;
 

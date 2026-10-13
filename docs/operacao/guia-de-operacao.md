@@ -26,7 +26,7 @@ deploy antigo e congelado: apontam para uma versão que já não conversa com a 
 Não aprove: isso cria uma **duplicata** sem o histórico.
 1. Abra o cadastro pendente da conta nova.
 2. No bloco **Esta pessoa já existe no sistema?**, escolha o cadastro que já existe e clique em **Vincular a este cadastro**.
-3. A conta passa a ser dessa pessoa, com todo o histórico; o cadastro pendente é removido (não dá para desfazer). CPF e e-mail
+3. A conta passa a ser dessa pessoa, com todo o histórico; o cadastro pendente é removido (não dá para desfazer). Chave C e e-mail
    informados no cadastro entram na pessoa se ela ainda não os tinha.
 
 ### Definir a Referência de equipe
@@ -99,4 +99,4 @@ e o ensaio com rollback estão em `database/importacao/README.md`. Pontos que im
 - **Plano do Supabase:** projetos gratuitos são pausados após cerca de uma semana sem uso e o plano gratuito não garante backup com
   restauração. Confira o plano e a política de backup, porque o banco tem dados reais.
 - **Custo do Railway:** depois do crédito inicial é cobrado por uso.
-- **Contas de login:** as pessoas importadas não têm CPF nem conta. Cada uma se cadastra e o Admin vincula (veja acima).
+- **Contas de login:** as pessoas importadas não têm conta, e a chave C delas é preenchida à mão na tela de Pessoas. Cada uma se cadastra e o Admin vincula (veja acima).

@@ -3,7 +3,7 @@ import type { Pessoa } from './pessoa.model';
 
 function pessoa(parcial: Partial<Pessoa>): Pessoa {
   return {
-    id: 'id', nome: 'Fulano', nomeExibicao: null, cpfMascarado: null, email: null,
+    id: 'id', nome: 'Fulano', nomeExibicao: null, chaveC: null, email: null,
     diretoriaId: null, diretoriaNome: null, nucleoId: null, nucleoNome: null, areaId: null, areaNome: null, cargoId: null, cargoNome: null,
     referenciaAreaId: null, referenciaAreaNome: null, fotoUrl: null, status: 'ATIVO', perfil: 'PROFISSIONAL',
     authUserId: null, aprovadoPorId: null, aprovadoPorNome: null, aprovadoEm: '2026-10-08T22:00:00Z',

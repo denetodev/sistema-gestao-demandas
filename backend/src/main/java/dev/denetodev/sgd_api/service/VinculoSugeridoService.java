@@ -8,7 +8,7 @@ import dev.denetodev.sgd_api.repository.AtividadeRepository;
 import dev.denetodev.sgd_api.repository.PecaRepository;
 import dev.denetodev.sgd_api.repository.PessoaDemandaRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
-import dev.denetodev.sgd_api.util.Cpf;
+import dev.denetodev.sgd_api.util.ChaveC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +48,7 @@ public class VinculoSugeridoService {
                 sugerida.getId(), sugerida.getNome(), sugerida.getNomeExibicao(),
                 sugerida.getArea().getNome(),
                 sugerida.getCargo() != null ? sugerida.getCargo().getNome() : null,
-                Cpf.mascarar(sugerida.getCpf()), sugerida.getStatus(), jaTemConta,
+                sugerida.getChaveC(), sugerida.getStatus(), jaTemConta,
                 pessoaDemandaRepository.countByPessoa_Id(sugerida.getId()),
                 atividadeRepository.countByPessoa_Id(sugerida.getId()),
                 pecaRepository.countByPessoa_Id(sugerida.getId()),

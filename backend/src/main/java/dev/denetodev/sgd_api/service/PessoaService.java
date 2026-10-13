@@ -13,7 +13,7 @@ import dev.denetodev.sgd_api.repository.PessoaRepository;
 import dev.denetodev.sgd_api.security.ConfirmacaoEmail;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
 import dev.denetodev.sgd_api.security.LimitadorTentativas;
-import dev.denetodev.sgd_api.util.Cpf;
+import dev.denetodev.sgd_api.util.ChaveC;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class PessoaService {
     private final ConfirmacaoEmail confirmacaoEmail;
     private final LimitadorTentativas limitadorTentativas;
 
-    /** Mesma resposta para qualquer CPF que não pode ser usado, para o cadastro não virar consulta de CPFs. */
+    /** Mesma resposta para qualquer chave C que não pode ser usado, para o cadastro não virar consulta de chaves C. */
     static final String MSG_CADASTRO_NAO_CONCLUIDO =
             "Não foi possível concluir o cadastro com os dados informados. Procure um Gestor ou Administrador.";
 
@@ -84,7 +84,7 @@ public class PessoaService {
 
         Pessoa pessoa = new Pessoa(request.nome(), area);
         pessoa.setEmail(request.email());
-        aplicarCpf(pessoa, request.cpf());
+        aplicarChaveC(pessoa, request.chaveC());
         pessoa.setCargo(resolverCargo(request.cargoId()));
         if (request.status() == StatusPessoa.REJEITADO) {
             throw new EstadoInvalidoException("Use o endpoint de rejeição para recusar um cadastro pendente");
@@ -111,7 +111,7 @@ public class PessoaService {
 
         pessoa.setNome(request.nome());
         pessoa.setEmail(request.email());
-        aplicarCpf(pessoa, request.cpf());
+        aplicarChaveC(pessoa, request.chaveC());
         pessoa.setArea(area);
         pessoa.setCargo(resolverCargo(request.cargoId()));
         if (request.status() == StatusPessoa.REJEITADO) {
@@ -154,7 +154,7 @@ public class PessoaService {
     /**
      * Liga a conta pendente (recém-cadastrada) a uma pessoa que já existe, por exemplo importada da planilha.
      * A conta passa a ser da pessoa existente, que mantém todo o histórico; o cadastro pendente, que seria
-     * uma duplicata, é removido. CPF e e-mail informados no cadastro só entram se a pessoa ainda não os tem.
+     * uma duplicata, é removido. chave C e e-mail informados no cadastro só entram se a pessoa ainda não os tem.
      */
     public PessoaResponse vincularContaAPessoaExistente(Jwt jwt, UUID pendenteId, UUID existenteId) {
         Pessoa ator = currentPessoaResolver.resolver(jwt);
@@ -181,10 +181,10 @@ public class PessoaService {
         checarPermissaoSobrePerfil(ator, existente.getPerfil(), existente);
 
         UUID authUserId = pendente.getAuthUserId();
-        String cpf = pendente.getCpf();
+        String chaveC = pendente.getChaveC();
         String email = pendente.getEmail();
 
-        // remove o duplicado primeiro: auth_user_id e cpf são únicos e vão para a pessoa existente
+        // remove o duplicado primeiro: auth_user_id e chaveC são únicos e vão para a pessoa existente
         pessoaRepository.delete(pendente);
         pessoaRepository.flush();
 
@@ -194,8 +194,8 @@ public class PessoaService {
             registrarAuditoria(existente.getId(), "email", existente.getEmail(), email, ator.getId());
             existente.setEmail(email);
         }
-        if (existente.getCpf() == null && cpf != null) {
-            existente.setCpf(cpf);
+        if (existente.getChaveC() == null && chaveC != null) {
+            existente.setChaveC(chaveC);
         }
         registrarAuditoria(existente.getId(), "auth_user_id", null, authUserId.toString(), ator.getId());
 
@@ -203,7 +203,7 @@ public class PessoaService {
     }
 
     /**
-     * Aprovação do vínculo sugerido pelo CPF: é aqui que o Gestor/Admin confirma que a conta nova é a pessoa do
+     * Aprovação do vínculo sugerido pelo chave C: é aqui que o Gestor/Admin confirma que a conta nova é a pessoa do
      * cadastro importado. Só então o login passa para o cadastro (e o histórico dele fica acessível).
      */
     public PessoaResponse confirmarVinculo(Jwt jwt, UUID pendenteId) {
@@ -231,7 +231,7 @@ public class PessoaService {
     }
 
     /**
-     * Cadastro da própria conta. Se o CPF é de um cadastro que já existe sem login (importado da planilha), a conta
+     * Cadastro da própria conta. Se o chave C é de um cadastro que já existe sem login (importado da planilha), a conta
      * NÃO assume esse cadastro: nasce como pendente comum, sem histórico e sem permissão, e guarda só a sugestão
      * de vínculo. Quem concretiza é um Gestor/Admin (confirmarVinculo). Quem não tem como ser vinculado recebe a
      * mesma mensagem neutra, sem dados do cadastro.
@@ -247,18 +247,18 @@ public class PessoaService {
             throw new EstadoInvalidoException("Já existe um cadastro vinculado a este usuário");
         }
 
-        String cpf = Cpf.normalizar(request.cpf());
-        if (!Cpf.valido(cpf)) {
-            throw new IllegalArgumentException("CPF inválido");
+        String chaveC = ChaveC.normalizar(request.chaveC());
+        if (!ChaveC.valido(chaveC)) {
+            throw new IllegalArgumentException("Chave C inválida: use C ou F seguido de 7 números");
         }
 
         Pessoa sugerida = null;
-        Pessoa comEsseCpf = pessoaRepository.findByCpf(cpf).orElse(null);
-        if (comEsseCpf != null) {
-            if (comEsseCpf.getAuthUserId() != null) {
+        Pessoa comEssaChave = pessoaRepository.findByChaveC(chaveC).orElse(null);
+        if (comEssaChave != null) {
+            if (comEssaChave.getAuthUserId() != null) {
                 throw new EstadoInvalidoException(MSG_CADASTRO_NAO_CONCLUIDO);
             }
-            sugerida = comEsseCpf;
+            sugerida = comEssaChave;
         }
 
         Area area = areaRepository.findById(request.areaId())
@@ -266,9 +266,9 @@ public class PessoaService {
 
         Pessoa pessoa = new Pessoa(request.nome().trim(), area);
         if (sugerida == null) {
-            pessoa.setCpf(cpf);
+            pessoa.setChaveC(chaveC);
         } else {
-            // o CPF é único e já pertence ao cadastro importado; a ligação é só uma sugestão até a aprovação
+            // o chave C é único e já pertence ao cadastro importado; a ligação é só uma sugestão até a aprovação
             pessoa.setVinculoSugerido(sugerida);
         }
         String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
@@ -381,7 +381,7 @@ public class PessoaService {
         auditoriaRepository.save(new Auditoria("pessoa", registroId, campo, valorAnterior, valorNovo, alteradoPor));
     }
 
-    /** Vazio/nulo mantém o CPF atual; informado, precisa ser válido e não pode pertencer a outra pessoa. */
+    /** Vazio/nulo mantém o chave C atual; informado, precisa ser válido e não pode pertencer a outra pessoa. */
     private Area resolverReferenciaArea(UUID areaId) {
         if (areaId == null) {
             return null;
@@ -390,20 +390,20 @@ public class PessoaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + areaId));
     }
 
-    private void aplicarCpf(Pessoa pessoa, String informado) {
-        String cpf = Cpf.normalizar(informado);
-        if (cpf == null) {
+    private void aplicarChaveC(Pessoa pessoa, String informado) {
+        String chaveC = ChaveC.normalizar(informado);
+        if (chaveC == null) {
             return;
         }
-        if (!Cpf.valido(cpf)) {
-            throw new IllegalArgumentException("CPF inválido");
+        if (!ChaveC.valido(chaveC)) {
+            throw new IllegalArgumentException("Chave C inválida: use C ou F seguido de 7 números");
         }
-        pessoaRepository.findByCpf(cpf)
+        pessoaRepository.findByChaveC(chaveC)
                 .filter(outra -> !outra.equals(pessoa))
                 .ifPresent(outra -> {
-                    throw new EstadoInvalidoException("Este CPF já pertence a outra pessoa cadastrada");
+                    throw new EstadoInvalidoException("Esta chave C já pertence a outra pessoa cadastrada");
                 });
-        pessoa.setCpf(cpf);
+        pessoa.setChaveC(chaveC);
     }
 
     private Cargo resolverCargo(UUID cargoId) {
@@ -424,7 +424,7 @@ public class PessoaService {
         Pessoa aprovadoPor = pessoa.getAprovadoPor();
         Area referenciaArea = pessoa.getReferenciaArea();
         return new PessoaResponse(
-                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), Cpf.mascarar(pessoa.getCpf()), pessoa.getEmail(), pessoa.getFotoUrl(),
+                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), pessoa.getChaveC(), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
                 pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getId() : null,
                 pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getNome() : null,

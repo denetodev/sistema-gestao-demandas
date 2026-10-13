@@ -17,17 +17,17 @@ describe('CompletarCadastro', () => {
     fixture.detectChanges();
   });
 
-  it('só libera o envio com nome, CPF válido e área', () => {
+  it('só libera o envio com nome, chave C válida e área', () => {
     expect(component.form.invalid).toBeTrue();
-    component.form.patchValue({ nome: 'Ana Caroliny Santos de Sousa', cpf: '529.982.247-26', areaId: 'a1' });
-    expect(component.form.controls.cpf.errors?.['cpfInvalido']).toBeTrue();
-    component.form.patchValue({ cpf: '529.982.247-25' });
+    component.form.patchValue({ nome: 'Ana Caroliny Santos de Sousa', chaveC: 'X1349864', areaId: 'a1' });
+    expect(component.form.controls.chaveC.errors?.['chaveCInvalida']).toBeTrue();
+    component.form.patchValue({ chaveC: 'C1349864' });
     expect(component.form.valid).toBeTrue();
   });
 
-  it('formata o CPF enquanto digita', () => {
-    component.form.controls.cpf.setValue('52998224725');
-    component.mascararCpf();
-    expect(component.form.controls.cpf.value).toBe('529.982.247-25');
+  it('põe a chave C em maiúscula enquanto digita', () => {
+    component.form.controls.chaveC.setValue('c1349864');
+    component.mascararChaveC();
+    expect(component.form.controls.chaveC.value).toBe('C1349864');
   });
 });
