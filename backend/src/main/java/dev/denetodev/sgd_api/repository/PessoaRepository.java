@@ -14,5 +14,7 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
 
     Optional<Pessoa> findByChaveC(String chaveC);
 
+    boolean existsByEmailIgnoreCase(String email);
+
     List<Pessoa> findByAprovadoEmIsNullAndStatus(StatusPessoa status);
 }

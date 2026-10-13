@@ -275,7 +275,12 @@ public class PessoaService {
         }
         String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
         pessoa.setNomeExibicao(exibicao.isEmpty() ? null : exibicao);
-        pessoa.setEmail(jwt.getClaimAsString("email"));
+        // o e-mail é único: se algum cadastro (o importado, preenchido antes pelo Gestor) já tem esse e-mail, a conta
+        // pendente nasce sem ele para não estourar a restrição; o e-mail do login continua valendo na conta
+        String emailConta = jwt.getClaimAsString("email");
+        if (emailConta != null && !pessoaRepository.existsByEmailIgnoreCase(emailConta)) {
+            pessoa.setEmail(emailConta);
+        }
         pessoa.setCargo(resolverCargo(request.cargoId()));
         pessoa.setAuthUserId(authUserId);
 
