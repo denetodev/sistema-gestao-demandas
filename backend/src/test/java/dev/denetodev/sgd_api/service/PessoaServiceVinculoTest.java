@@ -88,7 +88,10 @@ class PessoaServiceVinculoTest {
 
         assertEquals(authId, importada.getAuthUserId());
         assertEquals("Klebson", r.nome()); // o cadastro importado é o que vale
-        InOrder ordem = inOrder(pessoaRepository);
+        // a auditoria do pedido de vínculo foi escrita pela conta pendente: a autoria passa antes do delete,
+        // senão a FK auditoria.alterado_por barra a remoção (409 "registro em uso" em produção)
+        InOrder ordem = inOrder(auditoriaRepository, pessoaRepository);
+        ordem.verify(auditoriaRepository).transferirAutoria(pendente.getId(), importada.getId());
         ordem.verify(pessoaRepository).delete(pendente);
         ordem.verify(pessoaRepository).flush(); // libera auth_user_id e chaveC (únicos) antes de usar na importada
     }
