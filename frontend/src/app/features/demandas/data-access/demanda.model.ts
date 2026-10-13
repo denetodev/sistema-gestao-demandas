@@ -37,6 +37,7 @@ export interface Demanda {
 
 export interface CriarDemandaPayload {
   titulo: string;
+  codigo: string | null;
   descricao: string | null;
   diretoriaId: string;
   demandanteId: string | null;
