@@ -7,7 +7,9 @@ import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.AuditoriaRepository;
 import dev.denetodev.sgd_api.repository.CargoRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
+import dev.denetodev.sgd_api.security.ConfirmacaoEmail;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.security.LimitadorTentativas;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
@@ -47,7 +49,7 @@ class PessoaServiceVinculoTest {
         auditoriaRepository = mock(AuditoriaRepository.class);
         resolver = mock(CurrentPessoaResolver.class);
         service = new PessoaService(pessoaRepository, mock(AreaRepository.class), mock(CargoRepository.class),
-                auditoriaRepository, resolver);
+                auditoriaRepository, resolver, mock(ConfirmacaoEmail.class), mock(LimitadorTentativas.class));
 
         area = mock(Area.class);
         when(area.getId()).thenReturn(UUID.randomUUID());
@@ -100,14 +102,16 @@ class PessoaServiceVinculoTest {
     }
 
     @Test
-    void cpfEEmailQueJaExistemNaImportadaNaoSaoSobrescritos() {
+    void cpfDaImportadaNaoESobrescritoMasOEmailPassaAserODaContaDeLogin() {
         importada.setCpf("11144477735");
         importada.setEmail("antigo@bb.com.br");
 
         service.vincularContaAPessoaExistente(jwt, pendente.getId(), importada.getId());
 
         assertEquals("11144477735", importada.getCpf());
-        assertEquals("antigo@bb.com.br", importada.getEmail());
+        assertEquals("klebson@bb.com.br", importada.getEmail());
+        verify(auditoriaRepository).save(argThat((Auditoria a) -> "email".equals(a.getCampo())
+                && "antigo@bb.com.br".equals(a.getValorAnterior()) && "klebson@bb.com.br".equals(a.getValorNovo())));
     }
 
     @Test

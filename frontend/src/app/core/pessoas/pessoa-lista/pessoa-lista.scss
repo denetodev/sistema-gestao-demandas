@@ -44,6 +44,22 @@
   }
 }
 
+.sugestao {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--p-primary-color);
+  border-radius: 6px;
+  background: var(--sgd-laranja-suave, transparent);
+
+  h3 {
+    margin: 0;
+    font-size: 0.95rem;
+  }
+}
+
 .vinculo {
   display: flex;
   flex-direction: column;

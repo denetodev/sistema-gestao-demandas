@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PecaRepository extends JpaRepository<Peca, UUID> {
+
+    long countByPessoa_Id(UUID pessoaId);
     List<Peca> findByDemandaId(UUID demandaId);
 
     /**

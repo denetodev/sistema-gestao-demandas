@@ -19,7 +19,7 @@ import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
 import { cpfValidator, formatarCpf } from '../../../core/util/cpf';
 import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { candidatosAVinculo } from '../candidatos-vinculo';
-import type { Pessoa, StatusPessoa } from '../../../core/pessoas/pessoa.model';
+import type { Pessoa, StatusPessoa, VinculoSugerido } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
 import { CampoBusca } from '../../ui/campo-busca/campo-busca';
 import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
@@ -165,6 +165,51 @@ export class PessoaLista {
 
   pendente = computed(() => this.pessoaSelecionada()?.aprovadoEm === null);
 
+  // vínculo sugerido pelo CPF: a conta nova informou o CPF de um cadastro importado e o Gestor/Admin decide
+  sugestao = signal<VinculoSugerido | null>(null);
+
+  async #carregarSugestao(pessoa: Pessoa) {
+    this.sugestao.set(null);
+    if (!pessoa.temVinculoSugerido) return;
+    try {
+      const resumo = await firstValueFrom(this.#service.vinculoSugerido(pessoa.id));
+      if (this.pessoaSelecionada()?.id === pessoa.id) this.sugestao.set(resumo);
+    } catch {
+      this.erro.set('Não foi possível carregar o cadastro sugerido para o vínculo.');
+    }
+  }
+
+  confirmarSugestao() {
+    const pessoa = this.pessoaSelecionada();
+    const s = this.sugestao();
+    if (!pessoa || !s || s.impedimento) return;
+    this.#confirmationService.confirm({
+      header: 'Confirmar vínculo pelo CPF',
+      message: `Você confirma que a conta de ${pessoa.nome} (${pessoa.email ?? 'sem e-mail'}) é mesmo ${s.nome}? A conta passa a ver as ${s.demandas} demandas, ${s.atividades} atividades e ${s.pecas} peças desse cadastro. Este cadastro novo será removido e isso não pode ser desfeito.`,
+      icon: 'pi pi-shield',
+      acceptLabel: 'Confirmar vínculo',
+      rejectLabel: 'Voltar',
+      accept: () => this.#confirmarSugestao(pessoa),
+    });
+  }
+
+  async #confirmarSugestao(pessoa: Pessoa) {
+    this.salvando.set(true);
+    this.erro.set(null);
+    try {
+      await firstValueFrom(this.#service.confirmarVinculoSugerido(pessoa.id));
+      this.dialogAprovacao.set(false);
+      this.sugestao.set(null);
+      this.pessoas.reload();
+      this.#service.todas.reload();
+      this.#messageService.add({ severity: 'success', summary: 'Conta vinculada ao cadastro importado', life: 4000 });
+    } catch (e) {
+      this.erro.set((e as { error?: { mensagem?: string } }).error?.mensagem ?? 'Não foi possível confirmar o vínculo.');
+    } finally {
+      this.salvando.set(false);
+    }
+  }
+
   // vínculo da conta pendente a um cadastro que já existe (ex.: importado da planilha)
   vinculoId = signal<string | null>(null);
   candidatos = computed(() => candidatosAVinculo(this.#service.todas.value() ?? []));
@@ -211,7 +256,9 @@ export class PessoaLista {
     this.pessoaSelecionada.set(pessoa);
     this.erro.set(null);
     this.vinculoId.set(null);
+    this.sugestao.set(null);
     if (pessoa.aprovadoEm === null) {
+      void this.#carregarSugestao(pessoa);
       this.form.setValue({
         perfil: 'PROFISSIONAL',
         areaId: pessoa.areaId,

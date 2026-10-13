@@ -62,6 +62,11 @@ public class GlobalExceptionHandler {
                 .body(corpoErro(HttpStatus.CONTENT_TOO_LARGE, "Arquivo acima do limite de 5 MB"));
     }
 
+    @ExceptionHandler(TentativasExcedidasException.class)
+    public ResponseEntity<Map<String, Object>> tratarTentativas(TentativasExcedidasException ex) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(corpoErro(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> tratarArgumentoInvalido(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpoErro(HttpStatus.BAD_REQUEST, ex.getMessage()));

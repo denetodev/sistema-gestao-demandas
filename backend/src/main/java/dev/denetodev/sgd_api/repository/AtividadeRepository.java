@@ -31,6 +31,8 @@ public interface AtividadeRepository extends JpaRepository<Atividade, UUID> {
             @Param("ate") LocalDate ate);
 
     Page<Atividade> findByPessoa_Id(UUID pessoaId, Pageable pageable);
+
+    long countByPessoa_Id(UUID pessoaId);
     Page<Atividade> findByPessoa_AreaId(UUID areaId, Pageable pageable);
     Page<Atividade> findByPessoa_Area_NucleoId(UUID nucleoId, Pageable pageable);
 

@@ -16,6 +16,8 @@ public record PessoaResponse(
         UUID referenciaAreaId, String referenciaAreaNome,
         UUID authUserId,
         UUID aprovadoPorId, String aprovadoPorNome, OffsetDateTime aprovadoEm,
-        OffsetDateTime createdAt, OffsetDateTime updatedAt
+        OffsetDateTime createdAt, OffsetDateTime updatedAt,
+        /** A conta pediu para assumir um cadastro importado; o resumo só vai a Admin/Gestor, em /vinculo-sugerido. */
+        boolean temVinculoSugerido
 ) {
 }
