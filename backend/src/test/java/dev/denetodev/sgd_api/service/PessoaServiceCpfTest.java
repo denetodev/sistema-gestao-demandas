@@ -10,7 +10,9 @@ import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.AuditoriaRepository;
 import dev.denetodev.sgd_api.repository.CargoRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
+import dev.denetodev.sgd_api.security.ConfirmacaoEmail;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.security.LimitadorTentativas;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -30,6 +32,7 @@ class PessoaServiceCpfTest {
     private PessoaRepository pessoaRepository;
     private AreaRepository areaRepository;
     private CurrentPessoaResolver resolver;
+    private ConfirmacaoEmail confirmacaoEmail;
     private PessoaService service;
     private Area area;
     private UUID areaId;
@@ -39,8 +42,10 @@ class PessoaServiceCpfTest {
         pessoaRepository = mock(PessoaRepository.class);
         areaRepository = mock(AreaRepository.class);
         resolver = mock(CurrentPessoaResolver.class);
+        confirmacaoEmail = mock(ConfirmacaoEmail.class);
+        when(confirmacaoEmail.confirmado(any())).thenReturn(true);
         service = new PessoaService(pessoaRepository, areaRepository, mock(CargoRepository.class),
-                mock(AuditoriaRepository.class), resolver);
+                mock(AuditoriaRepository.class), resolver, confirmacaoEmail, new LimitadorTentativas(100, java.time.Duration.ofHours(1), java.time.Clock.systemUTC()));
 
         areaId = UUID.randomUUID();
         Diretoria diretoria = mock(Diretoria.class);
@@ -74,17 +79,6 @@ class PessoaServiceCpfTest {
     void autoCadastroRejeitaCpfInvalido() {
         assertThrows(IllegalArgumentException.class, () -> service.autoCadastro(jwt(),
                 new AutoCadastroRequest("Ana", "111.111.111-11", null, areaId, null)));
-    }
-
-    @Test
-    void autoCadastroComCpfJaCadastradoPedeVinculoPeloGestor() {
-        Pessoa existente = new Pessoa("Ana importada", area);
-        existente.setCpf(CPF);
-        when(pessoaRepository.findByCpf(CPF)).thenReturn(Optional.of(existente));
-
-        EstadoInvalidoException e = assertThrows(EstadoInvalidoException.class, () -> service.autoCadastro(jwt(),
-                new AutoCadastroRequest("Ana", CPF, null, areaId, null)));
-        assertTrue(e.getMessage().contains("Gestor"));
     }
 
     @Test

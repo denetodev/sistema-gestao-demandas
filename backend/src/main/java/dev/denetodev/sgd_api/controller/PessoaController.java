@@ -3,7 +3,9 @@ package dev.denetodev.sgd_api.controller;
 import dev.denetodev.sgd_api.dto.request.*;
 import dev.denetodev.sgd_api.dto.response.MeResponse;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
+import dev.denetodev.sgd_api.dto.response.VinculoSugeridoResponse;
 import dev.denetodev.sgd_api.service.PessoaService;
+import dev.denetodev.sgd_api.service.VinculoSugeridoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +23,11 @@ import java.util.UUID;
 public class PessoaController {
 
     private final PessoaService pessoaService;
+    private final VinculoSugeridoService vinculoSugeridoService;
 
-    public PessoaController(PessoaService pessoaService) {
+    public PessoaController(PessoaService pessoaService, VinculoSugeridoService vinculoSugeridoService) {
         this.pessoaService = pessoaService;
+        this.vinculoSugeridoService = vinculoSugeridoService;
     }
 
     @GetMapping
@@ -72,8 +76,8 @@ public class PessoaController {
 
     @PatchMapping("/{id}/vincular-auth")
     @PreAuthorize("hasRole('ADMIN')")
-    public PessoaResponse vincularAuth(@PathVariable UUID id, @Valid @RequestBody VincularAuthRequest request) {
-        return pessoaService.vincularAuth(id, request.authUserId());
+    public PessoaResponse vincularAuth(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody VincularAuthRequest request) {
+        return pessoaService.vincularAuth(jwt, id, request.authUserId());
     }
 
     /** Liga a conta pendente {id} à pessoa que já existe (ex.: importada da planilha). */
@@ -85,6 +89,20 @@ public class PessoaController {
             @Valid @RequestBody VincularContaRequest request
     ) {
         return pessoaService.vincularContaAPessoaExistente(jwt, id, request.pessoaExistenteId());
+    }
+
+    /** Resumo do cadastro importado que a conta pendente pediu para assumir pelo CPF. */
+    @GetMapping("/{id}/vinculo-sugerido")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public VinculoSugeridoResponse vinculoSugerido(@PathVariable UUID id) {
+        return vinculoSugeridoService.resumo(id);
+    }
+
+    /** Aprovação do vínculo sugerido: o login passa para o cadastro importado, com todo o histórico. */
+    @PostMapping("/{id}/confirmar-vinculo")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public PessoaResponse confirmarVinculo(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return pessoaService.confirmarVinculo(jwt, id);
     }
 
     @PostMapping("/auto-cadastro")

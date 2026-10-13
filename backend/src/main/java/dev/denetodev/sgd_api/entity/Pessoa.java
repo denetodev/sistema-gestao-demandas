@@ -63,6 +63,11 @@ public class Pessoa {
     @JoinColumn(name = "aprovado_por")
     private Pessoa aprovadoPor;
 
+    /** Cadastro importado (sem login) que esta conta pediu para assumir pelo CPF. Só a aprovação de Gestor/Admin concretiza. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vinculo_sugerido_id")
+    private Pessoa vinculoSugerido;
+
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -125,6 +130,9 @@ public class Pessoa {
 
     public Pessoa getAprovadoPor() { return aprovadoPor; }
     public void setAprovadoPor(Pessoa aprovadoPor) { this.aprovadoPor = aprovadoPor; }
+
+    public Pessoa getVinculoSugerido() { return vinculoSugerido; }
+    public void setVinculoSugerido(Pessoa vinculoSugerido) { this.vinculoSugerido = vinculoSugerido; }
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }

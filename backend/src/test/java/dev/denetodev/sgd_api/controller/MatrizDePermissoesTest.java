@@ -85,6 +85,7 @@ class MatrizDePermissoesTest {
     @MockitoBean ParticipanteService participanteService;
     @MockitoBean PecaService pecaService;
     @MockitoBean PessoaService pessoaService;
+    @MockitoBean VinculoSugeridoService vinculoSugeridoService;
     @MockitoBean ProjetoService projetoService;
     @MockitoBean RelatorioMensalService relatorioMensalService;
     @MockitoBean RelatorioDocxService relatorioDocxService;
@@ -177,6 +178,8 @@ class MatrizDePermissoesTest {
         c.add(new Caso(A, "/pessoas/" + ID + "/rejeitar", GESTAO));
         c.add(new Caso(A, "/pessoas/" + ID + "/vincular-auth", SO_ADMIN));
         c.add(new Caso(P, "/pessoas/" + ID + "/vincular-a", GESTAO));
+        c.add(new Caso(G, "/pessoas/" + ID + "/vinculo-sugerido", GESTAO));
+        c.add(new Caso(P, "/pessoas/" + ID + "/confirmar-vinculo", GESTAO));
 
         // relatório de outra pessoa e reabertura são decididos no serviço; aqui só a trava de Visualizador
         c.add(new Caso(P, "/relatorios/2026-10/reabrir", QUEM_ESCREVE));

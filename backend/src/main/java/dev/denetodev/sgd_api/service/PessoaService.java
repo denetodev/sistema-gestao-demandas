@@ -10,7 +10,9 @@ import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.AuditoriaRepository;
 import dev.denetodev.sgd_api.repository.CargoRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
+import dev.denetodev.sgd_api.security.ConfirmacaoEmail;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.security.LimitadorTentativas;
 import dev.denetodev.sgd_api.util.Cpf;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -31,19 +33,29 @@ public class PessoaService {
     private final CargoRepository cargoRepository;
     private final AuditoriaRepository auditoriaRepository;
     private final CurrentPessoaResolver currentPessoaResolver;
+    private final ConfirmacaoEmail confirmacaoEmail;
+    private final LimitadorTentativas limitadorTentativas;
+
+    /** Mesma resposta para qualquer CPF que não pode ser usado, para o cadastro não virar consulta de CPFs. */
+    static final String MSG_CADASTRO_NAO_CONCLUIDO =
+            "Não foi possível concluir o cadastro com os dados informados. Procure um Gestor ou Administrador.";
 
     public PessoaService(
             PessoaRepository pessoaRepository,
             AreaRepository areaRepository,
             CargoRepository cargoRepository,
             AuditoriaRepository auditoriaRepository,
-            CurrentPessoaResolver currentPessoaResolver
+            CurrentPessoaResolver currentPessoaResolver,
+            ConfirmacaoEmail confirmacaoEmail,
+            LimitadorTentativas limitadorTentativas
     ) {
         this.pessoaRepository = pessoaRepository;
         this.areaRepository = areaRepository;
         this.cargoRepository = cargoRepository;
         this.auditoriaRepository = auditoriaRepository;
         this.currentPessoaResolver = currentPessoaResolver;
+        this.confirmacaoEmail = confirmacaoEmail;
+        this.limitadorTentativas = limitadorTentativas;
     }
 
     @Transactional(readOnly = true)
@@ -121,9 +133,21 @@ public class PessoaService {
         pessoa.setStatus(StatusPessoa.INATIVO);
     }
 
-    public PessoaResponse vincularAuth(UUID id, UUID authUserId) {
+    /** Ligação direta de uma credencial a uma pessoa (só Admin). Confere conta livre, pessoa sem conta e e-mail confirmado. */
+    public PessoaResponse vincularAuth(Jwt jwt, UUID id, UUID authUserId) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
         Pessoa pessoa = buscarEntidade(id);
+        if (pessoa.getAuthUserId() != null) {
+            throw new EstadoInvalidoException("Essa pessoa já tem uma conta vinculada");
+        }
+        if (pessoaRepository.findByAuthUserId(authUserId).isPresent()) {
+            throw new EstadoInvalidoException("Essa conta já está ligada a outra pessoa");
+        }
+        if (!confirmacaoEmail.confirmado(authUserId)) {
+            throw new EstadoInvalidoException("Essa conta ainda não confirmou o e-mail");
+        }
         pessoa.setAuthUserId(authUserId);
+        registrarAuditoria(pessoa.getId(), "auth_user_id", null, authUserId.toString(), ator.getId());
         return paraResponse(pessoa);
     }
 
@@ -134,6 +158,7 @@ public class PessoaService {
      */
     public PessoaResponse vincularContaAPessoaExistente(Jwt jwt, UUID pendenteId, UUID existenteId) {
         Pessoa ator = currentPessoaResolver.resolver(jwt);
+        exigirGestorOuAdmin(ator);
         if (pendenteId.equals(existenteId)) {
             throw new EstadoInvalidoException("Escolha um cadastro diferente do pendente");
         }
@@ -164,7 +189,9 @@ public class PessoaService {
         pessoaRepository.flush();
 
         existente.setAuthUserId(authUserId);
-        if (existente.getEmail() == null && email != null) {
+        // o e-mail do cadastro passa a ser o da conta de login (é por ele que a pessoa entra)
+        if (email != null && !email.equalsIgnoreCase(existente.getEmail())) {
+            registrarAuditoria(existente.getId(), "email", existente.getEmail(), email, ator.getId());
             existente.setEmail(email);
         }
         if (existente.getCpf() == null && cpf != null) {
@@ -175,6 +202,27 @@ public class PessoaService {
         return paraResponse(existente);
     }
 
+    /**
+     * Aprovação do vínculo sugerido pelo CPF: é aqui que o Gestor/Admin confirma que a conta nova é a pessoa do
+     * cadastro importado. Só então o login passa para o cadastro (e o histórico dele fica acessível).
+     */
+    public PessoaResponse confirmarVinculo(Jwt jwt, UUID pendenteId) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        exigirGestorOuAdmin(ator);
+        Pessoa pendente = buscarEntidade(pendenteId);
+        Pessoa sugerida = pendente.getVinculoSugerido();
+        if (sugerida == null) {
+            throw new EstadoInvalidoException("Esta conta não tem vínculo sugerido");
+        }
+        if (pendente.getAuthUserId() == null || !confirmacaoEmail.confirmado(pendente.getAuthUserId())) {
+            throw new EstadoInvalidoException("A conta ainda não confirmou o e-mail");
+        }
+        UUID sugeridaId = sugerida.getId();
+        PessoaResponse resposta = vincularContaAPessoaExistente(jwt, pendenteId, sugeridaId);
+        registrarAuditoria(sugeridaId, "vinculo_confirmado", pendenteId.toString(), sugeridaId.toString(), ator.getId());
+        return resposta;
+    }
+
     @Transactional(readOnly = true)
     public MeResponse buscarStatusPorAuthUserId(UUID authUserId) {
         return pessoaRepository.findByAuthUserId(authUserId)
@@ -182,9 +230,19 @@ public class PessoaService {
                 .orElseGet(() -> new MeResponse(false, null));
     }
 
+    /**
+     * Cadastro da própria conta. Se o CPF é de um cadastro que já existe sem login (importado da planilha), a conta
+     * NÃO assume esse cadastro: nasce como pendente comum, sem histórico e sem permissão, e guarda só a sugestão
+     * de vínculo. Quem concretiza é um Gestor/Admin (confirmarVinculo). Quem não tem como ser vinculado recebe a
+     * mesma mensagem neutra, sem dados do cadastro.
+     */
     public PessoaResponse autoCadastro(Jwt jwt, AutoCadastroRequest request) {
         UUID authUserId = UUID.fromString(jwt.getSubject());
+        limitadorTentativas.registrar("auto-cadastro:" + authUserId);
 
+        if (!confirmacaoEmail.confirmado(authUserId)) {
+            throw new EstadoInvalidoException("Confirme seu e-mail pelo link que enviamos antes de enviar o cadastro.");
+        }
         if (pessoaRepository.findByAuthUserId(authUserId).isPresent()) {
             throw new EstadoInvalidoException("Já existe um cadastro vinculado a este usuário");
         }
@@ -193,23 +251,37 @@ public class PessoaService {
         if (!Cpf.valido(cpf)) {
             throw new IllegalArgumentException("CPF inválido");
         }
-        if (pessoaRepository.findByCpf(cpf).isPresent()) {
-            // a pessoa pode já existir (ex.: importada da planilha). Quem liga a conta ao registro é Gestor/Admin.
-            throw new EstadoInvalidoException("Este CPF já está cadastrado. Peça a um Gestor ou Administrador para vincular sua conta ao cadastro existente.");
+
+        Pessoa sugerida = null;
+        Pessoa comEsseCpf = pessoaRepository.findByCpf(cpf).orElse(null);
+        if (comEsseCpf != null) {
+            if (comEsseCpf.getAuthUserId() != null) {
+                throw new EstadoInvalidoException(MSG_CADASTRO_NAO_CONCLUIDO);
+            }
+            sugerida = comEsseCpf;
         }
 
         Area area = areaRepository.findById(request.areaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + request.areaId()));
 
         Pessoa pessoa = new Pessoa(request.nome().trim(), area);
-        pessoa.setCpf(cpf);
+        if (sugerida == null) {
+            pessoa.setCpf(cpf);
+        } else {
+            // o CPF é único e já pertence ao cadastro importado; a ligação é só uma sugestão até a aprovação
+            pessoa.setVinculoSugerido(sugerida);
+        }
         String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
         pessoa.setNomeExibicao(exibicao.isEmpty() ? null : exibicao);
         pessoa.setEmail(jwt.getClaimAsString("email"));
         pessoa.setCargo(resolverCargo(request.cargoId()));
         pessoa.setAuthUserId(authUserId);
 
-        return paraResponse(pessoaRepository.save(pessoa));
+        Pessoa salva = pessoaRepository.save(pessoa);
+        if (sugerida != null) {
+            registrarAuditoria(salva.getId(), "vinculo_sugerido_id", null, sugerida.getId().toString(), salva.getId());
+        }
+        return paraResponse(salva);
     }
 
     public PessoaResponse aprovar(UUID id, Jwt jwt, AprovarRequest request) {
@@ -242,6 +314,11 @@ public class PessoaService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + request.referenciaAreaId()))
                 : null;
 
+        if (alvo.getVinculoSugerido() != null) {
+            // aprovada como pessoa nova: a sugestão deixa de valer e fica registrada
+            registrarAuditoria(alvo.getId(), "vinculo_sugerido_id", alvo.getVinculoSugerido().getId().toString(), null, aprovador.getId());
+            alvo.setVinculoSugerido(null);
+        }
         alvo.setPerfil(request.perfil());
         alvo.setReferenciaArea(referenciaArea);
         alvo.setAprovadoEm(OffsetDateTime.now());
@@ -291,6 +368,12 @@ public class PessoaService {
         boolean alvoJaEhAdmin = pessoaAlvoExistente != null && pessoaAlvoExistente.getPerfil() == PerfilPessoa.ADMIN;
         if (elevandoParaAdmin || alvoJaEhAdmin) {
             throw new AccessDeniedException("Gestor não pode conceder ADMIN nem alterar uma Pessoa ADMIN");
+        }
+    }
+
+    private void exigirGestorOuAdmin(Pessoa ator) {
+        if (ator.getPerfil() != PerfilPessoa.ADMIN && ator.getPerfil() != PerfilPessoa.GESTOR) {
+            throw new AccessDeniedException("Só Gestor ou Admin pode ligar uma conta a um cadastro");
         }
     }
 
@@ -355,7 +438,8 @@ public class PessoaService {
                 aprovadoPor != null ? aprovadoPor.getId() : null,
                 aprovadoPor != null ? aprovadoPor.getNome() : null,
                 pessoa.getAprovadoEm(),
-                pessoa.getCreatedAt(), pessoa.getUpdatedAt()
+                pessoa.getCreatedAt(), pessoa.getUpdatedAt(),
+                pessoa.getVinculoSugerido() != null
         );
     }
 }
