@@ -62,6 +62,7 @@ function semear(ctx: MockCtx): Estado {
       const p = part(n);
       e.participantes.push({
         id: novoId('part'), demandaId: d.id, pessoaId: p.id, pessoaNome: p.nome,
+        equipeNome: (p as any).areaNome ?? null, nucleoNome: (p as any).nucleoNome ?? null,
         papel: PAPEIS[n === 0 ? 0 : 1 + ((i + n) % 3)],
         dataEntrada: d.dataCriacao, dataSaida: null, observacao: null,
       });
@@ -193,6 +194,7 @@ export function mockDemanda(req: HttpRequest<unknown>, ctx: MockCtx): Observable
         const pessoa = ctx.pessoas.find((p) => p.id === b.pessoaId);
         const novo = {
           id: novoId('part'), demandaId: id, pessoaId: b.pessoaId, pessoaNome: pessoa?.nome ?? '?',
+          equipeNome: (pessoa as any)?.areaNome ?? null, nucleoNome: (pessoa as any)?.nucleoNome ?? null,
           papel: b.papel ?? 'PARTICIPANTE', dataEntrada: hoje(), dataSaida: null, observacao: null,
         };
         e.participantes.push(novo);
@@ -355,6 +357,7 @@ function criarDemanda(ctx: MockCtx, b: any) {
   const p = ctx.pessoaAtual;
   estado!.participantes.push({
     id: novoId('part'), demandaId: d.id, pessoaId: p.id, pessoaNome: p.nome,
+        equipeNome: (p as any).areaNome ?? null, nucleoNome: (p as any).nucleoNome ?? null,
     papel: 'RESPONSAVEL_PRINCIPAL', dataEntrada: d.dataCriacao, dataSaida: null, observacao: null,
   });
   return resp(201, d);

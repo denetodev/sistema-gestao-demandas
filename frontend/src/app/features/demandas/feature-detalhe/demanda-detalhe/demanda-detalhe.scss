@@ -5,9 +5,11 @@
 .detalhe { display: flex; flex-direction: column; gap: 1rem; }
 
 .secao {
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-md, 6px);
-  padding: 1rem;
+  background: var(--sgd-cartao);
+  border: 1px solid var(--sgd-borda);
+  box-shadow: var(--sgd-sombra);
+  border-radius: var(--sgd-raio);
+  padding: 1.1rem 1.25rem;
   min-width: 0;
 }
 
@@ -15,12 +17,12 @@
   h2 { font-size: 1.05rem; margin: 0; } }
 
 .titulo-linha { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
-  h1 { font-size: 1.4rem; margin: 0; } }
+  h1 { font-size: 1.45rem; font-weight: 800; letter-spacing: -0.01em; margin: 0; } }
 
-.descricao { margin: 0.75rem 0 0; color: var(--p-text-muted-color); }
+.descricao { margin: 0.75rem 0 0; color: var(--sgd-muted); }
 
 .dados { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem 1.5rem; margin: 1rem 0 0;
-  dt { font-size: 0.75rem; color: var(--p-text-muted-color); }
+  dt { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--sgd-muted); }
   dd { margin: 0; } }
 
 .duas-colunas { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1rem; }
@@ -29,5 +31,5 @@
 .total-rotulo { text-align: right; }
 
 .form-dialog { display: flex; flex-direction: column; gap: 0.75rem; }
-.dica { color: var(--p-text-muted-color); }
+.dica { color: var(--sgd-muted); }
 .erro-campo { color: var(--p-red-500, #ef4444); }

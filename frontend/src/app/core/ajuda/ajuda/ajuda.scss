@@ -5,7 +5,7 @@
 
 .ajuda {
   background: var(--p-content-background);
-  border: 1px solid var(--p-content-border-color);
+  border: 1px solid var(--sgd-borda);
   border-left: 3px solid var(--p-primary-color);
   border-radius: 6px;
 }
@@ -31,7 +31,7 @@
 
 .ajuda__seta {
   margin-left: auto;
-  color: var(--p-text-muted-color) !important;
+  color: var(--sgd-muted) !important;
   transition: transform 0.15s;
 }
 
@@ -53,6 +53,6 @@
 
 .ajuda__item dd {
   margin: 0.15rem 0 0;
-  color: var(--p-text-muted-color);
+  color: var(--sgd-muted);
   line-height: 1.45;
 }

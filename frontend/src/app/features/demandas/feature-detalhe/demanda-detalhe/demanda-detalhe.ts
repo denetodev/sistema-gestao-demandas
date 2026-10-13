@@ -40,6 +40,14 @@ export class DemandaDetalhe {
   #demandas = inject(DemandaService);
   auth = inject(AuthService);
 
+  /** Núcleos das equipes de quem está no time (participantes que ainda não saíram). */
+  nucleosEnvolvidos = computed(() => {
+    const nomes = (this.participantes.value() ?? [])
+      .filter((p) => !p.dataSaida && p.nucleoNome)
+      .map((p) => p.nucleoNome as string);
+    return [...new Set(nomes)].join(', ');
+  });
+
   id = toSignal(this.#route.paramMap.pipe(map((p) => p.get('id') ?? '')), { initialValue: '' });
 
   demanda = httpResource<Demanda>(() => `${environment.apiUrl}/demandas/${this.id()}`);

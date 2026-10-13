@@ -1,5 +1,5 @@
 .voltar {
-  color: var(--p-text-muted-color);
+  color: var(--sgd-muted);
   text-decoration: none;
 
   &:hover {
@@ -15,13 +15,13 @@
     margin-left: 0.5rem;
     font-size: 0.9rem;
     font-weight: 400;
-    color: var(--p-text-muted-color);
+    color: var(--sgd-muted);
   }
 }
 
 .periodo {
   margin: 0.25rem 0 1rem;
-  color: var(--p-text-muted-color);
+  color: var(--sgd-muted);
 }
 
 .indicadores {
@@ -36,8 +36,8 @@
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.75rem 1rem;
-  background: var(--p-content-background);
-  border: 1px solid var(--p-content-border-color);
+  background: var(--sgd-cartao);
+  border: 1px solid var(--sgd-borda);
   border-radius: 6px;
 
   strong {
@@ -45,13 +45,13 @@
   }
 
   small {
-    color: var(--p-text-muted-color);
+    color: var(--sgd-muted);
   }
 }
 
 .indicador__rotulo {
   font-size: 0.85rem;
-  color: var(--p-text-muted-color);
+  color: var(--sgd-muted);
 }
 
 .situacao {

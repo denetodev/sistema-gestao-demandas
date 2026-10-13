@@ -29,6 +29,16 @@ export class CompletarCadastro {
   #cargoService = inject(CargoService);
 
   areas = inject(AreaService).listar;
+  /** O nome da equipe se repete em núcleos diferentes (Design em CRM e UGR), então o núcleo vai junto. */
+  opcoesEquipe = computed(() =>
+    (this.areas.value() ?? [])
+      .filter((a) => a.ativo)
+      .map((a) => ({ id: a.id, rotulo: a.nucleoNome ? `${a.nome} · ${a.nucleoNome}` : a.nome })),
+  );
+  equipeEscolhida() {
+    const id = this.form.controls.areaId.value;
+    return (this.areas.value() ?? []).find((a) => a.id === id) ?? null;
+  }
   cargos = computed(() => (this.#cargoService.listar.value() ?? []).filter((c) => c.ativo));
   email = this.#auth.emailSessao;
 

@@ -19,8 +19,11 @@
     <input pInputText id="cc-exibicao" formControlName="nomeExibicao" maxlength="80" placeholder="Ex.: Carol" />
 
     <label for="cc-area">Equipe</label>
-    <p-select inputId="cc-area" formControlName="areaId" [options]="areas.value() ?? []" optionLabel="nome"
+    <p-select inputId="cc-area" formControlName="areaId" [options]="opcoesEquipe()" optionLabel="rotulo"
       optionValue="id" placeholder="Selecione" />
+    @if (equipeEscolhida(); as e) {
+      <small class="cartao__detalhe">{{ e.diretoriaNome }}{{ e.nucleoNome ? ' › ' + e.nucleoNome : '' }} › {{ e.nome }}</small>
+    }
 
     <label for="cc-cargo">Cargo <span class="cartao__opcional">(opcional)</span></label>
     <p-select inputId="cc-cargo" formControlName="cargoId" [options]="cargos()" optionLabel="nome" optionValue="id"

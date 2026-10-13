@@ -4,7 +4,8 @@
   align-items: center;
   min-height: 100vh;
   padding: 1.5rem;
-  background: var(--p-content-background);
+  background: var(--sgd-tela);
+  background-image: radial-gradient(60rem 30rem at 50% -10rem, var(--sgd-laranja-suave), transparent);
 }
 
 .cartao {
@@ -14,8 +15,10 @@
   width: 100%;
   max-width: 28rem;
   padding: 2rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-md, 6px);
+  background: var(--sgd-cartao);
+  border: 1px solid var(--sgd-borda);
+  box-shadow: var(--sgd-sombra);
+  border-radius: var(--sgd-raio);
 
   h1 {
     margin: 0 0 0.25rem;
@@ -31,12 +34,12 @@
   &__detalhe {
     margin: 0 0 0.5rem;
     font-size: 0.85rem;
-    color: var(--p-text-muted-color);
+    color: var(--sgd-muted);
   }
 
   &__opcional {
     font-weight: 400;
-    color: var(--p-text-muted-color);
+    color: var(--sgd-muted);
   }
 
   &__erro {
