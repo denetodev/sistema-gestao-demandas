@@ -1,18 +1,84 @@
-<div class="mapa" #mapa [style.--colunas]="grade().colunas">
-  <div class="mapa__meses">
-    @for (m of grade().meses; track m.coluna) {
-      <span [style.grid-column]="m.coluna">{{ m.rotulo }}</span>
-    }
+<p class="explica">
+  Cada quadrado é um dia dos últimos 12 meses. Quanto mais escuro, mais atividades foram registradas naquele dia.
+  Quadrado cinza é dia sem registro.
+</p>
+
+<div class="painel">
+  <div class="painel__mapa">
+    <p class="leitura" aria-live="polite">{{ leitura() }}</p>
+
+    <div class="mapa" #mapa [style.--colunas]="grade().colunas">
+      <div class="mapa__miolo">
+        <span class="mapa__canto"></span>
+        <div class="mapa__meses">
+          @for (m of grade().meses; track m.coluna) {
+            <span [style.grid-column]="m.coluna">{{ m.rotulo }}</span>
+          }
+        </div>
+        <div class="mapa__dias" aria-hidden="true">
+          <span>Seg</span><span>Qua</span><span>Sex</span>
+        </div>
+        <div class="mapa__grade" role="img" [attr.aria-label]="grade().total + ' atividades nos últimos 12 meses'"
+          (mouseleave)="ativa.set(null)">
+          @for (c of grade().celulas; track c.data) {
+            <i [class]="'nivel-' + c.nivel" [class.ativa]="ativa()?.data === c.data" [style.grid-column]="c.coluna"
+              [style.grid-row]="c.linha" [title]="titulo(c)" (mouseenter)="ativa.set(c)"></i>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="legenda">
+      <span>{{ grade().total }} atividades nos últimos 12 meses</span>
+      <span class="legenda__escala">
+        menos <i class="nivel-0"></i><i class="nivel-1"></i><i class="nivel-2"></i><i class="nivel-3"></i><i class="nivel-4"></i> mais
+      </span>
+    </div>
   </div>
-  <div class="mapa__grade" role="img" [attr.aria-label]="grade().total + ' atividades nos últimos 12 meses'">
-    @for (c of grade().celulas; track c.data) {
-      <i [class]="'nivel-' + c.nivel" [style.grid-column]="c.coluna" [style.grid-row]="c.linha" [title]="titulo(c)"></i>
+
+  <aside class="insights" aria-label="Resumo do período">
+    @let n = insights();
+    <dl class="numeros">
+      <div>
+        <dt>Dias com atividade</dt>
+        <dd>{{ n.diasAtivos }}</dd>
+      </div>
+      <div>
+        <dt>Média por dia ativo</dt>
+        <dd>{{ n.mediaPorDiaAtivo }}</dd>
+      </div>
+      <div>
+        <dt>Sequência atual</dt>
+        <dd>{{ n.sequenciaAtual }} <small>{{ n.sequenciaAtual === 1 ? 'dia útil' : 'dias úteis' }}</small></dd>
+      </div>
+      <div>
+        <dt>Maior sequência</dt>
+        <dd>{{ n.maiorSequencia }} <small>{{ n.maiorSequencia === 1 ? 'dia útil' : 'dias úteis' }}</small></dd>
+      </div>
+    </dl>
+
+    @if (n.melhor) {
+      <p class="destaque-linha">
+        <i class="pi pi-bolt" aria-hidden="true"></i>
+        <span>Dia mais cheio: <strong>{{ n.melhor.data }}</strong>, com {{ n.melhor.quantidade }} atividades.</span>
+      </p>
     }
-  </div>
-</div>
-<div class="legenda">
-  <span>{{ grade().total }} atividades registradas nos últimos 12 meses</span>
-  <span class="legenda__escala">
-    menos <i class="nivel-0"></i><i class="nivel-1"></i><i class="nivel-2"></i><i class="nivel-3"></i><i class="nivel-4"></i> mais
-  </span>
+    @if (n.mesTop) {
+      <p class="destaque-linha">
+        <i class="pi pi-calendar" aria-hidden="true"></i>
+        <span>Mês mais ativo: <strong>{{ n.mesTop }}</strong>, com {{ n.mesTopQtd }} atividades.</span>
+      </p>
+    }
+
+    <div class="semana">
+      <span class="semana__titulo">Ritmo da semana</span>
+      @for (d of n.semana; track d.rotulo) {
+        <div class="semana__linha" [class.semana__linha--topo]="d.topo" [title]="d.completo + ': ' + d.quantidade + ' atividades'">
+          <span class="semana__dia">{{ d.rotulo }}</span>
+          <span class="semana__barra"><span [style.width.%]="d.percentual"></span></span>
+          <span class="semana__valor">{{ d.quantidade }}</span>
+        </div>
+      }
+    </div>
+  </aside>
 </div>

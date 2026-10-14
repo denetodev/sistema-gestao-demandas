@@ -80,9 +80,11 @@
       <ul class="legenda">
         @for (s of status; track s) {
           <li class="legenda__item">
-            <span class="legenda__ponto barra-status__trecho--{{ s }}"></span>
-            <span class="legenda__rotulo">{{ rotuloStatus[s] }}</span>
+            <span class="legenda__rotulo">
+              <span class="legenda__ponto barra-status__trecho--{{ s }}"></span>{{ rotuloStatus[s] }}
+            </span>
             <strong class="legenda__valor">{{ d.resumo.demandasPorStatus[s] }}</strong>
+            <span class="legenda__pct">{{ total > 0 ? ((d.resumo.demandasPorStatus[s] / total) * 100 | number: '1.0-1' : 'pt-BR') : '0' }}% do total</span>
           </li>
         }
       </ul>

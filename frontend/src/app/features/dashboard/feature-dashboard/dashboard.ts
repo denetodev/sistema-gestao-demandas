@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Button } from 'primeng/button';
@@ -23,7 +23,7 @@ const STATUS: StatusDemanda[] = ['NAO_INICIADA', 'EM_ANDAMENTO', 'EM_APROVACAO',
 @Component({
   selector: 'app-dashboard',
   imports: [Ajuda, 
-    CurrencyPipe, FormsModule, Button, Select, Checkbox, DatePicker, TableModule, Message, BarraPagina, MapaCalor,
+    CurrencyPipe, DecimalPipe, FormsModule, Button, Select, Checkbox, DatePicker, TableModule, Message, BarraPagina, MapaCalor,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
