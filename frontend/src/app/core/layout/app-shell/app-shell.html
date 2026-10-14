@@ -10,11 +10,20 @@
 <div class="app-layout" [class.sidebar-recolhida]="sidebarRecolhida()" [class.menu-aberto]="menuMovelAberto()">
   <aside class="app-sidebar" id="menu-lateral">
     <div class="app-marca">
-      <span class="app-marca__logo" aria-hidden="true">S</span>
+      <button type="button" class="app-marca__logo" (click)="sidebarRecolhida() && alternarMenu()"
+        [attr.tabindex]="sidebarRecolhida() ? 0 : -1"
+        [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'SGP Aristocrata'">
+        <span class="app-marca__letra">S</span>
+        <i class="pi pi-angle-double-right app-marca__expandir" aria-hidden="true"></i>
+      </button>
       <span class="app-marca__texto">
         <strong>SGP</strong>
         <small>Aristocrata</small>
       </span>
+      <button type="button" class="app-marca__recolher" (click)="alternarMenu()" aria-controls="menu-lateral"
+        aria-label="Recolher menu" title="Recolher menu">
+        <i class="pi pi-angle-double-left" aria-hidden="true"></i>
+      </button>
     </div>
 
     <nav class="app-nav" aria-label="Menu principal" (click)="fecharMenuMovel()">
@@ -84,9 +93,8 @@
   </aside>
 
   <header class="app-topbar">
-    <button type="button" class="app-icone-botao" (click)="alternarMenu()" aria-controls="menu-lateral"
-      [attr.aria-label]="sidebarRecolhida() ? 'Expandir menu' : 'Recolher menu'"
-      [attr.aria-expanded]="menuMovelAberto() || !sidebarRecolhida()">
+    <button type="button" class="app-icone-botao app-icone-botao--menu-movel" (click)="alternarMenu()"
+      aria-controls="menu-lateral" aria-label="Abrir menu" [attr.aria-expanded]="menuMovelAberto()">
       <i class="pi pi-bars"></i>
     </button>
 
@@ -98,11 +106,6 @@
     </form>
 
     <div class="app-topbar__fim">
-      <button type="button" class="app-icone-botao" (click)="tema.toggle()"
-        [attr.aria-label]="tema.dark() ? 'Usar tema claro' : 'Usar tema escuro'">
-        <i [class]="tema.dark() ? 'pi pi-sun' : 'pi pi-moon'"></i>
-      </button>
-
       <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)" aria-haspopup="menu">
         <span class="app-usuario">
           <span class="app-usuario__nome">{{ nomeExibido() }}</span>
@@ -115,7 +118,14 @@
         }
         <i class="pi pi-angle-down app-usuario__seta" aria-hidden="true"></i>
       </button>
-      <p-menu #menuUsuario [model]="itensUsuario" [popup]="true" />
+      <p-menu #menuUsuario [model]="itensUsuario()" [popup]="true" appendTo="body" styleClass="menu-usuario">
+        <ng-template #start>
+          <div class="menu-usuario__cab">
+            <strong>{{ nomeExibido() }}</strong>
+            <small>{{ auth.emailSessao() }}</small>
+          </div>
+        </ng-template>
+      </p-menu>
     </div>
   </header>
 

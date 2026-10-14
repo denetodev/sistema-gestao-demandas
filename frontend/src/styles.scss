@@ -155,12 +155,12 @@ td a:not(.p-button):hover {
 .p-datatable .p-datatable-thead > tr > th {
   background: transparent;
   color: var(--sgd-muted);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   border-color: var(--sgd-borda);
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 0.9rem;
 }
 
 .p-datatable .p-datatable-tbody > tr {
@@ -170,7 +170,24 @@ td a:not(.p-button):hover {
 
 .p-datatable .p-datatable-tbody > tr > td {
   border-color: var(--sgd-borda);
-  padding: 0.85rem 1rem;
+  padding: 0.42rem 0.9rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+/* botões de ícone dentro das tabelas: menores, para a linha não crescer */
+.p-datatable .p-button.p-button-icon-only {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.p-datatable .p-button.p-button-icon-only .p-button-icon {
+  font-size: 0.8rem;
+}
+
+.p-datatable .p-select,
+.p-datatable .p-select-label {
+  font-size: 0.8rem;
 }
 
 .p-datatable .p-datatable-tbody > tr:hover {
@@ -186,6 +203,8 @@ td a:not(.p-button):hover {
 }
 
 .p-paginator {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
   background: transparent;
   border-top: 1px solid var(--sgd-borda);
 }
@@ -193,8 +212,8 @@ td a:not(.p-button):hover {
 /* ---------- Etiquetas de situação, mais suaves ---------- */
 .p-tag {
   border-radius: 999px;
-  padding: 0.18rem 0.65rem;
-  font-size: 0.7rem;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -513,4 +532,9 @@ button,
 .vazio__acao {
   display: inline-block;
   margin-top: 0.9rem;
+}
+
+/* menu da conta (popup no body) */
+.menu-usuario {
+  min-width: 15rem;
 }

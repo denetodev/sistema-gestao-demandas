@@ -15,6 +15,8 @@ const PREFIXO = 'sgd.ajuda.';
 })
 export class Ajuda implements OnInit {
   chave = input.required<ChaveAjuda>();
+  /** Telas cheias de informação (como o detalhe da demanda) começam recolhidas; a escolha da pessoa vale depois. */
+  abrirNaPrimeiraVisita = input(true);
 
   conteudo = computed(() => AJUDA[this.chave()]);
   aberta = signal(true);
@@ -22,7 +24,7 @@ export class Ajuda implements OnInit {
   ngOnInit() {
     const guardada = lerPreferencia(this.chave());
     // sem escolha guardada: abre em tela larga e fica recolhida no celular, para não empurrar a lista
-    this.aberta.set(guardada ? guardada !== 'fechada' : window.innerWidth >= 640);
+    this.aberta.set(guardada ? guardada !== 'fechada' : this.abrirNaPrimeiraVisita() && window.innerWidth >= 640);
   }
 
   alternar(evento: Event) {

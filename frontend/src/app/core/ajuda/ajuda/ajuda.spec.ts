@@ -17,6 +17,21 @@ describe('Ajuda', () => {
     await TestBed.configureTestingModule({ imports: [Ajuda] }).compileComponents();
   });
 
+  it('com abrirNaPrimeiraVisita falso, nasce recolhida, mas respeita a escolha guardada', () => {
+    fixture = TestBed.createComponent(Ajuda);
+    fixture.componentRef.setInput('chave', 'campanhas');
+    fixture.componentRef.setInput('abrirNaPrimeiraVisita', false);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.aberta()).toBeFalse();
+
+    localStorage.setItem('sgd.ajuda.campanhas', 'aberta');
+    const outra = TestBed.createComponent(Ajuda);
+    outra.componentRef.setInput('chave', 'campanhas');
+    outra.componentRef.setInput('abrirNaPrimeiraVisita', false);
+    outra.detectChanges();
+    expect(outra.componentInstance.aberta()).toBeTrue();
+  });
+
   it('mostra o título e todas as perguntas e respostas da chave', () => {
     const el = criar('campanhas');
     expect(el.querySelector('summary')?.textContent).toContain(AJUDA.campanhas.titulo);
