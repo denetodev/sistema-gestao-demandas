@@ -49,6 +49,8 @@ export interface Dashboard {
 export interface DashboardFiltro {
   pessoaId: string | null;
   diretoriaId: string | null;
+  nucleoId: string | null;
+  areaId: string | null;
   porPessoa: boolean;
   /** yyyy-MM; null = mês atual */
   mes: string | null;

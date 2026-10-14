@@ -10,7 +10,8 @@ import { TableModule } from 'primeng/table';
 import { Message } from 'primeng/message';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
-import { DiretoriaService } from '../../../core/dados-mestres/diretoria/diretoria.service';
+import { NucleoService } from '../../../core/dados-mestres/nucleo/nucleo.service';
+import { AreaService } from '../../../core/dados-mestres/area/area.service';
 import type { EscopoDemanda, StatusDemanda } from '../../demandas/data-access/demanda.model';
 import { ROTULO_STATUS } from '../../demandas/data-access/demanda-itens.model';
 import { DashboardService } from '../data-access/dashboard.service';
@@ -35,7 +36,8 @@ export class Dashboard {
 
   dashboard = this.#service.dashboard;
   filtro = this.#service.filtro;
-  diretorias = inject(DiretoriaService).listar;
+  #nucleos = inject(NucleoService).listar;
+  #areas = inject(AreaService).listar;
 
   status = STATUS;
   rotuloStatus = ROTULO_STATUS;
@@ -46,10 +48,23 @@ export class Dashboard {
     () => this.auth.temPerfil('PROFISSIONAL') && !!this.auth.pessoa()?.referenciaAreaId,
   );
 
-  opcoesDiretoria = computed(() => [
-    { id: null, nome: 'Todas as diretorias' },
-    ...(this.diretorias.value() ?? []),
+  /** Gestor e Admin recortam o painel por núcleo e, dentro dele, por equipe. */
+  opcoesNucleo = computed(() => [
+    { id: null as string | null, nome: 'Todos os núcleos' },
+    ...(this.#nucleos.value() ?? []).filter((n) => n.ativo).map((n) => ({ id: n.id as string | null, nome: n.nome })),
   ]);
+
+  opcoesEquipeGestao = computed(() => {
+    const nucleoId = this.filtro().nucleoId;
+    const equipes = (this.#areas.value() ?? [])
+      .filter((a) => a.ativo && (!nucleoId || a.nucleoId === nucleoId))
+      .map((a) => ({
+        id: a.id as string | null,
+        // o nome da equipe se repete entre núcleos: sem núcleo escolhido, ele vai junto
+        nome: !nucleoId && a.nucleoNome ? `${a.nome} · ${a.nucleoNome}` : a.nome,
+      }));
+    return [{ id: null as string | null, nome: 'Todas as equipes' }, ...equipes];
+  });
 
   opcoesEquipe = computed(() => {
     const areaId = this.auth.pessoa()?.referenciaAreaId;
@@ -84,8 +99,13 @@ export class Dashboard {
     this.filtro.update((f) => ({ ...f, pessoaId }));
   }
 
-  mudarDiretoria(diretoriaId: string | null) {
-    this.filtro.update((f) => ({ ...f, diretoriaId }));
+  mudarNucleo(nucleoId: string | null) {
+    // trocar o núcleo limpa a equipe, que pode nem pertencer ao novo núcleo
+    this.filtro.update((f) => ({ ...f, nucleoId, areaId: null }));
+  }
+
+  mudarEquipeGestao(areaId: string | null) {
+    this.filtro.update((f) => ({ ...f, areaId }));
   }
 
   mudarPorPessoa(porPessoa: boolean) {

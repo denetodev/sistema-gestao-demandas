@@ -6,7 +6,7 @@ import type { Dashboard, DashboardFiltro } from './dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  filtro = signal<DashboardFiltro>({ pessoaId: null, diretoriaId: null, porPessoa: false, mes: null });
+  filtro = signal<DashboardFiltro>({ pessoaId: null, diretoriaId: null, nucleoId: null, areaId: null, porPessoa: false, mes: null });
 
   /** A visão (minha, equipe, diretoria) é decidida pelo backend conforme o perfil. */
   dashboard = httpResource<Dashboard>(() => {
@@ -16,6 +16,8 @@ export class DashboardService {
       params: {
         ...(f.pessoaId ? { pessoaId: f.pessoaId } : {}),
         ...(f.diretoriaId ? { diretoriaId: f.diretoriaId } : {}),
+        ...(f.nucleoId ? { nucleoId: f.nucleoId } : {}),
+        ...(f.areaId ? { areaId: f.areaId } : {}),
         ...(f.porPessoa ? { porPessoa: true } : {}),
         ...(f.mes ? { mes: f.mes } : {}),
       },

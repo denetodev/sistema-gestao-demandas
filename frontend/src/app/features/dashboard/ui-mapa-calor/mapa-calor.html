@@ -34,6 +34,20 @@
         menos <i class="nivel-0"></i><i class="nivel-1"></i><i class="nivel-2"></i><i class="nivel-3"></i><i class="nivel-4"></i> mais
       </span>
     </div>
+
+    <div class="meses">
+      <span class="meses__titulo">Atividades por mês</span>
+      <div class="meses__barras">
+        @for (m of porMes(); track m.completo) {
+          <div class="meses__coluna" [class.meses__coluna--parcial]="m.parcial"
+            [title]="m.completo + ': ' + m.quantidade + ' atividades' + (m.parcial ? ' (mês em andamento)' : '')">
+            <span class="meses__valor">{{ m.quantidade }}</span>
+            <span class="meses__barra"><span [style.height.%]="m.percentual"></span></span>
+            <span class="meses__rotulo">{{ m.rotulo }}</span>
+          </div>
+        }
+      </div>
+    </div>
   </div>
 
   <aside class="insights" aria-label="Resumo do período">

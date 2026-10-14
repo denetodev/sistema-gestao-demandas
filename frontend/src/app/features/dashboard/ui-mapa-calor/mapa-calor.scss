@@ -236,3 +236,67 @@ i {
     transition: none;
   }
 }
+
+/* ---------- atividades por mês: preenche o espaço sob o calendário ---------- */
+.meses {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sgd-borda);
+}
+
+.meses__titulo {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sgd-muted);
+}
+
+.meses__barras {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.meses__coluna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+}
+
+.meses__valor {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.meses__barra {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 124px;
+  border-radius: 6px;
+  background: var(--vazio);
+  overflow: hidden;
+
+  span {
+    display: block;
+    width: 100%;
+    min-height: 2px;
+    border-radius: 6px 6px 0 0;
+    background: color-mix(in srgb, var(--sgd-laranja) 62%, var(--vazio));
+    transition: height 0.4s var(--sgd-ease);
+  }
+}
+
+.meses__coluna--parcial .meses__barra span {
+  background: repeating-linear-gradient(45deg, var(--sgd-laranja-forte), var(--sgd-laranja-forte) 4px, color-mix(in srgb, var(--sgd-laranja) 60%, var(--vazio)) 4px, color-mix(in srgb, var(--sgd-laranja) 60%, var(--vazio)) 8px);
+}
+
+.meses__rotulo {
+  color: var(--sgd-muted);
+}

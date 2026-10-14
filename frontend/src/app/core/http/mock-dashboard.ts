@@ -29,6 +29,8 @@ export function dashboardMock(req: HttpRequest<unknown>, ctx: ContextoMock, e: E
   const hojeIso = new Date().toISOString().slice(0, 10);
   const mes = req.params.get('mes') ?? hojeIso.slice(0, 7);
   const diretoriaParam = req.params.get('diretoriaId');
+  const nucleoParam = req.params.get('nucleoId');
+  const areaParam = req.params.get('areaId');
   const pessoaParam = req.params.get('pessoaId');
   const porPessoa = req.params.get('porPessoa') === 'true';
 
@@ -41,6 +43,7 @@ export function dashboardMock(req: HttpRequest<unknown>, ctx: ContextoMock, e: E
   let alvo: any[];
   let titulo: string;
   let diretoriaId: string | null = null;
+  let recorteDeTime = false;
   if (visao === 'MINHA') {
     alvo = [eu];
     titulo = 'Meus números';
@@ -53,9 +56,18 @@ export function dashboardMock(req: HttpRequest<unknown>, ctx: ContextoMock, e: E
       : `Equipe ${eu.referenciaAreaNome} (agregado, ${equipe.length} pessoas)`;
   } else {
     diretoriaId = eu.perfil === 'VISUALIZADOR' ? eu.diretoriaId : diretoriaParam;
-    alvo = elegiveis.filter((p) => !diretoriaId || p.diretoriaId === diretoriaId);
+    const recorte = eu.perfil !== 'VISUALIZADOR';
+    alvo = elegiveis
+      .filter((p) => !diretoriaId || p.diretoriaId === diretoriaId)
+      .filter((p) => !recorte || !nucleoParam || p.nucleoId === nucleoParam)
+      .filter((p) => !recorte || !areaParam || p.areaId === areaParam);
     const nome = (ctx.dados['/diretorias'] as any[]).find((d) => d.id === diretoriaId)?.nome;
-    titulo = diretoriaId ? `Diretoria ${nome} (agregado)` : 'Todas as diretorias (agregado)';
+    titulo = recorte && areaParam
+      ? `Equipe ${alvo[0]?.areaNome ?? ''} (agregado)`
+      : recorte && nucleoParam
+        ? `Núcleo ${alvo[0]?.nucleoNome ?? ''} (agregado)`
+        : diretoriaId ? `Diretoria ${nome} (agregado)` : 'Todas as diretorias (agregado)';
+    recorteDeTime = recorte && !!(nucleoParam || areaParam);
   }
   const ids = new Set(alvo.map((p) => p.id));
 
@@ -108,7 +120,7 @@ export function dashboardMock(req: HttpRequest<unknown>, ctx: ContextoMock, e: E
   }
   const porId = new Map(ctx.demandas.map((d) => [d.id, d]));
   const resumoDemandas =
-    visao === 'DIRETORIA'
+    visao === 'DIRETORIA' && !recorteDeTime
       ? ctx.demandas.filter((d) => !diretoriaId || d.diretoriaId === diretoriaId)
       : [...new Set([...demandasPorPessoa.values()].flatMap((s) => [...s]))].map((id) => porId.get(id));
   const atrasada = (d: any) => d.dataPrazo && d.dataPrazo < hojeIso && !INATIVAS.includes(d.status);

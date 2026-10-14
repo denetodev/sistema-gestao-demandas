@@ -83,7 +83,13 @@ export class MapaCalor {
       const nivel = quantidade === 0 ? 0 : q <= 0.25 ? 1 : q <= 0.5 ? 2 : q <= 0.75 ? 3 : 4;
       celulas.push({ data, quantidade, nivel, coluna: coluna + 1, linha: d.getDay() + 1, diaSemana: d.getDay() });
     }
-    return { celulas, meses, total, colunas: coluna + 1 };
+    const colunas = coluna + 1;
+    // rótulo de mês só entra se houver espaço até o próximo e até o fim da grade (senão vaza para fora)
+    const mesesVisiveis = meses.filter((m, i) => {
+      const proximo = meses[i + 1]?.coluna ?? colunas + 1;
+      return proximo - m.coluna >= 3;
+    });
+    return { celulas, meses: mesesVisiveis, total, colunas };
   });
 
   /** Os números ao lado do calendário. */
@@ -140,6 +146,22 @@ export class MapaCalor {
       mesTopQtd,
       semana,
     };
+  });
+
+  /** Soma de atividades em cada um dos últimos 12 meses (o mês corrente é parcial). */
+  porMes = computed(() => {
+    const soma = new Map<string, number>();
+    for (const c of this.grade().celulas) soma.set(c.data.slice(0, 7), (soma.get(c.data.slice(0, 7)) ?? 0) + c.quantidade);
+    const chaves = [...soma.keys()].sort().slice(-12);
+    const max = Math.max(1, ...chaves.map((k) => soma.get(k) ?? 0));
+    const corrente = iso(new Date()).slice(0, 7);
+    return chaves.map((k) => ({
+      rotulo: MESES[Number(k.slice(5, 7)) - 1],
+      completo: `${MESES[Number(k.slice(5, 7)) - 1]}/${k.slice(0, 4)}`,
+      quantidade: soma.get(k) ?? 0,
+      percentual: Math.round(((soma.get(k) ?? 0) / max) * 100),
+      parcial: k === corrente,
+    }));
   });
 
   /** A frase acima do calendário: o dia sob o mouse ou, sem ele, um convite para passar o mouse. */

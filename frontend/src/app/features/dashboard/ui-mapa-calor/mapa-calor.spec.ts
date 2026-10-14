@@ -96,4 +96,24 @@ describe('MapaCalor', () => {
     comp.ativa.set(null);
     expect(comp.leitura()).toContain('Passe o mouse');
   });
+
+  it('soma as atividades por mes nos ultimos 12 meses e marca o mes corrente como parcial', () => {
+    const comp = abrir([
+      { data: iso(0), quantidade: 4 },
+      { data: iso(1), quantidade: 1 },
+    ]);
+    const meses = comp.porMes();
+    expect(meses.length).toBeLessThanOrEqual(13);
+    const ultimo = meses[meses.length - 1];
+    expect(ultimo.parcial).toBeTrue();
+    expect(ultimo.quantidade).toBeGreaterThanOrEqual(4);
+    expect(Math.max(...meses.map((m) => m.percentual))).toBe(100);
+  });
+
+  it('nao deixa rotulo de mes colado no fim da grade', () => {
+    const grade = abrir([]).grade();
+    for (const m of grade.meses) {
+      expect(grade.colunas - m.coluna).toBeGreaterThanOrEqual(2);
+    }
+  });
 });
