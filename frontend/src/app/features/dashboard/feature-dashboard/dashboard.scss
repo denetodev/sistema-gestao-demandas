@@ -167,33 +167,48 @@
 
 .legenda {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.6rem 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem;
   margin: 0;
   padding: 0;
   list-style: none;
 
+  /* cada situação é um mini cartão: o nome em cima, o número grande e a fatia do total embaixo */
   &__item {
     display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.65rem 0.85rem;
+    background: var(--sgd-realce);
+    border: 1px solid var(--sgd-borda);
+    border-radius: 10px;
+  }
+
+  &__rotulo {
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 0.85rem;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    color: var(--sgd-muted);
   }
 
   &__ponto {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex: none;
   }
 
-  &__rotulo {
-    color: var(--sgd-muted);
+  &__valor {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
   }
 
-  &__valor {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
+  &__pct {
+    font-size: 0.72rem;
+    color: var(--sgd-muted);
   }
 }
 

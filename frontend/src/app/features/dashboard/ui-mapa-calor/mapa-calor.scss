@@ -1,46 +1,110 @@
 :host {
   display: block;
+  --vazio: color-mix(in srgb, var(--sgd-muted) 16%, var(--sgd-cartao));
 }
 
+.explica {
+  margin: 0 0 1rem;
+  font-size: 0.8rem;
+  color: var(--sgd-muted);
+  max-width: 62ch;
+}
+
+.painel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.5rem 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .painel {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.leitura {
+  min-height: 1.3rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ---------- calendário: os quadrados esticam para ocupar a largura ---------- */
 .mapa {
   overflow-x: auto;
   padding-bottom: 0.25rem;
 }
 
+.mapa__miolo {
+  display: grid;
+  grid-template-columns: 2rem minmax(calc(var(--colunas) * 12px), 1fr);
+  grid-template-rows: 1.1rem auto;
+  column-gap: 0.25rem;
+  row-gap: 4px;
+  min-width: calc(var(--colunas) * 14px + 2.25rem);
+}
+
 .mapa__meses,
 .mapa__grade {
   display: grid;
-  grid-template-columns: repeat(var(--colunas), 12px);
+  grid-template-columns: repeat(var(--colunas), minmax(0, 1fr));
   gap: 3px;
-  width: max-content;
 }
 
 .mapa__meses {
   font-size: 0.7rem;
   color: var(--sgd-muted);
-  margin-bottom: 4px;
-  height: 1rem;
+
+  span {
+    white-space: nowrap;
+  }
+}
+
+.mapa__dias {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  font-size: 0.65rem;
+  color: var(--sgd-muted);
+
+  // Seg, Qua e Sex ficam nas linhas 2, 4 e 6
+  span:nth-child(1) { grid-row: 2; }
+  span:nth-child(2) { grid-row: 4; }
+  span:nth-child(3) { grid-row: 6; }
+  span {
+    display: flex;
+    align-items: center;
+  }
 }
 
 .mapa__grade {
-  grid-template-rows: repeat(7, 12px);
+  grid-template-rows: repeat(7, auto);
+
+  i {
+    width: 100%;
+    aspect-ratio: 1;
+  }
 }
 
 i {
   display: block;
   width: 12px;
   height: 12px;
-  border-radius: 2px;
-  background: var(--p-surface-200);
+  border-radius: 3px;
+  background: var(--vazio);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 
-  &.nivel-1 { background: color-mix(in srgb, var(--p-primary-color) 25%, var(--p-surface-200)); }
-  &.nivel-2 { background: color-mix(in srgb, var(--p-primary-color) 50%, var(--p-surface-200)); }
-  &.nivel-3 { background: color-mix(in srgb, var(--p-primary-color) 75%, var(--p-surface-200)); }
-  &.nivel-4 { background: var(--p-primary-color); }
-}
+  &.nivel-1 { background: color-mix(in srgb, var(--sgd-laranja) 28%, var(--vazio)); }
+  &.nivel-2 { background: color-mix(in srgb, var(--sgd-laranja) 52%, var(--vazio)); }
+  &.nivel-3 { background: color-mix(in srgb, var(--sgd-laranja) 78%, var(--vazio)); }
+  &.nivel-4 { background: var(--sgd-laranja-forte); }
 
-:host-context(.app-dark) i.nivel-0 {
-  background: var(--p-surface-800);
+  &.ativa {
+    transform: scale(1.35);
+    box-shadow: 0 0 0 2px var(--sgd-cartao), 0 0 0 3px var(--sgd-texto);
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .legenda {
@@ -49,8 +113,8 @@ i {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
   color: var(--sgd-muted);
 }
 
@@ -58,4 +122,117 @@ i {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+}
+
+/* ---------- resumo ao lado ---------- */
+.insights {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  background: var(--sgd-realce);
+  border: 1px solid var(--sgd-borda);
+  border-radius: 12px;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin: 0;
+
+  dt {
+    font-size: 0.7rem;
+    color: var(--sgd-muted);
+  }
+
+  dd {
+    margin: 0.1rem 0 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+
+    small {
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--sgd-muted);
+    }
+  }
+}
+
+.destaque-linha {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+
+  i {
+    width: auto;
+    height: auto;
+    margin-top: 0.15rem;
+    background: none;
+    color: var(--sgd-laranja);
+    font-size: 0.85rem;
+  }
+}
+
+.semana {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.semana__titulo {
+  margin-bottom: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sgd-muted);
+}
+
+.semana__linha {
+  display: grid;
+  grid-template-columns: 2rem 1fr 2.2rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.semana__dia {
+  color: var(--sgd-muted);
+}
+
+.semana__barra {
+  height: 7px;
+  border-radius: 999px;
+  background: var(--vazio);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--sgd-laranja) 60%, var(--vazio));
+    transition: width 0.4s var(--sgd-ease);
+  }
+}
+
+.semana__valor {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.semana__linha--topo .semana__barra span {
+  background: var(--sgd-laranja-forte);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  i,
+  .semana__barra span {
+    transition: none;
+  }
 }
