@@ -17,8 +17,11 @@ export class AuthService {
   #http = inject(HttpClient);
   emailSessao = computed(() => this.#session()?.user.email ?? null);
 
+  // Depende de `autenticado` (boolean) e não da sessão: o supabase-js emite um Session novo toda vez que a aba volta
+  // ao foco (SIGNED_IN / TOKEN_REFRESHED). Se a requisição dependesse da sessão, voltar à aba recarregaria o /pessoas/me,
+  // a casca mostraria "Carregando..." e as janelas abertas (nova demanda, campanha...) seriam destruídas.
   me = httpResource<PessoaMeResponse>(() =>
-    this.#session() ? `${environment.apiUrl}/pessoas/me` : undefined,
+    this.autenticado() ? `${environment.apiUrl}/pessoas/me` : undefined,
   );
 
   #statusMe$ = toObservable(this.me.status);
