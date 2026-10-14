@@ -57,6 +57,22 @@ describe('AppShell', () => {
     expect(component.sidebarRecolhida()).toBeFalse();
   });
 
+  it('o botao de recolher fica dentro do menu e a marca expande quando recolhido', () => {
+    spyOnProperty(window, 'innerWidth').and.returnValue(1280);
+    const el = fixture.nativeElement as HTMLElement;
+    el.querySelector<HTMLButtonElement>('.app-marca__recolher')!.click();
+    fixture.detectChanges();
+    expect(component.sidebarRecolhida()).toBeTrue();
+
+    el.querySelector<HTMLButtonElement>('.app-marca__logo')!.click();
+    fixture.detectChanges();
+    expect(component.sidebarRecolhida()).toBeFalse();
+  });
+
+  it('o menu da conta reune perfil, tema e sair', () => {
+    expect(component.itensUsuario().map((i) => i.label).filter(Boolean)).toEqual(['Meu perfil', 'Tema escuro', 'Sair']);
+  });
+
   it('a busca do topo leva para as demandas com o texto como filtro', () => {
     const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     component.busca.set('  captação agro ');

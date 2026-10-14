@@ -184,18 +184,80 @@ img.app-avatar {
 }
 
 .app-marca__logo {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  padding: 0;
+  border: none;
   border-radius: 10px;
   background: linear-gradient(135deg, #fb923c, #ea580c);
   color: #fff;
+  font-family: inherit;
   font-size: 1.15rem;
   font-weight: 800;
   flex-shrink: 0;
+  cursor: default;
   box-shadow: 0 4px 14px rgba(234, 88, 12, 0.4);
+}
+
+.app-marca__letra,
+.app-marca__expandir {
+  position: absolute;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.app-marca__expandir {
+  font-size: 0.95rem;
+  opacity: 0;
+  transform: translateX(-4px);
+}
+
+/* o botão de recolher mora dentro do menu, no canto da marca */
+.app-marca__recolher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sgd-menu-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.2s ease;
+
+  &:hover {
+    background: var(--sgd-menu-hover);
+    color: #fff;
+  }
+}
+
+.app-icone-botao--menu-movel {
+  display: none;
+}
+
+/* cabeçalho do menu da conta */
+.menu-usuario__cab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.75rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--sgd-borda);
+
+  strong {
+    font-size: 0.875rem;
+  }
+
+  small {
+    color: var(--sgd-muted);
+    font-size: 0.75rem;
+  }
 }
 
 .app-marca__texto {
@@ -406,6 +468,14 @@ img.app-avatar {
 
 /* ---------- Menu recolhido: só os ícones ---------- */
 .sidebar-recolhida {
+  .app-marca__recolher {
+    max-width: 0;
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
   .app-marca__texto,
   .app-nav__rotulo {
     max-width: 0;
@@ -511,6 +581,17 @@ img.app-avatar {
     justify-content: flex-start;
   }
 
+  .app-icone-botao--menu-movel {
+    display: inline-flex;
+  }
+
+  .sidebar-recolhida .app-marca__recolher {
+    width: 32px;
+    max-width: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .sidebar-recolhida .app-marca {
     padding: 0 1.25rem;
     gap: 0.75rem;
@@ -544,5 +625,31 @@ img.app-avatar {
   .menu-aberto .app-backdrop {
     opacity: 1;
     pointer-events: auto;
+  }
+}
+
+/* no computador, com o menu recolhido, passar o mouse na marca troca o S pela seta de expandir */
+@media (min-width: 900px) {
+  .sidebar-recolhida .app-marca__logo {
+    cursor: pointer;
+
+    &:hover .app-marca__letra,
+    &:focus-visible .app-marca__letra {
+      opacity: 0;
+      transform: translateX(4px);
+    }
+
+    &:hover .app-marca__expandir,
+    &:focus-visible .app-marca__expandir {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-marca__letra,
+  .app-marca__expandir {
+    transition: none;
   }
 }

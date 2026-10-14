@@ -54,11 +54,17 @@ export class AppShell {
     return (primeira + ultima).toUpperCase();
   });
 
-  itensUsuario: MenuItem[] = [
+  /** As ferramentas da conta ficam todas aqui: perfil, tema e saída. */
+  itensUsuario = computed<MenuItem[]>(() => [
     { label: 'Meu perfil', icon: 'pi pi-user', routerLink: '/meu-perfil' },
+    {
+      label: this.tema.dark() ? 'Tema claro' : 'Tema escuro',
+      icon: this.tema.dark() ? 'pi pi-sun' : 'pi pi-moon',
+      command: () => this.tema.toggle(),
+    },
     { separator: true },
     { label: 'Sair', icon: 'pi pi-sign-out', command: () => this.sair() },
-  ];
+  ]);
 
   alternarMenu() {
     if (window.innerWidth < LARGURA_CELULAR) {

@@ -70,7 +70,7 @@
           <dt>Link externo</dt>
           <dd>
             @if (d.linkExterno) {
-              <a [href]="d.linkExterno" target="_blank" rel="noopener noreferrer">{{ d.linkExterno }}</a>
+              <a class="link-externo" [href]="d.linkExterno" [title]="d.linkExterno" target="_blank" rel="noopener noreferrer">{{ d.linkExterno }}</a>
             } @else {
               —
             }

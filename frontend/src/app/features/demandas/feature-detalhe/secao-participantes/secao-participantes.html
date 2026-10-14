@@ -7,13 +7,15 @@
   </header>
   <p-table [value]="itens()" dataKey="id" [stripedRows]="true">
     <ng-template pTemplate="header">
-      <tr><th>Pessoa</th><th>Equipe</th><th>Núcleo</th><th>Papel</th><th>Entrada</th><th></th></tr>
+      <tr><th>Pessoa</th><th>Equipe</th><th>Papel</th><th>Entrada</th><th></th></tr>
     </ng-template>
     <ng-template pTemplate="body" let-p>
       <tr>
         <td>{{ p.pessoaNome }}</td>
-        <td>{{ p.equipeNome ?? '—' }}</td>
-        <td>{{ p.nucleoNome ?? '—' }}</td>
+        <td>
+          {{ p.equipeNome ?? '—' }}
+          @if (p.nucleoNome) { <small class="sub">{{ p.nucleoNome }}</small> }
+        </td>
         <td>
           @if (editavel() && !p.dataSaida) {
             <p-select [ngModel]="p.papel" (ngModelChange)="mudarPapel(p, $event)" [options]="opcoesPapel"
@@ -30,7 +32,7 @@
         </td>
       </tr>
     </ng-template>
-    <ng-template pTemplate="emptymessage"><tr><td colspan="6">Nenhum participante.</td></tr></ng-template>
+    <ng-template pTemplate="emptymessage"><tr><td colspan="4">Nenhum participante.</td></tr></ng-template>
   </p-table>
 </section>
 
