@@ -28,6 +28,8 @@ public class DashboardController {
      * @param visao       MINHA, EQUIPE ou DIRETORIA; sem valor, escolhe pelo perfil de quem pede
      * @param pessoaId    só na visão EQUIPE: abre o individual de um colega da área
      * @param diretoriaId só na visão DIRETORIA (Gestor/Admin): sem valor, todas as diretorias
+     * @param nucleoId    só na visão DIRETORIA (Gestor/Admin): recorta num núcleo
+     * @param areaId      só na visão DIRETORIA (Gestor/Admin): recorta numa equipe (área)
      * @param porPessoa   Gestor/Admin: inclui o detalhamento individual
      * @param mes         yyyy-MM; padrão é o mês atual
      */
@@ -37,9 +39,11 @@ public class DashboardController {
             @RequestParam(required = false) VisaoDashboard visao,
             @RequestParam(required = false) UUID pessoaId,
             @RequestParam(required = false) UUID diretoriaId,
+            @RequestParam(required = false) UUID nucleoId,
+            @RequestParam(required = false) UUID areaId,
             @RequestParam(defaultValue = "false") boolean porPessoa,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth mes
     ) {
-        return dashboardService.montar(jwt, visao, pessoaId, diretoriaId, porPessoa, mes);
+        return dashboardService.montar(jwt, visao, pessoaId, diretoriaId, nucleoId, areaId, porPessoa, mes);
     }
 }

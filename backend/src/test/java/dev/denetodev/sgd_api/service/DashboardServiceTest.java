@@ -122,6 +122,40 @@ class DashboardServiceTest {
         assertEquals(List.of("Ana", "Bruno"), r.porPessoa().stream().map(DashboardResponse.LinhaPessoa::nome).toList());
     }
 
+    @Test
+    void gestorRecortaPorNucleoOuPorEquipe() {
+        dev.denetodev.sgd_api.entity.Nucleo houseCrm = mock(dev.denetodev.sgd_api.entity.Nucleo.class);
+        when(houseCrm.getId()).thenReturn(UUID.randomUUID());
+        when(houseCrm.getNome()).thenReturn("House-CRM");
+        dev.denetodev.sgd_api.entity.Nucleo multimidia = mock(dev.denetodev.sgd_api.entity.Nucleo.class);
+        when(multimidia.getId()).thenReturn(UUID.randomUUID());
+        when(multimidia.getNome()).thenReturn("Multimídia");
+        Area designCrm = area(diretoria, "Design");
+        when(designCrm.getNucleo()).thenReturn(houseCrm);
+        Area htmlCrm = area(diretoria, "HTML");
+        when(htmlCrm.getNucleo()).thenReturn(houseCrm);
+        Area motion = area(diretoria, "Motion");
+        when(motion.getNucleo()).thenReturn(multimidia);
+
+        Pessoa gestor = pessoa("Gina", designCrm, PerfilPessoa.GESTOR, null);
+        Pessoa ana = pessoa("Ana", designCrm, PerfilPessoa.PROFISSIONAL, null);
+        Pessoa bruno = pessoa("Bruno", htmlCrm, PerfilPessoa.PROFISSIONAL, null);
+        Pessoa caio = pessoa("Caio", motion, PerfilPessoa.PROFISSIONAL, null);
+        when(pessoaRepository.findAll()).thenReturn(List.of(gestor, ana, bruno, caio));
+        when(pessoaDemandaRepository.findVigentesPorPessoas(anyCollection())).thenReturn(List.of());
+
+        DashboardResponse doNucleo = service.montar(gestor, null, null, null, houseCrm.getId(), null, false, MES, HOJE);
+        assertEquals(2, doNucleo.resumo().pessoas());
+        assertEquals("Núcleo House-CRM (agregado)", doNucleo.titulo());
+
+        DashboardResponse daEquipe = service.montar(gestor, null, null, null, null, htmlCrm.getId(), false, MES, HOJE);
+        assertEquals(1, daEquipe.resumo().pessoas());
+        assertEquals("Equipe HTML (agregado)", daEquipe.titulo());
+
+        DashboardResponse todos = service.montar(gestor, null, null, null, null, null, false, MES, HOJE);
+        assertEquals(3, todos.resumo().pessoas());
+    }
+
     // ---- helpers ----
 
     private static Diretoria diretoria(String nome) {

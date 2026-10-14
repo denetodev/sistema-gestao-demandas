@@ -5,15 +5,18 @@
                 (ngModelChange)="mudarPessoa($event)" [style]="{ minWidth: '14rem' }" />
     }
     @if (ehGestorOuAdmin()) {
-      <p-select [options]="opcoesDiretoria()" optionLabel="nome" optionValue="id" [ngModel]="filtro().diretoriaId"
-                (ngModelChange)="mudarDiretoria($event)" [style]="{ minWidth: '14rem' }" />
+      <p-select [options]="opcoesNucleo()" optionLabel="nome" optionValue="id" [ngModel]="filtro().nucleoId"
+                (ngModelChange)="mudarNucleo($event)" [style]="{ minWidth: '12rem' }" ariaLabel="Filtrar por núcleo" />
+      <p-select [options]="opcoesEquipeGestao()" optionLabel="nome" optionValue="id" [ngModel]="filtro().areaId"
+                (ngModelChange)="mudarEquipeGestao($event)" [style]="{ minWidth: '12rem' }" [filter]="true" filterBy="nome"
+                ariaLabel="Filtrar por equipe" />
       <label class="detalhar">
         <p-checkbox [binary]="true" [ngModel]="filtro().porPessoa" (ngModelChange)="mudarPorPessoa($event)" />
         Detalhar por pessoa
       </label>
     }
     <p-datepicker [ngModel]="mes()" (ngModelChange)="mudarMes($event)" view="month" dateFormat="MM/yy"
-                  [showIcon]="true" [style]="{ width: '9rem' }" />
+                  [showIcon]="true" [style]="{ width: '12.5rem' }" />
   </ng-container>
 </app-barra-pagina>
 

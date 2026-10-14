@@ -70,13 +70,22 @@ public class DashboardService {
     }
 
     public DashboardResponse montar(
-            Jwt jwt, VisaoDashboard visao, UUID pessoaId, UUID diretoriaId, boolean porPessoa, YearMonth mes
+            Jwt jwt, VisaoDashboard visao, UUID pessoaId, UUID diretoriaId, UUID nucleoId, UUID areaId,
+            boolean porPessoa, YearMonth mes
     ) {
-        return montar(currentPessoaResolver.resolver(jwt), visao, pessoaId, diretoriaId, porPessoa, mes, LocalDate.now());
+        return montar(currentPessoaResolver.resolver(jwt), visao, pessoaId, diretoriaId, nucleoId, areaId,
+                porPessoa, mes, LocalDate.now());
     }
 
     DashboardResponse montar(
             Pessoa usuario, VisaoDashboard visaoPedida, UUID pessoaId, UUID diretoriaId,
+            boolean porPessoa, YearMonth mesPedido, LocalDate hoje
+    ) {
+        return montar(usuario, visaoPedida, pessoaId, diretoriaId, null, null, porPessoa, mesPedido, hoje);
+    }
+
+    DashboardResponse montar(
+            Pessoa usuario, VisaoDashboard visaoPedida, UUID pessoaId, UUID diretoriaId, UUID nucleoId, UUID areaId,
             boolean porPessoa, YearMonth mesPedido, LocalDate hoje
     ) {
         boolean adminOuGestor = ehAdminOuGestor(usuario);
@@ -87,6 +96,8 @@ public class DashboardService {
 
         List<Pessoa> alvo;
         UUID diretoriaFiltro = null;
+        UUID nucleoFiltro = null;
+        UUID areaFiltro = null;
         String titulo;
         switch (visao) {
             case MINHA -> {
@@ -117,12 +128,19 @@ public class DashboardService {
                     diretoriaFiltro = usuario.getArea().getDiretoria().getId();
                 } else {
                     diretoriaFiltro = diretoriaId;
+                    nucleoFiltro = nucleoId;
+                    areaFiltro = areaId;
                 }
                 UUID filtro = diretoriaFiltro;
+                UUID nucleo = nucleoFiltro;
+                UUID area = areaFiltro;
                 alvo = elegiveis().stream()
                         .filter(p -> filtro == null || (p.getArea() != null && p.getArea().getDiretoria().getId().equals(filtro)))
+                        .filter(p -> nucleo == null || (p.getArea() != null && p.getArea().getNucleo() != null
+                                && p.getArea().getNucleo().getId().equals(nucleo)))
+                        .filter(p -> area == null || (p.getArea() != null && p.getArea().getId().equals(area)))
                         .toList();
-                titulo = filtro == null ? "Todas as diretorias (agregado)" : "Diretoria " + diretoriaRepository.findById(filtro).map(Diretoria::getNome).orElse("") + " (agregado)";
+                titulo = tituloDaVisao(filtro, nucleo, area, alvo);
             }
         }
 
@@ -137,7 +155,9 @@ public class DashboardService {
             }
         }
         // Na visão por diretoria o resumo conta as demandas da diretoria, não só as das pessoas elegíveis
-        Collection<Demanda> demandasResumo = visao == VisaoDashboard.DIRETORIA
+        // Com núcleo ou equipe escolhidos, o resumo conta as demandas em que essas pessoas estão no time
+        boolean recorteDeTime = nucleoFiltro != null || areaFiltro != null;
+        Collection<Demanda> demandasResumo = visao == VisaoDashboard.DIRETORIA && !recorteDeTime
                 ? (diretoriaFiltro == null ? demandaRepository.findAll() : demandaRepository.findByDiretoriaId(diretoriaFiltro))
                 : demandasDistintas.values();
 
@@ -211,6 +231,21 @@ public class DashboardService {
                 : List.of();
 
         return new DashboardResponse(visao, titulo, mes.toString(), resumo, dias, linhasArea, linhasPessoa);
+    }
+
+    /** "Equipe Design (agregado)", "Núcleo House-CRM (agregado)", "Diretoria UGR (agregado)" ou "Todas as diretorias". */
+    private String tituloDaVisao(UUID diretoria, UUID nucleo, UUID area, List<Pessoa> alvo) {
+        if (area != null) {
+            String nome = alvo.stream().map(p -> p.getArea().getNome()).findFirst().orElse("");
+            return ("Equipe " + nome).trim() + " (agregado)";
+        }
+        if (nucleo != null) {
+            String nome = alvo.stream().map(p -> p.getArea().getNucleo().getNome()).findFirst().orElse("");
+            return ("Núcleo " + nome).trim() + " (agregado)";
+        }
+        return diretoria == null
+                ? "Todas as diretorias (agregado)"
+                : "Diretoria " + diretoriaRepository.findById(diretoria).map(Diretoria::getNome).orElse("") + " (agregado)";
     }
 
     private List<LinhaArea> porArea(
