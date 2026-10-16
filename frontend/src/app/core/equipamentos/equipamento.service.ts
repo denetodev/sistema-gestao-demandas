@@ -1,6 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import type { Demanda } from '../../features/demandas/data-access/demanda.model';
+import type { Pagina } from '../http/pagina.model';
 import {
   CategoriaEquipamento,
   ControleEquipamento,
@@ -8,6 +10,8 @@ import {
   EmprestimoPayload,
   Equipamento,
   EquipamentoPayload,
+  FotoEmprestimo,
+  MomentoFoto,
   GrupoEmprestimos,
   Termo,
 } from './equipamento.model';
@@ -68,6 +72,29 @@ export class EquipamentoService {
 
   cancelar(id: string) {
     return this.#http.patch<Emprestimo>(`${this.#base}/emprestimos/${id}/cancelar`, {});
+  }
+
+  // ---- fotos opcionais (saída e devolução) ----
+  fotos(emprestimoId: string) {
+    return this.#http.get<FotoEmprestimo[]>(`${this.#base}/emprestimos/${emprestimoId}/fotos`);
+  }
+
+  enviarFoto(emprestimoId: string, momento: MomentoFoto, arquivo: File) {
+    const corpo = new FormData();
+    corpo.append('arquivo', arquivo);
+    return this.#http.post<FotoEmprestimo>(`${this.#base}/emprestimos/${emprestimoId}/fotos`, corpo, { params: { momento } });
+  }
+
+  removerFoto(emprestimoId: string, fotoId: string) {
+    return this.#http.delete<void>(`${this.#base}/emprestimos/${emprestimoId}/fotos/${fotoId}`);
+  }
+
+  // ---- vínculo opcional com demanda ----
+  /** Busca por título ou código dentro da diretoria da pessoa (leitura aberta a todo vinculado). */
+  buscarDemandas(busca: string) {
+    return this.#http.get<Pagina<Demanda>>(`${this.#base}/demandas`, {
+      params: { escopo: 'DIRETORIA', size: 10, ...(busca ? { busca } : {}) },
+    });
   }
 
   // ---- acesso ao módulo (gestão) ----

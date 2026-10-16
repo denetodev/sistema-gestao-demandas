@@ -73,6 +73,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V16 | `pessoa.chave_c` (única, C ou F + 7 dígitos): substitui o CPF como identidade do vínculo. A coluna `cpf` saiu na V17 |
 | V17 | remove `pessoa.cpf` (e as constraints dele) |
 | V18 | módulo de equipamentos: `categoria_equipamento`, `equipamento`, `emprestimo`, `emprestimo_item`, `termo_equipamento`, `area.acessa_equipamentos` e `pessoa.papel_equipamentos` |
+| V19 | `emprestimo_foto`: fotos opcionais do equipamento na saída e na devolução (arquivo no bucket privado, pasta emprestimos/) |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

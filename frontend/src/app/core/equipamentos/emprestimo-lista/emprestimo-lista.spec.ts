@@ -62,6 +62,32 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     expect(component.podeContinuar()).toBeFalse();
   });
 
+  it('o OK do termo leva a demanda escolhida', async () => {
+    await criar({ perfil: 'ADMIN' });
+    preencher();
+    component.demandaEscolhida.set({ id: 'dm1', titulo: 'Newsletter' } as never);
+    component.continuar();
+
+    const promessa = component.confirmarTermoERegistrar();
+    const req = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/emprestimos'));
+    expect(req.request.body.demandaId).toBe('dm1');
+    req.flush({});
+    await promessa;
+  });
+
+  it('foto de saída só depois de autorizado; a de devolução, depois que saiu; quem consulta nunca', async () => {
+    await criar({ perfil: 'PROFISSIONAL', papelEquipamentos: 'OPERADOR_DE_ESTUDIO' });
+    expect(component.podeFotografar({ status: 'AGUARDANDO_AUTORIZACAO' } as never, 'SAIDA')).toBeFalse();
+    expect(component.podeFotografar({ status: 'AUTORIZADO' } as never, 'SAIDA')).toBeTrue();
+    expect(component.podeFotografar({ status: 'AUTORIZADO' } as never, 'DEVOLUCAO')).toBeFalse();
+    expect(component.podeFotografar({ status: 'RETIRADO' } as never, 'DEVOLUCAO')).toBeTrue();
+  });
+
+  it('quem só consulta não fotografa', async () => {
+    await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
+    expect(component.podeFotografar({ status: 'RETIRADO' } as never, 'DEVOLUCAO')).toBeFalse();
+  });
+
   it('quem só consulta não vê os botões de operar nem de autorizar', async () => {
     await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
     expect(component.auth.operaEquipamentos()).toBeFalse();
