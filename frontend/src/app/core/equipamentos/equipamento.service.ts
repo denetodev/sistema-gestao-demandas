@@ -120,11 +120,7 @@ export class EquipamentoService {
     });
   }
 
-  // ---- acesso ao módulo (gestão) ----
-  definirAcessoEquipe(areaId: string, acessa: boolean) {
-    return this.#http.patch(`${this.#base}/areas/${areaId}/acesso-equipamentos`, { acessa });
-  }
-
+  // ---- papel da pessoa no módulo (gestão) ----
   definirPapel(pessoaId: string, papel: string | null) {
     return this.#http.patch(`${this.#base}/pessoas/${pessoaId}/papel-equipamentos`, { papel });
   }

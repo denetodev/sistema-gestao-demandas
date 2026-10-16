@@ -105,9 +105,6 @@ export class EmprestimoLista {
     this.periodo.set(null);
   }
 
-  /** Quem só consulta vê "quem está com quê": o backend já devolve só o que está retirado. */
-  titulo = computed(() => (this.auth.operaEquipamentos() ? 'Empréstimos' : 'Quem está com quê'));
-
   aguardando = computed(() => (this.emprestimos.value() ?? []).filter((e) => e.status === 'AGUARDANDO_AUTORIZACAO').length);
   atrasados = computed(() => (this.emprestimos.value() ?? []).filter((e) => e.atrasado).length);
 

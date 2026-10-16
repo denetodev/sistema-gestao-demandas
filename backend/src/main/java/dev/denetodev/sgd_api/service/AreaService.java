@@ -56,13 +56,6 @@ public class AreaService {
         return paraResponse(area);
     }
 
-    /** Liga ou desliga o acesso da equipe inteira ao módulo de equipamentos. */
-    public AreaResponse definirAcessoEquipamentos(UUID id, boolean acessa) {
-        Area area = buscarEntidade(id);
-        area.setAcessaEquipamentos(acessa);
-        return paraResponse(area);
-    }
-
     public void desativar(UUID id) {
         buscarEntidade(id).setAtivo(false);
     }
@@ -96,7 +89,7 @@ public class AreaService {
                 a.getDiretoria().getId(), a.getDiretoria().getNome(),
                 a.getNucleo() != null ? a.getNucleo().getId() : null,
                 a.getNucleo() != null ? a.getNucleo().getNome() : null,
-                a.isAtivo(), a.isAcessaEquipamentos(), a.getCreatedAt(), a.getUpdatedAt()
+                a.isAtivo(), a.getCreatedAt(), a.getUpdatedAt()
         );
     }
 }

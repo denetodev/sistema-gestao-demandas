@@ -6,6 +6,6 @@ import java.util.UUID;
 public record AreaResponse(
         UUID id, String nome, UUID diretoriaId, String diretoriaNome,
         UUID nucleoId, String nucleoNome,
-        boolean ativo, boolean acessaEquipamentos, OffsetDateTime createdAt, OffsetDateTime updatedAt
+        boolean ativo, OffsetDateTime createdAt, OffsetDateTime updatedAt
 ) {
 }

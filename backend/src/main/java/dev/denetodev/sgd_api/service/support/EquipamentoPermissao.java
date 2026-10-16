@@ -9,11 +9,10 @@ import org.springframework.security.access.AccessDeniedException;
  * Regras do módulo de equipamentos, sem estado (usadas também para montar a resposta da própria pessoa).
  *
  * <ul>
- *   <li>Acesso: Admin e Gestor sempre; Profissional se a equipe dele tem acesso ou se ele tem um papel no módulo;
- *       Visualizador nunca.</li>
+ *   <li>Acesso (ver e usar): Admin e Gestor, que veem tudo; e Profissional que tenha um papel no módulo
+ *       (Operador de estúdio ou Gestor de equipamentos). Sem papel, nem para consultar. Visualizador nunca.</li>
  *   <li>Gerencia (edita o inventário e autoriza ou recusa empréstimos): Admin, Gestor e Gestor de equipamentos.</li>
  *   <li>Opera (registra empréstimo, entrega e recebe a devolução): quem gerencia mais o Operador de estúdio.</li>
- *   <li>Quem só tem acesso consulta o inventário e vê quem está com quê.</li>
  * </ul>
  */
 public final class EquipamentoPermissao {
@@ -29,10 +28,7 @@ public final class EquipamentoPermissao {
         if (p.getPerfil() == PerfilPessoa.VISUALIZADOR) {
             return false;
         }
-        if (ehGestao(p) || p.getPapelEquipamentos() != null) {
-            return true;
-        }
-        return p.getArea() != null && p.getArea().isAcessaEquipamentos();
+        return ehGestao(p) || p.getPapelEquipamentos() != null;
     }
 
     public static boolean gerencia(Pessoa p) {

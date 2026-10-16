@@ -63,7 +63,6 @@ class EquipamentoAgendaTest {
 
     private Pessoa pessoa(String nome, PapelEquipamentos papel, boolean equipeLiberada) {
         Area area = new Area(null, "Equipe " + nome);
-        area.setAcessaEquipamentos(equipeLiberada);
         Pessoa p = new Pessoa(nome, area);
         ReflectionTestUtils.setField(p, "id", UUID.randomUUID());
         p.setPerfil(PerfilPessoa.PROFISSIONAL);
@@ -120,19 +119,12 @@ class EquipamentoAgendaTest {
         assertEquals(2, linha(r, cabos).blocos().get(0).quantidade());
     }
 
+
     @Test
-    void quemSoConsultaVeApenasOQueEstaComAlguemAgora() {
+    void profissionalSemPapelNaoVeAAgendaNemOInventario() {
         agir(consulta);
-        EmprestimoItem reserva = uso(camera, "Maria", 3, 4, StatusEmprestimo.AUTORIZADO, 1);
-        EmprestimoItem comAlguem = uso(cabos, "João", -1, 1, StatusEmprestimo.RETIRADO, 2);
-        abertos(reserva, comAlguem);
-
-        AgendaResponse r = service.agenda(jwt, AGORA.minusDays(7), AGORA.plusDays(14));
-
-        assertTrue(linha(r, camera).blocos().isEmpty());
-        assertEquals(1, linha(r, cabos).blocos().size());
-        // quem consulta nem pede o histórico de devoluções
-        org.mockito.Mockito.verify(itemRepository, org.mockito.Mockito.never()).devolvidosDesde(any());
+        assertThrows(AccessDeniedException.class, () -> service.agenda(jwt, null, null));
+        assertThrows(AccessDeniedException.class, () -> service.listar(jwt, null, null));
     }
 
     @Test

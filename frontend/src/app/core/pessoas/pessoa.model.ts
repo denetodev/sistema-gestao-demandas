@@ -21,7 +21,7 @@ export interface Pessoa {
   referenciaAreaId: string | null;
   referenciaAreaNome: string | null;
   fotoUrl: string | null;
-  /** Papel no módulo de equipamentos (nulo = só consulta, se a equipe tiver acesso). */
+  /** Papel no módulo de equipamentos (nulo = sem acesso ao módulo, para Profissional). */
   papelEquipamentos?: PapelEquipamentos | null;
   status: StatusPessoa;
   perfil: Perfil;

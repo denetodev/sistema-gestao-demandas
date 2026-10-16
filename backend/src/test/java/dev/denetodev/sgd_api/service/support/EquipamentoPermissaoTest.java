@@ -11,19 +11,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EquipamentoPermissaoTest {
 
-    private Pessoa pessoa(PerfilPessoa perfil, boolean equipeComAcesso, PapelEquipamentos papel) {
-        Area area = new Area(null, "Equipe");
-        area.setAcessaEquipamentos(equipeComAcesso);
-        Pessoa p = new Pessoa("Fulano", area);
+    private Pessoa pessoa(PerfilPessoa perfil, PapelEquipamentos papel) {
+        Pessoa p = new Pessoa("Fulano", new Area(null, "Equipe"));
         p.setPerfil(perfil);
         p.setPapelEquipamentos(papel);
         return p;
     }
 
     @Test
-    void adminEGestorTemTudo() {
+    void adminEGestorVeemETemTudoMesmoSemPapel() {
         for (PerfilPessoa perfil : new PerfilPessoa[]{PerfilPessoa.ADMIN, PerfilPessoa.GESTOR}) {
-            Pessoa p = pessoa(perfil, false, null);
+            Pessoa p = pessoa(perfil, null);
             assertTrue(EquipamentoPermissao.temAcesso(p));
             assertTrue(EquipamentoPermissao.gerencia(p));
             assertTrue(EquipamentoPermissao.opera(p));
@@ -31,46 +29,43 @@ class EquipamentoPermissaoTest {
     }
 
     @Test
-    void profissionalDeEquipeLiberadaSoConsultaSemPapel() {
-        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, true, null);
-        assertTrue(EquipamentoPermissao.temAcesso(p));
+    void profissionalSemPapelNaoEntraNemParaConsultar() {
+        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, null);
+        assertFalse(EquipamentoPermissao.temAcesso(p));
         assertFalse(EquipamentoPermissao.opera(p));
         assertFalse(EquipamentoPermissao.gerencia(p));
+        assertThrows(AccessDeniedException.class, () -> EquipamentoPermissao.exigirAcesso(p));
         assertThrows(AccessDeniedException.class, () -> EquipamentoPermissao.exigirOperacao(p));
         assertThrows(AccessDeniedException.class, () -> EquipamentoPermissao.exigirGerencia(p));
     }
 
     @Test
-    void profissionalDeEquipeNaoLiberadaSemPapelNaoEntra() {
-        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, false, null);
-        assertFalse(EquipamentoPermissao.temAcesso(p));
-        assertThrows(AccessDeniedException.class, () -> EquipamentoPermissao.exigirAcesso(p));
-    }
-
-    @Test
-    void operadorDeEstudioOperaMasNaoGerencia() {
-        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, true, PapelEquipamentos.OPERADOR_DE_ESTUDIO);
+    void operadorDeEstudioEntraEOperaMasNaoGerencia() {
+        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, PapelEquipamentos.OPERADOR_DE_ESTUDIO);
+        assertTrue(EquipamentoPermissao.temAcesso(p));
         assertTrue(EquipamentoPermissao.opera(p));
         assertFalse(EquipamentoPermissao.gerencia(p));
+        assertThrows(AccessDeniedException.class, () -> EquipamentoPermissao.exigirGerencia(p));
     }
 
     @Test
-    void gestorDeEquipamentosGerenciaEOpera() {
-        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, true, PapelEquipamentos.GESTOR_DE_EQUIPAMENTOS);
+    void gestorDeEquipamentosEntraGerenciaEOpera() {
+        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, PapelEquipamentos.GESTOR_DE_EQUIPAMENTOS);
+        assertTrue(EquipamentoPermissao.temAcesso(p));
         assertTrue(EquipamentoPermissao.gerencia(p));
         assertTrue(EquipamentoPermissao.opera(p));
     }
 
     @Test
-    void papelBastaParaTerAcessoMesmoSeAEquipeNaoForLiberada() {
-        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, false, PapelEquipamentos.OPERADOR_DE_ESTUDIO);
-        assertTrue(EquipamentoPermissao.temAcesso(p));
-        assertTrue(EquipamentoPermissao.opera(p));
+    void aEquipeNaoDaAcessoSozinha() {
+        // o acesso por equipe saiu: a marca na equipe, mesmo que ainda exista no banco, não vale mais
+        Pessoa p = pessoa(PerfilPessoa.PROFISSIONAL, null);
+        assertFalse(EquipamentoPermissao.temAcesso(p));
     }
 
     @Test
-    void visualizadorNuncaEntraNemComPapelOuEquipeLiberada() {
-        Pessoa p = pessoa(PerfilPessoa.VISUALIZADOR, true, PapelEquipamentos.GESTOR_DE_EQUIPAMENTOS);
+    void visualizadorNuncaEntraNemComPapel() {
+        Pessoa p = pessoa(PerfilPessoa.VISUALIZADOR, PapelEquipamentos.GESTOR_DE_EQUIPAMENTOS);
         assertFalse(EquipamentoPermissao.temAcesso(p));
         assertFalse(EquipamentoPermissao.gerencia(p));
         assertFalse(EquipamentoPermissao.opera(p));

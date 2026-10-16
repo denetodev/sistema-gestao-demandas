@@ -63,7 +63,6 @@ class EmprestimoFotoServiceTest {
 
     private Pessoa pessoa(String nome, PapelEquipamentos papel, boolean equipeLiberada) {
         Area area = new Area(null, "Equipe " + nome);
-        area.setAcessaEquipamentos(equipeLiberada);
         Pessoa p = new Pessoa(nome, area);
         ReflectionTestUtils.setField(p, "id", UUID.randomUUID());
         p.setPerfil(PerfilPessoa.PROFISSIONAL);
@@ -131,14 +130,12 @@ class EmprestimoFotoServiceTest {
         verify(storage).remover(argThat(c -> c.startsWith("emprestimos/")));
     }
 
-    @Test
-    void quemSoConsultaVeFotosApenasDeEmprestimoRetirado() {
-        agir(consulta);
-        assertThrows(AccessDeniedException.class, () -> service.listar(jwt, emprestimo.getId()));
 
+    @Test
+    void profissionalSemPapelNaoVeAsFotos() {
+        agir(consulta);
         emprestimo.setStatus(StatusEmprestimo.RETIRADO);
-        when(fotoRepository.findByEmprestimoIdOrderByCreatedAtAsc(emprestimo.getId())).thenReturn(List.of());
-        assertTrue(service.listar(jwt, emprestimo.getId()).isEmpty());
+        assertThrows(AccessDeniedException.class, () -> service.listar(jwt, emprestimo.getId()));
     }
 
     @Test

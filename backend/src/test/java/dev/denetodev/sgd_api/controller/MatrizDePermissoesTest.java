@@ -212,8 +212,7 @@ class MatrizDePermissoesTest {
                 new Caso(A, "/emprestimos/" + ID + "/cancelar", QUEM_ESCREVE))) {
             c.add(base);
         }
-        // quem recebe acesso ao módulo (equipe inteira ou pessoa) é decisão da gestão
-        c.add(new Caso(A, "/areas/" + ID + "/acesso-equipamentos", GESTAO));
+        // quem recebe um papel no módulo é decisão da gestão
         c.add(new Caso(A, "/pessoas/" + ID + "/papel-equipamentos", GESTAO));
 
         // relatório de outra pessoa e reabertura são decididos no serviço; aqui só a trava de Visualizador

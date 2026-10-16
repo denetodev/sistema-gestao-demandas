@@ -384,6 +384,10 @@ public class PessoaService {
         Pessoa ator = currentPessoaResolver.resolver(jwt);
         exigirGestorOuAdmin(ator);
         Pessoa pessoa = buscarEntidade(id);
+        checarPermissaoSobrePerfil(ator, pessoa.getPerfil(), pessoa);
+        if (papel != null && pessoa.getPerfil() == PerfilPessoa.VISUALIZADOR) {
+            throw new EstadoInvalidoException("Visualizador não tem acesso ao módulo de equipamentos. Mude o perfil antes de dar um papel");
+        }
         PapelEquipamentos anterior = pessoa.getPapelEquipamentos();
         pessoa.setPapelEquipamentos(papel);
         registrarAuditoria(pessoa.getId(), "papel_equipamentos", anterior == null ? null : anterior.name(),

@@ -335,7 +335,7 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
       {
         pergunta: 'Quem vê o quê?',
         resposta:
-          'Operador e gestores veem todos os empréstimos. Quem só tem acesso ao módulo vê "quem está com quê". As fotos de saída e de devolução são opcionais e ficam nos detalhes (olho).',
+          'Só entram no módulo o Operador de estúdio, o Gestor de equipamentos, o Gestor e o Admin, e todos veem todos os empréstimos. As fotos de saída e de devolução são opcionais e ficam nos detalhes (olho).',
       },
     ],
   },
@@ -380,7 +380,7 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
       {
         pergunta: 'Quem vê o quê?',
         resposta:
-          'Operador e gestores veem reservas, empréstimos e devoluções recentes. Quem só tem acesso ao módulo vê apenas o que está com alguém agora.',
+          'Quem tem acesso ao módulo vê reservas, empréstimos e devoluções recentes. Sem o papel de Operador de estúdio ou de Gestor de equipamentos (ou perfil Gestor ou Admin), a pessoa não entra.',
       },
     ],
   },

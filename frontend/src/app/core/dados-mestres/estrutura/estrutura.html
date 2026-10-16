@@ -45,17 +45,13 @@
     <div class="tabela-rolagem">
       <p-table [value]="equipes()" [loading]="areas.isLoading()" dataKey="id">
         <ng-template pTemplate="header">
-          <tr><th>Equipe</th><th>Núcleo</th><th>Diretoria</th><th>Acessa equipamentos</th><th class="col-acoes"></th></tr>
+          <tr><th>Equipe</th><th>Núcleo</th><th>Diretoria</th><th class="col-acoes"></th></tr>
         </ng-template>
         <ng-template pTemplate="body" let-a>
           <tr>
             <td>{{ a.nome }}</td>
             <td>{{ a.nucleoNome ?? '—' }}</td>
             <td>{{ a.diretoriaNome ?? '—' }}</td>
-            <td>
-              <p-checkbox [binary]="true" [ngModel]="a.acessaEquipamentos" (ngModelChange)="alternarEquipamentos(a, $event)"
-                [ariaLabel]="'Equipe ' + a.nome + ' acessa o módulo de equipamentos'" />
-            </td>
             <td class="col-acoes">
               <p-button [text]="true" icon="pi pi-pencil" ariaLabel="Mudar núcleo da equipe" (onClick)="editarEquipe(a)" />
             </td>

@@ -193,14 +193,12 @@ public class EquipamentoService {
     }
 
     /**
-     * Agenda (Gantt): quem opera ou gerencia vê reservas, empréstimos e devoluções recentes; quem só consulta vê
-     * apenas o que está com alguém agora, como na lista de "quem está com quê".
+     * Agenda (Gantt): reservas, empréstimos em curso e devoluções recentes de cada equipamento na janela pedida.
      */
     @Transactional(readOnly = true)
     public AgendaResponse agenda(Jwt jwt, OffsetDateTime de, OffsetDateTime ate) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         EquipamentoPermissao.exigirAcesso(usuario);
-        boolean opera = EquipamentoPermissao.opera(usuario);
         OffsetDateTime agora = OffsetDateTime.now(clock);
         OffsetDateTime inicioJanela = de == null ? agora.minusDays(7) : de;
         OffsetDateTime fimJanela = ate == null ? agora.plusDays(21) : ate;
@@ -217,16 +215,11 @@ public class EquipamentoService {
 
         if (!ids.isEmpty()) {
             for (EmprestimoItem i : itemRepository.ocupacao(ids, OCUPAM)) {
-                if (!opera && i.getEmprestimo().getStatus() != StatusEmprestimo.RETIRADO) {
-                    continue;
-                }
                 adicionarBloco(blocos, i, i.getEmprestimo().getPrevistaDevolucao(), false, agora, inicioJanela, fimJanela);
             }
-            if (opera) {
-                for (EmprestimoItem i : itemRepository.devolvidosDesde(inicioJanela)) {
-                    if (ids.contains(i.getEquipamento().getId())) {
-                        adicionarBloco(blocos, i, i.getDevolvidoEm(), true, agora, inicioJanela, fimJanela);
-                    }
+            for (EmprestimoItem i : itemRepository.devolvidosDesde(inicioJanela)) {
+                if (ids.contains(i.getEquipamento().getId())) {
+                    adicionarBloco(blocos, i, i.getDevolvidoEm(), true, agora, inicioJanela, fimJanela);
                 }
             }
         }

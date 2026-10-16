@@ -57,10 +57,7 @@ public class EmprestimoFotoService {
     public List<FotoEmprestimoResponse> listar(Jwt jwt, UUID emprestimoId) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         EquipamentoPermissao.exigirAcesso(usuario);
-        Emprestimo emprestimo = buscarEmprestimo(emprestimoId);
-        if (!EquipamentoPermissao.opera(usuario) && emprestimo.getStatus() != StatusEmprestimo.RETIRADO) {
-            throw new AccessDeniedException("Sem permissão para ver as fotos deste empréstimo");
-        }
+        buscarEmprestimo(emprestimoId); // 404 se não existir
         return fotoRepository.findByEmprestimoIdOrderByCreatedAtAsc(emprestimoId).stream().map(this::paraResponse).toList();
     }
 

@@ -74,7 +74,6 @@ class EmprestimoServiceTest {
         gestorEquip = pessoa("Gestor equip", PerfilPessoa.PROFISSIONAL, PapelEquipamentos.GESTOR_DE_EQUIPAMENTOS);
         admin = pessoa("Admin", PerfilPessoa.ADMIN, null);
         consulta = pessoa("Consulta", PerfilPessoa.PROFISSIONAL, null);
-        ((Area) ReflectionTestUtils.getField(consulta, "area")).setAcessaEquipamentos(true);
 
         camera = equipamento("Câmera A7", ControleEquipamento.INDIVIDUAL, 1);
         cabos = equipamento("Cabo HDMI", ControleEquipamento.QUANTIDADE, 10);
@@ -448,6 +447,24 @@ class EmprestimoServiceTest {
     }
 
     @Test
+    void profissionalSemPapelNaoEntraEmNadaDoModulo() {
+        Emprestimo e = registrarComoOperador(false);
+        agir(consulta); // Profissional sem papel: nem para consultar
+        assertThrows(AccessDeniedException.class, () -> service.listar(jwt, EmprestimoService.Grupo.ATIVOS));
+        assertThrows(AccessDeniedException.class, () -> service.buscar(jwt, e.getId()));
+        assertThrows(AccessDeniedException.class, () -> service.resumo(jwt));
+    }
+
+    @Test
+    void adminEGestorSemPapelVeemTudo() {
+        registrarComoOperador(false);
+        when(emprestimoRepository.findByStatusIn(anyCollection())).thenReturn(List.copyOf(banco.values()));
+        agir(admin);
+        assertEquals(1, service.listar(jwt, EmprestimoService.Grupo.ATIVOS).size());
+        assertEquals(1, service.resumo(jwt).aguardandoAutorizacao());
+    }
+
+    @Test
     void quemSoConsultaNaoCancelaPedidoDeOutro() {
         Emprestimo e = registrarComoOperador(false);
         agir(consulta);
@@ -467,24 +484,7 @@ class EmprestimoServiceTest {
         assertFalse(service.buscar(jwt, aguardando.getId()).atrasado()); // só conta atraso depois que saiu
     }
 
-    @Test
-    void quemSoConsultaVeApenasOQueEstaRetirado() {
-        agir(consulta);
-        when(emprestimoRepository.findByStatusIn(anyCollection())).thenReturn(List.of());
 
-        service.listar(jwt, EmprestimoService.Grupo.TODOS);
-
-        ArgumentCaptor<Collection<StatusEmprestimo>> captor = ArgumentCaptor.forClass(Collection.class);
-        verify(emprestimoRepository).findByStatusIn(captor.capture());
-        assertEquals(Set.of(StatusEmprestimo.RETIRADO), new HashSet<>(captor.getValue()));
-    }
-
-    @Test
-    void quemSoConsultaNaoAbreEmprestimoQueNaoEstaRetirado() {
-        Emprestimo e = registrarComoOperador(false);
-        agir(consulta);
-        assertThrows(AccessDeniedException.class, () -> service.buscar(jwt, e.getId()));
-    }
 
     @Test
     void filaMostraAguardandoExternoPrimeiro() {
@@ -585,20 +585,6 @@ class EmprestimoServiceTest {
         assertTrue(externo.isExterno());
     }
 
-    @Test
-    void resumoParaQuemSoConsultaTrazSoOsAtrasados() {
-        service_registrarOutro(true);
-        Emprestimo retirado = retiradoComDoisItens();
-        ReflectionTestUtils.setField(retirado, "previstaDevolucao", agora().minusHours(2));
-        when(emprestimoRepository.findByStatusIn(anyCollection())).thenReturn(List.copyOf(banco.values()));
-        agir(consulta);
-
-        ResumoEmprestimosResponse r = service.resumo(jwt);
-
-        assertEquals(0, r.aguardandoAutorizacao());
-        assertEquals(0, r.aguardandoExterno());
-        assertEquals(1, r.atrasados());
-    }
 
     private Emprestimo service_registrarOutro(boolean externo) {
         agir(operador);
