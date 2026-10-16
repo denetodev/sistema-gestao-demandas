@@ -11,6 +11,7 @@ import { Textarea } from 'primeng/textarea';
 import { DatePicker } from 'primeng/datepicker';
 import { MultiSelect } from 'primeng/multiselect';
 import { Checkbox } from 'primeng/checkbox';
+import { AutoComplete } from 'primeng/autocomplete';
 import { Button } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { AuthService } from '../../auth/auth.service';
@@ -19,13 +20,14 @@ import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
 import { chaveCValida, normalizarChaveC } from '../../util/chave-c';
 import { EquipamentoService } from '../equipamento.service';
 import { pedeAtencao, resumoItens, rotuloSituacao, severidadeSituacao } from '../equipamento-apresentacao';
-import type { Emprestimo, Equipamento, GrupoEmprestimos } from '../equipamento.model';
+import type { Emprestimo, Equipamento, FotoEmprestimo, GrupoEmprestimos, MomentoFoto } from '../equipamento.model';
+import type { Demanda } from '../../../features/demandas/data-access/demanda.model';
 
 @Component({
   selector: 'app-emprestimo-lista',
   imports: [
     DatePipe, FormsModule, ReactiveFormsModule, RouterLink, TableModule, Dialog, InputText, InputNumber, Textarea,
-    DatePicker, MultiSelect, Checkbox, Button, Tag, BarraPagina, Pilulas,
+    DatePicker, MultiSelect, Checkbox, AutoComplete, Button, Tag, BarraPagina, Pilulas,
   ],
   templateUrl: './emprestimo-lista.html',
   styleUrl: './emprestimo-lista.scss',
@@ -85,6 +87,7 @@ export class EmprestimoLista {
     this.form.reset({ externo: false });
     this.selecionados.set([]);
     this.quantidades.set({});
+    this.demandaEscolhida.set(null);
     this.etapa.set('dados');
     this.equipamentos.reload();
     this.termo.reload();
@@ -97,6 +100,19 @@ export class EmprestimoLista {
 
   mudarQuantidade(e: Equipamento, valor: number | null) {
     this.quantidades.update((q) => ({ ...q, [e.id]: valor ?? 1 }));
+  }
+
+  // ---- vínculo opcional com demanda ----
+  demandaEscolhida = signal<Demanda | null>(null);
+  sugestoesDemanda = signal<Demanda[]>([]);
+
+  async buscarDemandas(evento: { query: string }) {
+    try {
+      const pagina = await firstValueFrom(this.#service.buscarDemandas(evento.query));
+      this.sugestoesDemanda.set(pagina.content);
+    } catch {
+      this.sugestoesDemanda.set([]);
+    }
   }
 
   chaveOk(): boolean {
@@ -128,7 +144,7 @@ export class EmprestimoLista {
           externo: v.externo,
           localUso: v.localUso.trim() || null,
           previstaDevolucao: v.previstaDevolucao!.toISOString(),
-          demandaId: null,
+          demandaId: this.demandaEscolhida()?.id ?? null,
           atividadeId: null,
           itens: this.selecionados().map((e) => ({
             equipamentoId: e.id,
@@ -182,6 +198,62 @@ export class EmprestimoLista {
   }
   cancelar(e: Emprestimo) {
     return this.agir(firstValueFrom(this.#service.cancelar(e.id)));
+  }
+
+  // ---- detalhes e fotos ----
+  momentos: MomentoFoto[] = ['SAIDA', 'DEVOLUCAO'];
+  detalhe = signal<Emprestimo | null>(null);
+  fotos = signal<FotoEmprestimo[]>([]);
+  enviandoFoto = signal(false);
+
+  fotosDe(momento: MomentoFoto) {
+    return this.fotos().filter((f) => f.momento === momento);
+  }
+
+  async abrirDetalhe(e: Emprestimo) {
+    this.detalhe.set(e);
+    await this.carregarFotos(e.id);
+  }
+
+  private async carregarFotos(id: string) {
+    try {
+      this.fotos.set(await firstValueFrom(this.#service.fotos(id)));
+    } catch {
+      this.fotos.set([]);
+    }
+  }
+
+  /** Foto de saída só depois de autorizado; a de devolução, depois que o equipamento saiu. */
+  podeFotografar(e: Emprestimo, momento: MomentoFoto) {
+    if (!this.auth.operaEquipamentos()) return false;
+    return momento === 'SAIDA'
+      ? e.status === 'AUTORIZADO' || e.status === 'RETIRADO' || e.status === 'DEVOLVIDO'
+      : e.status === 'RETIRADO' || e.status === 'DEVOLVIDO';
+  }
+
+  async escolherFoto(e: Emprestimo, momento: MomentoFoto, evento: Event) {
+    const input = evento.target as HTMLInputElement;
+    const arquivo = input.files?.[0];
+    input.value = '';
+    if (!arquivo) return;
+    this.enviandoFoto.set(true);
+    try {
+      await firstValueFrom(this.#service.enviarFoto(e.id, momento, arquivo));
+      await this.carregarFotos(e.id);
+    } catch {
+      // aviso já exibido pelo interceptor
+    } finally {
+      this.enviandoFoto.set(false);
+    }
+  }
+
+  async removerFoto(e: Emprestimo, foto: FotoEmprestimo) {
+    try {
+      await firstValueFrom(this.#service.removerFoto(e.id, foto.id));
+      await this.carregarFotos(e.id);
+    } catch {
+      // aviso já exibido pelo interceptor
+    }
   }
 
   // ---- recusar ----

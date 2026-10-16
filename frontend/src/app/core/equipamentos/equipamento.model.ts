@@ -109,6 +109,19 @@ export interface EmprestimoPayload {
   termoAceito: boolean;
 }
 
+export type MomentoFoto = 'SAIDA' | 'DEVOLUCAO';
+
+/** url é assinada e vence em poucos minutos (bucket privado): recarregue a lista quando precisar. */
+export interface FotoEmprestimo {
+  id: string;
+  momento: MomentoFoto;
+  url: string;
+  validadeSegundos: number;
+  tamanho: number;
+  enviadaPorNome: string;
+  createdAt: string;
+}
+
 export interface Termo {
   versao: number;
   texto: string;

@@ -54,6 +54,7 @@
             <td>{{ e.previstaDevolucao | date: 'dd/MM/yyyy HH:mm' }}</td>
             <td>{{ e.localUso ?? (e.externo ? 'Fora do prédio' : 'No prédio') }}</td>
             <td class="col-acoes">
+              <p-button [text]="true" size="small" severity="secondary" icon="pi pi-eye" ariaLabel="Ver detalhes e fotos" (onClick)="abrirDetalhe(e)" />
               @if (podeAutorizar(e)) {
                 <p-button label="Autorizar" size="small" icon="pi pi-check" (onClick)="autorizar(e)" />
                 <p-button label="Recusar" size="small" severity="danger" [outlined]="true" icon="pi pi-times" (onClick)="abrirRecusa(e)" />
@@ -128,6 +129,13 @@
         }
       }
 
+      <label for="demanda">Demanda (opcional)</label>
+      <p-autocomplete inputId="demanda" [ngModel]="demandaEscolhida()" (ngModelChange)="demandaEscolhida.set($event)"
+        [ngModelOptions]="{ standalone: true }" [suggestions]="sugestoesDemanda()" (completeMethod)="buscarDemandas($event)"
+        optionLabel="titulo" [dropdown]="true" [forceSelection]="true" placeholder="Buscar por título ou código" appendTo="body">
+        <ng-template let-d pTemplate="item">{{ d.codigo ? d.codigo + ' · ' : '' }}{{ d.titulo }}</ng-template>
+      </p-autocomplete>
+
       <label for="prevista">Devolução prevista</label>
       <p-datepicker inputId="prevista" formControlName="previstaDevolucao" [showTime]="true" dateFormat="dd/mm/yy"
         [showIcon]="true" appendTo="body" [minDate]="agora" />
@@ -152,6 +160,57 @@
         <p-button label="Voltar" severity="secondary" [text]="true" (onClick)="etapa.set('dados')" />
         <p-button label="OK, registrar empréstimo" icon="pi pi-check" [loading]="salvando()" (onClick)="confirmarTermoERegistrar()" />
       </div>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog [visible]="!!detalhe()" (visibleChange)="!$event && detalhe.set(null)" header="Empréstimo" [modal]="true" [style]="{ width: '620px' }">
+  @if (detalhe(); as d) {
+    <div class="detalhe">
+      <div class="situacao">
+        <p-tag [value]="rotuloSituacao(d)" [severity]="severidadeSituacao(d)" />
+        @if (d.externo) { <p-tag value="EXTERNO" severity="contrast" icon="pi pi-external-link" /> }
+      </div>
+      <dl>
+        <dt>Quem retirou</dt><dd>{{ d.retiranteNome }}{{ d.retiranteChaveC ? ' · ' + d.retiranteChaveC : '' }}{{ d.retiranteContato ? ' · ' + d.retiranteContato : '' }}</dd>
+        <dt>Equipamentos</dt><dd>{{ resumoItens(d) }}</dd>
+        <dt>Devolução prevista</dt><dd>{{ d.previstaDevolucao | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        @if (d.localUso) { <dt>Onde vai ser usado</dt><dd>{{ d.localUso }}</dd> }
+        @if (d.finalidade) { <dt>Finalidade</dt><dd>{{ d.finalidade }}</dd> }
+        @if (d.demandaTitulo) { <dt>Demanda</dt><dd>{{ d.demandaTitulo }}</dd> }
+        <dt>Registrado por</dt><dd>{{ d.registradoPorNome }} em {{ d.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>Termo</dt><dd>versão {{ d.termoVersao }}, aceito em {{ d.termoAceitoEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        @if (d.autorizadoPorNome) { <dt>{{ d.status === 'RECUSADO' ? 'Recusado por' : 'Autorizado por' }}</dt><dd>{{ d.autorizadoPorNome }} em {{ d.autorizadoEm | date: 'dd/MM/yyyy HH:mm' }}</dd> }
+        @if (d.motivoRecusa) { <dt>Motivo da recusa</dt><dd>{{ d.motivoRecusa }}</dd> }
+        @if (d.retiradoPorNome) { <dt>Entregue por</dt><dd>{{ d.retiradoPorNome }} em {{ d.retiradoEm | date: 'dd/MM/yyyy HH:mm' }}</dd> }
+        @if (d.devolvidoPorNome) { <dt>Recebido por</dt><dd>{{ d.devolvidoPorNome }} em {{ d.devolvidoEm | date: 'dd/MM/yyyy HH:mm' }}</dd> }
+        @if (d.observacoesDevolucao) { <dt>Observações da devolução</dt><dd>{{ d.observacoesDevolucao }}</dd> }
+      </dl>
+
+      @for (momento of momentos; track momento) {
+        @if (fotosDe(momento).length || podeFotografar(d, momento)) {
+          <h4>{{ momento === 'SAIDA' ? 'Fotos da saída' : 'Fotos da devolução' }} <small class="sub">(opcional)</small></h4>
+          <div class="fotos">
+            @for (f of fotosDe(momento); track f.id) {
+              <figure class="foto">
+                <a [href]="f.url" target="_blank" rel="noopener"><img [src]="f.url" alt="Foto do equipamento" loading="lazy" /></a>
+                @if (auth.operaEquipamentos()) {
+                  <p-button class="foto__remover" [text]="true" size="small" severity="danger" icon="pi pi-trash" ariaLabel="Remover foto" (onClick)="removerFoto(d, f)" />
+                }
+              </figure>
+            }
+            @if (podeFotografar(d, momento)) {
+              <label class="foto foto--nova">
+                <i class="pi pi-camera"></i>
+                <span>{{ enviandoFoto() ? 'Enviando...' : 'Adicionar foto' }}</span>
+                <input type="file" accept="image/jpeg,image/png" capture="environment" [disabled]="enviandoFoto()"
+                  (change)="escolherFoto(d, momento, $event)" />
+              </label>
+            }
+          </div>
+        }
+      }
+      <small class="sub">JPEG ou PNG, até 5 MB cada, no máximo 6 por etapa.</small>
     </div>
   }
 </p-dialog>
