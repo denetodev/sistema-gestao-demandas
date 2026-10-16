@@ -26,10 +26,6 @@ public class Area {
     @Column(name = "ativo", nullable = false)
     private boolean ativo = true;
 
-    /** A equipe inteira entra no módulo de equipamentos (ex.: Videomaker, Operador). */
-    @Column(name = "acessa_equipamentos", nullable = false)
-    private boolean acessaEquipamentos = false;
-
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -53,8 +49,6 @@ public class Area {
     public void setNome(String nome) { this.nome = nome; }
     public boolean isAtivo() { return ativo; }
     public void setAtivo(boolean ativo) { this.ativo = ativo; }
-    public boolean isAcessaEquipamentos() { return acessaEquipamentos; }
-    public void setAcessaEquipamentos(boolean acessaEquipamentos) { this.acessaEquipamentos = acessaEquipamentos; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
 

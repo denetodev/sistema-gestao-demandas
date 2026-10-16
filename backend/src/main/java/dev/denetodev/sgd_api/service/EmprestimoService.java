@@ -103,27 +103,19 @@ public class EmprestimoService {
 
     // ---------- leitura ----------
 
-    /**
-     * Quem opera ou gerencia vê todas as filas. Quem só tem acesso enxerga apenas o que está retirado ("quem está
-     * com quê"), independentemente do grupo pedido.
-     */
+    /** Filas da tela: em andamento (padrão), histórico ou todos. */
     @Transactional(readOnly = true)
     public List<EmprestimoResponse> listar(Jwt jwt, Grupo grupo) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         EquipamentoPermissao.exigirAcesso(usuario);
         OffsetDateTime agora = OffsetDateTime.now(clock);
 
-        Set<StatusEmprestimo> status;
-        if (!EquipamentoPermissao.opera(usuario)) {
-            status = EnumSet.of(StatusEmprestimo.RETIRADO);
-        } else {
-            Grupo g = grupo == null ? Grupo.ATIVOS : grupo;
-            status = switch (g) {
-                case ATIVOS -> EM_ANDAMENTO;
-                case HISTORICO -> ENCERRADOS;
-                case TODOS -> EnumSet.allOf(StatusEmprestimo.class);
-            };
-        }
+        Grupo g = grupo == null ? Grupo.ATIVOS : grupo;
+        Set<StatusEmprestimo> status = switch (g) {
+            case ATIVOS -> EM_ANDAMENTO;
+            case HISTORICO -> ENCERRADOS;
+            case TODOS -> EnumSet.allOf(StatusEmprestimo.class);
+        };
         Comparator<Emprestimo> ordem = status.equals(ENCERRADOS)
                 ? Comparator.comparing(Emprestimo::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
                 : fila();
@@ -135,11 +127,7 @@ public class EmprestimoService {
     public EmprestimoResponse buscar(Jwt jwt, UUID id) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         EquipamentoPermissao.exigirAcesso(usuario);
-        Emprestimo emprestimo = buscarEntidade(id);
-        if (!EquipamentoPermissao.opera(usuario) && emprestimo.getStatus() != StatusEmprestimo.RETIRADO) {
-            throw new AccessDeniedException("Sem permissão para ver este empréstimo");
-        }
-        return paraResponse(emprestimo, OffsetDateTime.now(clock));
+        return paraResponse(buscarEntidade(id), OffsetDateTime.now(clock));
     }
 
     /** Contadores do aviso no menu. */
@@ -150,9 +138,6 @@ public class EmprestimoService {
         OffsetDateTime agora = OffsetDateTime.now(clock);
         List<Emprestimo> abertos = emprestimoRepository.findByStatusIn(EM_ANDAMENTO);
         long atrasados = abertos.stream().filter(e -> e.atrasado(agora)).count();
-        if (!EquipamentoPermissao.opera(usuario)) {
-            return new ResumoEmprestimosResponse(0, 0, atrasados);
-        }
         List<Emprestimo> aguardando = abertos.stream()
                 .filter(e -> e.getStatus() == StatusEmprestimo.AGUARDANDO_AUTORIZACAO).toList();
         return new ResumoEmprestimosResponse(aguardando.size(), aguardando.stream().filter(Emprestimo::isExterno).count(), atrasados);
@@ -452,12 +437,8 @@ public class EmprestimoService {
 
     public EmprestimoResponse cancelar(Jwt jwt, UUID id) {
         Pessoa ator = currentPessoaResolver.resolver(jwt);
-        EquipamentoPermissao.exigirAcesso(ator);
+        EquipamentoPermissao.exigirOperacao(ator);
         Emprestimo e = buscarEntidade(id);
-        boolean quemRegistrou = e.getRegistradoPor().getId().equals(ator.getId());
-        if (!EquipamentoPermissao.opera(ator) && !quemRegistrou) {
-            throw new AccessDeniedException("Sem permissão para cancelar este empréstimo");
-        }
         if (e.getStatus() != StatusEmprestimo.AGUARDANDO_AUTORIZACAO && e.getStatus() != StatusEmprestimo.AUTORIZADO) {
             throw new EstadoInvalidoException("Só dá para cancelar antes da entrega do equipamento");
         }

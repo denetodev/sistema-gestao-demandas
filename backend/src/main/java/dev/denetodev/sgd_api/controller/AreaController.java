@@ -1,6 +1,5 @@
 package dev.denetodev.sgd_api.controller;
 
-import dev.denetodev.sgd_api.dto.request.AcessoEquipamentosRequest;
 import dev.denetodev.sgd_api.dto.request.AreaRequest;
 import dev.denetodev.sgd_api.dto.response.AreaResponse;
 import dev.denetodev.sgd_api.service.AreaService;
@@ -42,12 +41,6 @@ public class AreaController {
     @PutMapping("/{id}")
     public AreaResponse atualizar(@PathVariable UUID id, @Valid @RequestBody AreaRequest request) {
         return areaService.atualizar(id, request);
-    }
-
-    /** Liga ou desliga o acesso da equipe inteira ao módulo de equipamentos. */
-    @PatchMapping("/{id}/acesso-equipamentos")
-    public AreaResponse definirAcessoEquipamentos(@PathVariable UUID id, @RequestBody AcessoEquipamentosRequest request) {
-        return areaService.definirAcessoEquipamentos(id, request.acessa());
     }
 
     @DeleteMapping("/{id}")
