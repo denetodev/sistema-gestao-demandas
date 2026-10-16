@@ -93,6 +93,7 @@ class MatrizDePermissoesTest {
     @MockitoBean TipoPecaService tipoPecaService;
     @MockitoBean EquipamentoService equipamentoService;
     @MockitoBean EmprestimoService emprestimoService;
+    @MockitoBean EmprestimoFotoService emprestimoFotoService;
 
     @BeforeEach
     void prepararChamadores() {
@@ -187,7 +188,7 @@ class MatrizDePermissoesTest {
         // (equipe liberada, papel, Gestor, Admin) e quem opera ou gerencia é decidido nos serviços
         // (EquipamentoPermissaoTest, EmprestimoServiceTest).
         for (String caminho : List.of("/equipamentos", "/equipamentos/" + ID, "/equipamentos/termo",
-                "/categorias-equipamento", "/emprestimos", "/emprestimos/" + ID)) {
+                "/categorias-equipamento", "/emprestimos", "/emprestimos/" + ID, "/emprestimos/" + ID + "/fotos")) {
             c.add(new Caso(G, caminho, TODOS_VINCULADOS));
         }
         for (Caso base : List.of(
@@ -199,6 +200,8 @@ class MatrizDePermissoesTest {
                 new Caso(U, "/categorias-equipamento/" + ID, QUEM_ESCREVE),
                 new Caso(D, "/categorias-equipamento/" + ID, QUEM_ESCREVE),
                 new Caso(P, "/emprestimos", QUEM_ESCREVE),
+                new Caso(P, "/emprestimos/" + ID + "/fotos", QUEM_ESCREVE),
+                new Caso(D, "/emprestimos/" + ID + "/fotos/" + ID, QUEM_ESCREVE),
                 new Caso(A, "/emprestimos/" + ID + "/autorizar", QUEM_ESCREVE),
                 new Caso(A, "/emprestimos/" + ID + "/recusar", QUEM_ESCREVE),
                 new Caso(A, "/emprestimos/" + ID + "/retirar", QUEM_ESCREVE),
