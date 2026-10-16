@@ -13,6 +13,7 @@ import dev.denetodev.sgd_api.repository.PessoaRepository;
 import dev.denetodev.sgd_api.security.ConfirmacaoEmail;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
 import dev.denetodev.sgd_api.security.LimitadorTentativas;
+import dev.denetodev.sgd_api.service.support.EquipamentoPermissao;
 import dev.denetodev.sgd_api.util.ChaveC;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -378,6 +379,18 @@ public class PessoaService {
         }
     }
 
+    /** Gestor ou Admin define (ou remove, com nulo) o papel da pessoa no módulo de equipamentos. */
+    public PessoaResponse definirPapelEquipamentos(Jwt jwt, UUID id, PapelEquipamentos papel) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        exigirGestorOuAdmin(ator);
+        Pessoa pessoa = buscarEntidade(id);
+        PapelEquipamentos anterior = pessoa.getPapelEquipamentos();
+        pessoa.setPapelEquipamentos(papel);
+        registrarAuditoria(pessoa.getId(), "papel_equipamentos", anterior == null ? null : anterior.name(),
+                papel == null ? null : papel.name(), ator.getId());
+        return paraResponse(pessoa);
+    }
+
     private void exigirGestorOuAdmin(Pessoa ator) {
         if (ator.getPerfil() != PerfilPessoa.ADMIN && ator.getPerfil() != PerfilPessoa.GESTOR) {
             throw new AccessDeniedException("Só Gestor ou Admin pode ligar uma conta a um cadastro");
@@ -446,7 +459,8 @@ public class PessoaService {
                 aprovadoPor != null ? aprovadoPor.getNome() : null,
                 pessoa.getAprovadoEm(),
                 pessoa.getCreatedAt(), pessoa.getUpdatedAt(),
-                pessoa.getVinculoSugerido() != null
+                pessoa.getVinculoSugerido() != null,
+                pessoa.getPapelEquipamentos(), EquipamentoPermissao.temAcesso(pessoa)
         );
     }
 }

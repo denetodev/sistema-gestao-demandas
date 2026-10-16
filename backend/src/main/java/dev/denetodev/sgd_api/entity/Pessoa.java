@@ -53,6 +53,11 @@ public class Pessoa {
     @JoinColumn(name = "referencia_area_id")
     private Area referenciaArea;
 
+    /** Papel dentro do módulo de equipamentos; nulo = só consulta (se a equipe tiver acesso). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "papel_equipamentos", length = 30)
+    private PapelEquipamentos papelEquipamentos;
+
     @Column(name = "auth_user_id")
     private UUID authUserId;
 
@@ -115,6 +120,9 @@ public class Pessoa {
     }
 
     public LocalDate getInativadoEm() { return inativadoEm; }
+
+    public PapelEquipamentos getPapelEquipamentos() { return papelEquipamentos; }
+    public void setPapelEquipamentos(PapelEquipamentos papelEquipamentos) { this.papelEquipamentos = papelEquipamentos; }
 
     public PerfilPessoa getPerfil() { return perfil; }
     public void setPerfil(PerfilPessoa perfil) { this.perfil = perfil; }

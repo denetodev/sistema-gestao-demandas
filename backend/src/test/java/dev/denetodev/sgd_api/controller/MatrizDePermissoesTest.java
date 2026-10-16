@@ -91,6 +91,8 @@ class MatrizDePermissoesTest {
     @MockitoBean RelatorioDocxService relatorioDocxService;
     @MockitoBean TipoAtividadeService tipoAtividadeService;
     @MockitoBean TipoPecaService tipoPecaService;
+    @MockitoBean EquipamentoService equipamentoService;
+    @MockitoBean EmprestimoService emprestimoService;
 
     @BeforeEach
     void prepararChamadores() {
@@ -180,6 +182,33 @@ class MatrizDePermissoesTest {
         c.add(new Caso(P, "/pessoas/" + ID + "/vincular-a", GESTAO));
         c.add(new Caso(G, "/pessoas/" + ID + "/vinculo-sugerido", GESTAO));
         c.add(new Caso(P, "/pessoas/" + ID + "/confirmar-vinculo", GESTAO));
+
+        // módulo de equipamentos: a barreira HTTP só trava o Visualizador nas escritas. Quem tem acesso ao módulo
+        // (equipe liberada, papel, Gestor, Admin) e quem opera ou gerencia é decidido nos serviços
+        // (EquipamentoPermissaoTest, EmprestimoServiceTest).
+        for (String caminho : List.of("/equipamentos", "/equipamentos/" + ID, "/equipamentos/termo",
+                "/categorias-equipamento", "/emprestimos", "/emprestimos/" + ID)) {
+            c.add(new Caso(G, caminho, TODOS_VINCULADOS));
+        }
+        for (Caso base : List.of(
+                new Caso(P, "/equipamentos", QUEM_ESCREVE),
+                new Caso(U, "/equipamentos/" + ID, QUEM_ESCREVE),
+                new Caso(D, "/equipamentos/" + ID, QUEM_ESCREVE),
+                new Caso(P, "/equipamentos/termo", QUEM_ESCREVE),
+                new Caso(P, "/categorias-equipamento", QUEM_ESCREVE),
+                new Caso(U, "/categorias-equipamento/" + ID, QUEM_ESCREVE),
+                new Caso(D, "/categorias-equipamento/" + ID, QUEM_ESCREVE),
+                new Caso(P, "/emprestimos", QUEM_ESCREVE),
+                new Caso(A, "/emprestimos/" + ID + "/autorizar", QUEM_ESCREVE),
+                new Caso(A, "/emprestimos/" + ID + "/recusar", QUEM_ESCREVE),
+                new Caso(A, "/emprestimos/" + ID + "/retirar", QUEM_ESCREVE),
+                new Caso(A, "/emprestimos/" + ID + "/devolver", QUEM_ESCREVE),
+                new Caso(A, "/emprestimos/" + ID + "/cancelar", QUEM_ESCREVE))) {
+            c.add(base);
+        }
+        // quem recebe acesso ao módulo (equipe inteira ou pessoa) é decisão da gestão
+        c.add(new Caso(A, "/areas/" + ID + "/acesso-equipamentos", GESTAO));
+        c.add(new Caso(A, "/pessoas/" + ID + "/papel-equipamentos", GESTAO));
 
         // relatório de outra pessoa e reabertura são decididos no serviço; aqui só a trava de Visualizador
         c.add(new Caso(P, "/relatorios/2026-10/reabrir", QUEM_ESCREVE));

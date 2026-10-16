@@ -111,6 +111,14 @@ public class PessoaController {
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/pessoas/" + criada.id())).body(criada);
     }
 
+    /** Papel da pessoa no módulo de equipamentos (papel nulo remove). */
+    @PatchMapping("/{id}/papel-equipamentos")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
+    public PessoaResponse definirPapelEquipamentos(
+            @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt, @RequestBody PapelEquipamentosRequest request) {
+        return pessoaService.definirPapelEquipamentos(jwt, id, request.papel());
+    }
+
     @PatchMapping("/{id}/aprovar")
     @PreAuthorize("hasAnyRole('ADMIN', 'GESTOR')")
     public PessoaResponse aprovar(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AprovarRequest request) {

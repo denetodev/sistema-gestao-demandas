@@ -1,5 +1,6 @@
 package dev.denetodev.sgd_api.dto.response;
 
+import dev.denetodev.sgd_api.entity.PapelEquipamentos;
 import dev.denetodev.sgd_api.entity.PerfilPessoa;
 import dev.denetodev.sgd_api.entity.StatusPessoa;
 
@@ -18,6 +19,8 @@ public record PessoaResponse(
         UUID aprovadoPorId, String aprovadoPorNome, OffsetDateTime aprovadoEm,
         OffsetDateTime createdAt, OffsetDateTime updatedAt,
         /** A conta pediu para assumir um cadastro importado; o resumo só vai a Admin/Gestor, em /vinculo-sugerido. */
-        boolean temVinculoSugerido
+        boolean temVinculoSugerido,
+        /** Papel no módulo de equipamentos e se a pessoa tem acesso a ele (equipe liberada, papel, Gestor ou Admin). */
+        PapelEquipamentos papelEquipamentos, boolean acessaEquipamentos
 ) {
 }
