@@ -38,6 +38,10 @@ public class Emprestimo {
     @Column(name = "local_uso", length = 160)
     private String localUso;
 
+    /** Quando a pessoa vai retirar. O equipamento fica reservado de aqui até a devolução prevista. */
+    @Column(name = "retirada_prevista", nullable = false)
+    private OffsetDateTime retiradaPrevista = OffsetDateTime.now();
+
     @Column(name = "prevista_devolucao", nullable = false)
     private OffsetDateTime previstaDevolucao;
 
@@ -109,6 +113,17 @@ public class Emprestimo {
         this.termoVersao = termoVersao;
     }
 
+    /** Começa a ocupar na retirada prevista, ou antes, se a pessoa levou o equipamento adiantado. */
+    public OffsetDateTime inicioOcupacao() {
+        return retiradoEm != null && retiradoEm.isBefore(retiradaPrevista) ? retiradoEm : retiradaPrevista;
+    }
+
+    /** Fim da ocupação. Retirado e vencido não tem fim: segue com a pessoa até devolver (Instant.MAX). */
+    public java.time.Instant fimOcupacao(OffsetDateTime agora) {
+        return status == StatusEmprestimo.RETIRADO && previstaDevolucao.isBefore(agora)
+                ? java.time.Instant.MAX : previstaDevolucao.toInstant();
+    }
+
     /** Retirado e já passou da devolução prevista. */
     public boolean atrasado(OffsetDateTime agora) {
         return status == StatusEmprestimo.RETIRADO && previstaDevolucao.isBefore(agora);
@@ -130,6 +145,8 @@ public class Emprestimo {
     public void setExterno(boolean v) { this.externo = v; }
     public String getLocalUso() { return localUso; }
     public void setLocalUso(String v) { this.localUso = v; }
+    public OffsetDateTime getRetiradaPrevista() { return retiradaPrevista; }
+    public void setRetiradaPrevista(OffsetDateTime v) { this.retiradaPrevista = v; }
     public OffsetDateTime getPrevistaDevolucao() { return previstaDevolucao; }
     public StatusEmprestimo getStatus() { return status; }
     public void setStatus(StatusEmprestimo v) { this.status = v; }

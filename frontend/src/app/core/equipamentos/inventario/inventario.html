@@ -1,5 +1,6 @@
 <app-barra-pagina titulo="Inventário" subtitulo="Cada equipamento, onde está e com quem.">
   <ng-container fim>
+    <a routerLink="/equipamentos/agenda"><p-button icon="pi pi-calendar" label="Agenda" severity="secondary" [outlined]="true" /></a>
     <a routerLink="/equipamentos"><p-button icon="pi pi-list" label="Empréstimos" severity="secondary" [outlined]="true" /></a>
     @if (auth.gerenciaEquipamentos()) {
       <p-button icon="pi pi-file-edit" label="Termo" severity="secondary" [outlined]="true" (onClick)="abrirTermo()" />

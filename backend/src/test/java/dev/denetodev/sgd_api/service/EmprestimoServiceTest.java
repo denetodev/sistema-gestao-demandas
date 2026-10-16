@@ -116,7 +116,7 @@ class EmprestimoServiceTest {
     }
 
     private EmprestimoRequest pedido(boolean externo, EmprestimoRequest.Item... itens) {
-        return new EmprestimoRequest("João da Silva", "f1234567", "ramal 123", null, "Gravação", externo, "Praça",
+        return new EmprestimoRequest("João da Silva", "f1234567", "ramal 123", null, "Gravação", externo, "Praça", null,
                 OffsetDateTime.now(Clock.fixed(AGORA, ZoneOffset.UTC)).plusDays(2), null, null, List.of(itens), true);
     }
 
@@ -149,7 +149,7 @@ class EmprestimoServiceTest {
     @Test
     void semOOkDoTermoNaoRegistra() {
         EmprestimoRequest r = pedido(false, item(camera, null));
-        EmprestimoRequest semTermo = new EmprestimoRequest(r.retiranteNome(), null, null, null, null, false, null,
+        EmprestimoRequest semTermo = new EmprestimoRequest(r.retiranteNome(), null, null, null, null, false, null, null,
                 r.previstaDevolucao(), null, null, r.itens(), false);
         assertThrows(EstadoInvalidoException.class, () -> service.registrar(jwt, semTermo));
         verify(emprestimoRepository, never()).save(any());
@@ -158,7 +158,7 @@ class EmprestimoServiceTest {
     @Test
     void devolucaoPrevistaPrecisaSerFutura() {
         EmprestimoRequest r = pedido(false, item(camera, null));
-        EmprestimoRequest ontem = new EmprestimoRequest(r.retiranteNome(), null, null, null, null, false, null,
+        EmprestimoRequest ontem = new EmprestimoRequest(r.retiranteNome(), null, null, null, null, false, null, null,
                 OffsetDateTime.now(Clock.fixed(AGORA, ZoneOffset.UTC)).minusHours(1), null, null, r.itens(), true);
         assertThrows(IllegalArgumentException.class, () -> service.registrar(jwt, ontem));
     }
@@ -166,26 +166,153 @@ class EmprestimoServiceTest {
     @Test
     void chaveCInvalidaDeQuemRetiraERecusada() {
         EmprestimoRequest r = pedido(false, item(camera, null));
-        EmprestimoRequest ruim = new EmprestimoRequest(r.retiranteNome(), "X123", null, null, null, false, null,
+        EmprestimoRequest ruim = new EmprestimoRequest(r.retiranteNome(), "X123", null, null, null, false, null, null,
                 r.previstaDevolucao(), null, null, r.itens(), true);
         assertThrows(IllegalArgumentException.class, () -> service.registrar(jwt, ruim));
     }
 
-    @Test
-    void equipamentoIndividualJaReservadoNaoPodeSerPedidoDeNovo() {
-        EmprestimoItem ocupando = new EmprestimoItem(new Emprestimo("Outro", OffsetDateTime.now(), operador, 1), camera, 1);
-        when(itemRepository.ocupacao(anyCollection(), anyCollection())).thenReturn(List.of(ocupando));
+    /** Outro empréstimo, já gravado, ocupando o equipamento de {@code de} a {@code ate} (em dias a partir de AGORA). */
+    private EmprestimoItem outroUso(Equipamento e, int quantidade, long deDias, long ateDias, StatusEmprestimo status) {
+        OffsetDateTime ate = agora().plusDays(ateDias);
+        Emprestimo outro = new Emprestimo("Outro", ate, operador, 1);
+        ReflectionTestUtils.setField(outro, "id", UUID.randomUUID());
+        outro.setRetiradaPrevista(agora().plusDays(deDias));
+        outro.setStatus(status);
+        return new EmprestimoItem(outro, e, quantidade);
+    }
 
-        assertThrows(EstadoInvalidoException.class, () -> service.registrar(jwt, pedido(false, item(camera, null))));
+    private void ocupar(EmprestimoItem... itens) {
+        when(itemRepository.ocupacao(anyCollection(), eq(EquipamentoService.OCUPAM))).thenReturn(List.of(itens));
+    }
+
+    private EmprestimoRequest pedidoNoPeriodo(long retiradaDias, long devolucaoDias, EmprestimoRequest.Item... itens) {
+        return new EmprestimoRequest("João da Silva", null, null, null, null, false, null,
+                agora().plusDays(retiradaDias), agora().plusDays(devolucaoDias), null, null, List.of(itens), true);
     }
 
     @Test
-    void lotePorQuantidadeConfereODisponivel() {
-        EmprestimoItem ocupando = new EmprestimoItem(new Emprestimo("Outro", OffsetDateTime.now(), operador, 1), cabos, 8);
-        when(itemRepository.ocupacao(anyCollection(), anyCollection())).thenReturn(List.of(ocupando));
+    void equipamentoIndividualJaReservadoNoPeriodoNaoPodeSerPedidoDeNovo() {
+        ocupar(outroUso(camera, 1, 0, 3, StatusEmprestimo.AUTORIZADO));
 
-        assertThrows(EstadoInvalidoException.class, () -> service.registrar(jwt, pedido(false, item(cabos, 3))));
-        assertDoesNotThrow(() -> service.registrar(jwt, pedido(false, item(cabos, 2))));
+        EstadoInvalidoException e = assertThrows(EstadoInvalidoException.class,
+                () -> service.registrar(jwt, pedidoNoPeriodo(0, 2, item(camera, null))));
+        assertTrue(e.getMessage().contains("Câmera A7"));
+        assertTrue(e.getMessage().contains("Outro"));
+    }
+
+    @Test
+    void reservaParaOutroPeriodoPodeSerFeitaMesmoComOEquipamentoOcupadoAgora() {
+        ocupar(outroUso(camera, 1, -1, 1, StatusEmprestimo.RETIRADO)); // está com alguém até amanhã
+
+        EmprestimoResponse r = service.registrar(jwt, pedidoNoPeriodo(5, 6, item(camera, null)));
+
+        assertEquals(StatusEmprestimo.AGUARDANDO_AUTORIZACAO, r.status());
+        assertEquals(agora().plusDays(5), r.retiradaPrevista());
+    }
+
+    @Test
+    void periodosQueApenasSeEncostamNaoConflitam() {
+        ocupar(outroUso(camera, 1, 2, 3, StatusEmprestimo.AUTORIZADO)); // começa quando o novo termina
+        assertDoesNotThrow(() -> service.registrar(jwt, pedidoNoPeriodo(0, 2, item(camera, null))));
+    }
+
+    @Test
+    void retiradoEVencidoBloqueiaQualquerReservaFutura() {
+        // devolução prevista foi há 1 dia e ainda não voltou: não tem fim
+        ocupar(outroUso(camera, 1, -3, -1, StatusEmprestimo.RETIRADO));
+
+        assertThrows(EstadoInvalidoException.class, () -> service.registrar(jwt, pedidoNoPeriodo(5, 6, item(camera, null))));
+    }
+
+    @Test
+    void loteConfereOPicoNoPeriodo() {
+        // 6 unidades hoje e outras 6 amanhã: nunca 12 ao mesmo tempo, o pico é 6 e sobram 4
+        ocupar(outroUso(cabos, 6, 0, 1, StatusEmprestimo.AUTORIZADO), outroUso(cabos, 6, 1, 2, StatusEmprestimo.AUTORIZADO));
+
+        assertThrows(EstadoInvalidoException.class, () -> service.registrar(jwt, pedidoNoPeriodo(0, 2, item(cabos, 5))));
+        assertDoesNotThrow(() -> service.registrar(jwt, pedidoNoPeriodo(0, 2, item(cabos, 4))));
+    }
+
+    @Test
+    void retiradaNoPassadoOuDevolucaoAntesDaRetiradaSaoRecusadas() {
+        assertThrows(IllegalArgumentException.class, () -> service.registrar(jwt, pedidoNoPeriodo(-1, 2, item(camera, null))));
+        assertThrows(IllegalArgumentException.class, () -> service.registrar(jwt, pedidoNoPeriodo(3, 2, item(camera, null))));
+    }
+
+    @Test
+    void corrigirADataParaUmPeriodoOcupadoEhRecusadoMasAPropriaReservaNaoContaContraSi() {
+        Emprestimo e = registrarComoOperador(false); // camera de agora a +2d
+        // o próprio pedido aparece como ocupação; outra reserva da câmera começa em +5d
+        ocupar(new EmprestimoItem(e, camera, 1), outroUso(camera, 1, 5, 6, StatusEmprestimo.AUTORIZADO));
+
+        // estender para +4d continua livre, mesmo "encostando" na própria reserva
+        assertDoesNotThrow(() -> service.editar(jwt, e.getId(), edicaoNoPeriodo(0, 4)));
+        // estender para +6d invade a reserva de outra pessoa
+        EstadoInvalidoException erro = assertThrows(EstadoInvalidoException.class, () -> service.editar(jwt, e.getId(), edicaoNoPeriodo(0, 6)));
+        assertTrue(erro.getMessage().contains("Outro"));
+    }
+
+    private EmprestimoEdicaoRequest edicaoNoPeriodo(long retiradaDias, long devolucaoDias) {
+        return new EmprestimoEdicaoRequest("João da Silva", null, null, null, false, null,
+                agora().plusDays(retiradaDias), agora().plusDays(devolucaoDias), null);
+    }
+
+    @Test
+    void naoProrrogaPorCimaDeUmaReservaDeOutraPessoa() {
+        Emprestimo e = retiradoComDoisItens(); // devolução prevista em +2d
+        ocupar(new EmprestimoItem(e, camera, 1), outroUso(camera, 1, 3, 4, StatusEmprestimo.AUTORIZADO));
+
+        assertDoesNotThrow(() -> service.prorrogar(jwt, e.getId(), new ProrrogacaoRequest(agora().plusDays(3), null)));
+        assertThrows(EstadoInvalidoException.class,
+                () -> service.prorrogar(jwt, e.getId(), new ProrrogacaoRequest(agora().plusDays(3).plusHours(12), null)));
+    }
+
+    @Test
+    void naoEntregaEquipamentoQueAindaEstaComOutraPessoa() {
+        Emprestimo e = registrarComoOperador(false);
+        agir(gestorEquip);
+        service.autorizar(jwt, e.getId());
+        agir(operador);
+        // o empréstimo anterior da câmera está atrasado e não voltou
+        EmprestimoItem comOutro = outroUso(camera, 1, -3, -1, StatusEmprestimo.RETIRADO);
+        when(itemRepository.ocupacao(anyCollection(), eq(EnumSet.of(StatusEmprestimo.RETIRADO)))).thenReturn(List.of(comOutro));
+
+        EstadoInvalidoException erro = assertThrows(EstadoInvalidoException.class, () -> service.retirar(jwt, e.getId()));
+        assertTrue(erro.getMessage().contains("ainda está com Outro"));
+        assertEquals(StatusEmprestimo.AUTORIZADO, e.getStatus());
+    }
+
+    @Test
+    void entregaAdiantadaNaoPodeInvadirReservaDeOutraPessoa() {
+        // reserva para daqui a 2 dias, mas a pessoa chegou hoje
+        agir(operador);
+        EmprestimoResponse r = service.registrar(jwt, pedidoNoPeriodo(2, 3, item(camera, null)));
+        Emprestimo e = banco.get(r.id());
+        agir(gestorEquip);
+        service.autorizar(jwt, e.getId());
+        agir(operador);
+        // outra reserva da mesma câmera, de hoje até depois de amanhã
+        when(itemRepository.ocupacao(anyCollection(), eq(EquipamentoService.OCUPAM)))
+                .thenReturn(List.of(new EmprestimoItem(e, camera, 1), outroUso(camera, 1, 0, 2, StatusEmprestimo.AUTORIZADO)));
+
+        EstadoInvalidoException erro = assertThrows(EstadoInvalidoException.class, () -> service.retirar(jwt, e.getId()));
+        assertTrue(erro.getMessage().contains("A retirada está prevista para"));
+    }
+
+    @Test
+    void entregaAdiantadaSemConflitoFunciona() {
+        agir(operador);
+        EmprestimoResponse r = service.registrar(jwt, pedidoNoPeriodo(2, 3, item(camera, null)));
+        Emprestimo e = banco.get(r.id());
+        agir(gestorEquip);
+        service.autorizar(jwt, e.getId());
+        agir(operador);
+
+        EmprestimoResponse entregue = service.retirar(jwt, e.getId());
+
+        assertEquals(StatusEmprestimo.RETIRADO, entregue.status());
+        // adiantou: a ocupação passa a contar da entrega
+        assertEquals(e.getRetiradoEm(), e.inicioOcupacao());
     }
 
     @Test
@@ -381,7 +508,7 @@ class EmprestimoServiceTest {
     }
 
     private EmprestimoEdicaoRequest edicao(OffsetDateTime prevista) {
-        return new EmprestimoEdicaoRequest("João da Silva Júnior", "c7654321", null, "Nova finalidade", true, "Estúdio B", prevista, null);
+        return new EmprestimoEdicaoRequest("João da Silva Júnior", "c7654321", null, "Nova finalidade", true, "Estúdio B", null, prevista, null);
     }
 
     @Test

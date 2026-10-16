@@ -18,6 +18,10 @@ public interface EmprestimoItemRepository extends JpaRepository<EmprestimoItem, 
     List<EmprestimoItem> ocupacao(@Param("ids") Collection<UUID> equipamentoIds,
                                   @Param("status") Collection<StatusEmprestimo> status);
 
+    /** Itens já devolvidos que terminaram depois de {@code desde}: o histórico que aparece na agenda. */
+    @Query("select i from EmprestimoItem i join fetch i.emprestimo e where i.devolvidoEm is not null and i.devolvidoEm >= :desde")
+    List<EmprestimoItem> devolvidosDesde(@Param("desde") java.time.OffsetDateTime desde);
+
     @Query("select i from EmprestimoItem i join fetch i.emprestimo e where i.devolvidoEm is null and e.status in :status")
     List<EmprestimoItem> ocupacaoGeral(@Param("status") Collection<StatusEmprestimo> status);
 }

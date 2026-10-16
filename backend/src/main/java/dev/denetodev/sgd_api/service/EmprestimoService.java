@@ -25,6 +25,8 @@ import dev.denetodev.sgd_api.repository.EmprestimoRepository;
 import dev.denetodev.sgd_api.repository.EquipamentoRepository;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.DisponibilidadePeriodo;
+import dev.denetodev.sgd_api.service.support.DisponibilidadePeriodo.Uso;
 import dev.denetodev.sgd_api.service.support.EquipamentoPermissao;
 import dev.denetodev.sgd_api.util.ChaveC;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,6 +35,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -171,8 +176,12 @@ public class EmprestimoService {
             throw new EstadoInvalidoException("É preciso confirmar o termo de responsabilidade (OK) para registrar o empréstimo");
         }
         OffsetDateTime agora = OffsetDateTime.now(clock);
-        if (!request.previstaDevolucao().isAfter(agora)) {
-            throw new IllegalArgumentException("A devolução prevista precisa ser uma data futura");
+        OffsetDateTime retirada = request.retiradaPrevista() == null ? agora : request.retiradaPrevista();
+        if (retirada.isBefore(agora.minusMinutes(5))) {
+            throw new IllegalArgumentException("A retirada prevista não pode ser no passado");
+        }
+        if (!request.previstaDevolucao().isAfter(retirada) || !request.previstaDevolucao().isAfter(agora)) {
+            throw new IllegalArgumentException("A devolução prevista precisa ser depois da retirada");
         }
 
         TermoEquipamento termo = equipamentoService.termoVigente();
@@ -182,6 +191,7 @@ public class EmprestimoService {
                 ? retirantePessoa.getNome() : request.retiranteNome().trim();
 
         Emprestimo emprestimo = new Emprestimo(nome, request.previstaDevolucao(), ator, termo.getVersao());
+        emprestimo.setRetiradaPrevista(retirada);
         emprestimo.setRetirantePessoa(retirantePessoa);
         emprestimo.setRetiranteChaveC(chaveOpcional(request.retiranteChaveC(), retirantePessoa));
         emprestimo.setRetiranteContato(vazioParaNulo(request.retiranteContato()));
@@ -197,23 +207,23 @@ public class EmprestimoService {
                     .orElseThrow(() -> new RecursoNaoEncontradoException("Atividade não encontrada: " + request.atividadeId())));
         }
 
-        reservarItens(emprestimo, request.itens());
+        reservarItens(emprestimo, request.itens(), agora);
         Emprestimo salvo = emprestimoRepository.save(emprestimo);
         registrarAuditoria(salvo, null, StatusEmprestimo.AGUARDANDO_AUTORIZACAO, ator, null);
         return paraResponse(salvo, agora);
     }
 
-    private void reservarItens(Emprestimo emprestimo, List<EmprestimoRequest.Item> pedidos) {
+    private void reservarItens(Emprestimo emprestimo, List<EmprestimoRequest.Item> pedidos, OffsetDateTime agora) {
         Map<UUID, Integer> quantidades = new java.util.LinkedHashMap<>();
         for (EmprestimoRequest.Item pedido : pedidos) {
             if (quantidades.putIfAbsent(pedido.equipamentoId(), pedido.quantidade() == null ? 1 : pedido.quantidade()) != null) {
                 throw new IllegalArgumentException("O mesmo equipamento aparece mais de uma vez no pedido");
             }
         }
-        // trava as linhas: dois pedidos simultâneos não levam a mesma peça
+        // trava as linhas: dois pedidos simultâneos não levam a mesma peça no mesmo período
         Map<UUID, Equipamento> equipamentos = equipamentoRepository.travarPorIds(quantidades.keySet()).stream()
                 .collect(Collectors.toMap(Equipamento::getId, e -> e));
-        Map<UUID, Integer> ocupado = equipamentoService.ocupado(quantidades.keySet());
+        Map<UUID, List<EmprestimoItem>> usos = usosAbertos(quantidades.keySet());
 
         for (Map.Entry<UUID, Integer> pedido : quantidades.entrySet()) {
             Equipamento e = equipamentos.get(pedido.getKey());
@@ -224,14 +234,49 @@ public class EmprestimoService {
                 throw new EstadoInvalidoException(e.getNome() + " está desativado");
             }
             int quantidade = e.getCategoria().getControle() == ControleEquipamento.INDIVIDUAL ? 1 : pedido.getValue();
-            int livre = e.getQuantidadeTotal() - ocupado.getOrDefault(e.getId(), 0);
-            if (quantidade > livre) {
-                throw new EstadoInvalidoException(livre <= 0
-                        ? e.getNome() + " não está disponível: já está reservado ou emprestado"
-                        : e.getNome() + ": só há " + livre + " unidade(s) disponível(is)");
-            }
+            conferirPeriodo(e, quantidade, emprestimo.getRetiradaPrevista(), emprestimo.getPrevistaDevolucao(), null, usos, agora);
             emprestimo.getItens().add(new EmprestimoItem(emprestimo, e, quantidade));
         }
+    }
+
+    /** Itens ainda não devolvidos de empréstimos que ocupam equipamentos (aguardando, autorizado ou retirado), por equipamento. */
+    private Map<UUID, List<EmprestimoItem>> usosAbertos(java.util.Collection<UUID> equipamentoIds) {
+        return itemRepository.ocupacao(equipamentoIds, EquipamentoService.OCUPAM).stream()
+                .collect(Collectors.groupingBy(i -> i.getEquipamento().getId()));
+    }
+
+    /**
+     * Confere se cabe {@code quantidade} do equipamento em todo o período [ini, fim). O empréstimo informado em
+     * {@code ignorarEmprestimoId} não conta (é ele mesmo, em correção, prorrogação ou entrega antecipada).
+     */
+    private void conferirPeriodo(Equipamento e, int quantidade, OffsetDateTime ini, OffsetDateTime fim,
+                                 UUID ignorarEmprestimoId, Map<UUID, List<EmprestimoItem>> usos, OffsetDateTime agora) {
+        List<EmprestimoItem> doEquipamento = usos.getOrDefault(e.getId(), List.of()).stream()
+                .filter(i -> ignorarEmprestimoId == null || !i.getEmprestimo().getId().equals(ignorarEmprestimoId))
+                .toList();
+        List<Uso> lista = doEquipamento.stream().map(i -> DisponibilidadePeriodo.de(i, agora)).toList();
+        int livre = DisponibilidadePeriodo.livre(e.getQuantidadeTotal(), lista, ini.toInstant(), fim.toInstant());
+        if (quantidade <= livre) {
+            return;
+        }
+        Uso conflito = DisponibilidadePeriodo.primeiroQueEncosta(lista, ini.toInstant(), fim.toInstant());
+        if (livre > 0 || conflito == null) {
+            throw new EstadoInvalidoException(e.getNome() + ": só há " + livre + " unidade(s) disponível(is) nesse período");
+        }
+        String quem = doEquipamento.stream().filter(i -> i.getEmprestimo().getId().equals(conflito.emprestimoId()))
+                .map(i -> i.getEmprestimo().getRetiranteNome()).findFirst().orElse("outro empréstimo");
+        String janela = conflito.fim().equals(Instant.MAX)
+                ? "desde " + formatar(conflito.inicio()) + " e ainda não foi devolvido"
+                : "de " + formatar(conflito.inicio()) + " a " + formatar(conflito.fim());
+        throw new EstadoInvalidoException(e.getNome() + " não está disponível nesse período: já está reservado ou emprestado para "
+                + quem + " " + janela);
+    }
+
+    private static final DateTimeFormatter FORMATO = DateTimeFormatter.ofPattern("dd/MM HH:mm");
+    private static final ZoneId FUSO = ZoneId.of("America/Sao_Paulo");
+
+    private static String formatar(Instant instante) {
+        return FORMATO.format(instante.atZone(FUSO));
     }
 
     // ---------- correção e prorrogação ----------
@@ -246,8 +291,19 @@ public class EmprestimoService {
                     + "Depois disso, cancele e registre de novo");
         }
         OffsetDateTime agora = OffsetDateTime.now(clock);
-        if (!request.previstaDevolucao().isAfter(agora)) {
-            throw new IllegalArgumentException("A devolução prevista precisa ser uma data futura");
+        OffsetDateTime retirada = request.retiradaPrevista() == null ? e.getRetiradaPrevista() : request.retiradaPrevista();
+        if (!retirada.equals(e.getRetiradaPrevista()) && retirada.isBefore(agora.minusMinutes(5))) {
+            throw new IllegalArgumentException("A retirada prevista não pode ser no passado");
+        }
+        if (!request.previstaDevolucao().isAfter(retirada) || !request.previstaDevolucao().isAfter(agora)) {
+            throw new IllegalArgumentException("A devolução prevista precisa ser depois da retirada");
+        }
+        // mudou o período: precisa continuar cabendo, sem contar o próprio pedido
+        List<UUID> ids = e.getItens().stream().map(i -> i.getEquipamento().getId()).toList();
+        equipamentoRepository.travarPorIds(ids);
+        Map<UUID, List<EmprestimoItem>> usos = usosAbertos(ids);
+        for (EmprestimoItem item : e.getItens()) {
+            conferirPeriodo(item.getEquipamento(), item.getQuantidade(), retirada, request.previstaDevolucao(), e.getId(), usos, agora);
         }
         String nome = request.retiranteNome().trim();
         String chave = chaveOpcional(request.retiranteChaveC(), e.getRetirantePessoa());
@@ -258,6 +314,7 @@ public class EmprestimoService {
         auditarSeMudou(e, "finalidade", e.getFinalidade(), vazioParaNulo(request.finalidade()), ator);
         auditarSeMudou(e, "externo", String.valueOf(e.isExterno()), String.valueOf(request.externo()), ator);
         auditarSeMudou(e, "local_uso", e.getLocalUso(), vazioParaNulo(request.localUso()), ator);
+        auditarSeMudou(e, "retirada_prevista", String.valueOf(e.getRetiradaPrevista()), String.valueOf(retirada), ator);
         auditarSeMudou(e, "prevista_devolucao", String.valueOf(e.getPrevistaDevolucao()), String.valueOf(request.previstaDevolucao()), ator);
         UUID demandaAtual = e.getDemanda() == null ? null : e.getDemanda().getId();
         auditarSeMudou(e, "demanda_id", demandaAtual == null ? null : demandaAtual.toString(),
@@ -269,6 +326,7 @@ public class EmprestimoService {
         e.setFinalidade(vazioParaNulo(request.finalidade()));
         e.setExterno(request.externo());
         e.setLocalUso(vazioParaNulo(request.localUso()));
+        e.setRetiradaPrevista(retirada);
         e.setPrevistaDevolucao(request.previstaDevolucao());
         e.setDemanda(request.demandaId() == null ? null : demandaRepository.findById(request.demandaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + request.demandaId())));
@@ -284,6 +342,14 @@ public class EmprestimoService {
         OffsetDateTime agora = OffsetDateTime.now(clock);
         if (!request.novaPrevista().isAfter(e.getPrevistaDevolucao()) || !request.novaPrevista().isAfter(agora)) {
             throw new IllegalArgumentException("A nova data precisa ser futura e depois da devolução prevista atual");
+        }
+        List<EmprestimoItem> pendentes = e.getItens().stream().filter(EmprestimoItem::pendente).toList();
+        List<UUID> ids = pendentes.stream().map(i -> i.getEquipamento().getId()).toList();
+        equipamentoRepository.travarPorIds(ids);
+        Map<UUID, List<EmprestimoItem>> usos = usosAbertos(ids);
+        for (EmprestimoItem item : pendentes) {
+            // se outra pessoa reservou o equipamento logo depois, não dá para estender por cima
+            conferirPeriodo(item.getEquipamento(), item.getQuantidade(), e.inicioOcupacao(), request.novaPrevista(), e.getId(), usos, agora);
         }
         Auditoria a = new Auditoria("emprestimo", e.getId(), "prevista_devolucao",
                 String.valueOf(e.getPrevistaDevolucao()), String.valueOf(request.novaPrevista()), ator.getId());
@@ -341,6 +407,7 @@ public class EmprestimoService {
         EquipamentoPermissao.exigirOperacao(ator);
         Emprestimo e = buscarEntidade(id);
         exigirStatus(e, StatusEmprestimo.AUTORIZADO, "entregar");
+        conferirEntrega(e);
         e.setRetiradoPor(ator);
         e.setRetiradoEm(OffsetDateTime.now(clock));
         mudarStatus(e, StatusEmprestimo.RETIRADO, ator, null);
@@ -400,6 +467,43 @@ public class EmprestimoService {
 
     // ---------- apoio ----------
 
+    /**
+     * Antes de entregar: o equipamento tem que estar fisicamente aqui (o empréstimo anterior pode estar atrasado) e,
+     * se a pessoa chegou antes da hora marcada, a retirada adiantada não pode invadir a reserva de outra pessoa.
+     */
+    private void conferirEntrega(Emprestimo e) {
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        List<EmprestimoItem> pendentes = e.getItens().stream().filter(EmprestimoItem::pendente).toList();
+        List<UUID> ids = pendentes.stream().map(i -> i.getEquipamento().getId()).toList();
+        equipamentoRepository.travarPorIds(ids);
+
+        Map<UUID, List<EmprestimoItem>> comOutros = itemRepository.ocupacao(ids, EnumSet.of(StatusEmprestimo.RETIRADO)).stream()
+                .filter(i -> !i.getEmprestimo().getId().equals(e.getId()))
+                .collect(Collectors.groupingBy(i -> i.getEquipamento().getId()));
+        for (EmprestimoItem item : pendentes) {
+            Equipamento eq = item.getEquipamento();
+            List<EmprestimoItem> outros = comOutros.getOrDefault(eq.getId(), List.of());
+            int comOutras = outros.stream().mapToInt(EmprestimoItem::getQuantidade).sum();
+            if (!outros.isEmpty() && eq.getQuantidadeTotal() - comOutras < item.getQuantidade()) {
+                Emprestimo dono = outros.get(0).getEmprestimo();
+                throw new EstadoInvalidoException(eq.getNome() + " ainda está com " + dono.getRetiranteNome()
+                        + " (devolução prevista " + formatar(dono.getPrevistaDevolucao().toInstant()) + "). Registre a devolução antes de entregar");
+            }
+        }
+
+        if (agora.isBefore(e.getRetiradaPrevista())) {
+            Map<UUID, List<EmprestimoItem>> usos = usosAbertos(ids);
+            for (EmprestimoItem item : pendentes) {
+                try {
+                    conferirPeriodo(item.getEquipamento(), item.getQuantidade(), agora, e.getPrevistaDevolucao(), e.getId(), usos, agora);
+                } catch (EstadoInvalidoException ex) {
+                    throw new EstadoInvalidoException("A retirada está prevista para " + formatar(e.getRetiradaPrevista().toInstant())
+                            + " e entregar agora conflita com outra reserva. " + ex.getMessage());
+                }
+            }
+        }
+    }
+
     private void exigirStatus(Emprestimo e, StatusEmprestimo esperado, String acao) {
         if (e.getStatus() != esperado) {
             throw new EstadoInvalidoException("Não dá para " + acao + " um empréstimo com situação " + e.getStatus());
@@ -454,7 +558,7 @@ public class EmprestimoService {
                 e.getId(), e.getStatus(), e.atrasado(agora), e.isExterno(), e.getLocalUso(),
                 e.getRetiranteNome(), e.getRetiranteChaveC(), e.getRetiranteContato(),
                 e.getRetirantePessoa() == null ? null : e.getRetirantePessoa().getId(),
-                e.getFinalidade(), e.getPrevistaDevolucao(),
+                e.getFinalidade(), e.getRetiradaPrevista(), e.getPrevistaDevolucao(),
                 e.getDemanda() == null ? null : e.getDemanda().getId(),
                 e.getDemanda() == null ? null : e.getDemanda().getTitulo(),
                 e.getAtividade() == null ? null : e.getAtividade().getId(),

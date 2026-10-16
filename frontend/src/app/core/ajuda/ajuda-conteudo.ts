@@ -30,7 +30,8 @@ export type ChaveAjuda =
   | 'estrutura'
   | 'relatorio'
   | 'emprestimos'
-  | 'inventario';
+  | 'inventario'
+  | 'agenda';
 
 export const AJUDA: Record<ChaveAjuda, Ajuda> = {
   dashboard: {
@@ -314,7 +315,12 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
       {
         pergunta: 'Qual é o caminho de um empréstimo?',
         resposta:
-          'O Operador registra o pedido e o termo (OK na tela). O Gestor de equipamentos autoriza ou recusa. Autorizado, o Operador entrega e, na volta, recebe a devolução. Todo empréstimo passa por autorização, dentro ou fora do prédio.',
+          'O Operador registra o pedido, com retirada e devolução prevista, e o termo (OK na tela). O Gestor de equipamentos autoriza ou recusa. Autorizado, o Operador entrega e, na volta, recebe a devolução. Todo empréstimo passa por autorização, dentro ou fora do prédio.',
+      },
+      {
+        pergunta: 'Posso reservar para outro dia?',
+        resposta:
+          'Sim. Informe a retirada prevista (vazio significa agora) e a devolução: a lista de equipamentos mostra só o que está livre em todo esse período. Um equipamento que volta amanhã pode ser reservado para a semana que vem. Dois pedidos não podem ocupar a mesma peça ao mesmo tempo.',
       },
       {
         pergunta: 'O que significa EXTERNO e a linha em vermelho?',
@@ -350,6 +356,31 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
         pergunta: 'Posso apagar um equipamento?',
         resposta:
           'Ele é desativado, não apagado, para o histórico continuar completo. Não dá para desativar enquanto estiver em um empréstimo em aberto.',
+      },
+    ],
+  },
+  agenda: {
+    titulo: 'Como ler a agenda?',
+    itens: [
+      {
+        pergunta: 'O que cada barra mostra?',
+        resposta:
+          'Uma barra é um período de uso: da retirada até a devolução prevista. Verde é com a pessoa, azul é reservado (já autorizado), laranja espera autorização, vermelho é atrasado e cinza já foi devolvido. A linha vermelha vertical é o agora.',
+      },
+      {
+        pergunta: 'Como vejo com quem o equipamento está?',
+        resposta:
+          'Clique no nome do equipamento: aparecem quem está com ele agora, as reservas e o que voltou recentemente. Clicar numa barra abre o período, com a pessoa, as datas e o local.',
+      },
+      {
+        pergunta: 'Por que o atrasado continua depois da data prevista?',
+        resposta:
+          'Porque o equipamento ainda não voltou: a faixa listrada vai até agora. Enquanto não for devolvido, ele não pode ser reservado para outra pessoa.',
+      },
+      {
+        pergunta: 'Quem vê o quê?',
+        resposta:
+          'Operador e gestores veem reservas, empréstimos e devoluções recentes. Quem só tem acesso ao módulo vê apenas o que está com alguém agora.',
       },
     ],
   },

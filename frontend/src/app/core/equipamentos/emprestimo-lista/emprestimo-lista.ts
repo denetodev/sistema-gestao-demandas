@@ -1,8 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { catchError, debounceTime, firstValueFrom, of, switchMap } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
@@ -117,8 +118,6 @@ export class EmprestimoLista {
   selecionados = signal<Equipamento[]>([]);
   quantidades = signal<Record<string, number>>({});
 
-  /** Só o que tem unidade livre entra na escolha. */
-  disponiveis = computed(() => (this.equipamentos.value() ?? []).filter((e) => e.quantidadeDisponivel > 0));
 
   form = this.#fb.nonNullable.group({
     retiranteNome: ['', [Validators.required, Validators.maxLength(160)]],
@@ -127,10 +126,66 @@ export class EmprestimoLista {
     finalidade: [''],
     externo: [false],
     localUso: [''],
+    retiradaPrevista: this.#fb.control<Date | null>(null),
     previstaDevolucao: this.#fb.control<Date | null>(null, Validators.required),
   });
 
   agora = new Date();
+
+  // ---- disponibilidade no período escolhido ----
+  // O que vale não é "livre agora", e sim livre durante TODO o período pedido: um equipamento que volta amanhã
+  // pode ser reservado para a semana que vem.
+  #valoresDoForm = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+
+  /** Retirada vazia significa agora (calculado na hora da consulta, para a chave não mudar a cada tecla). */
+  janela = computed(
+    () => {
+      const v = this.#valoresDoForm();
+      const fim = v.previstaDevolucao ?? null;
+      if (!fim) return null;
+      return { retirada: v.retiradaPrevista ? v.retiradaPrevista.toISOString() : null, fim: fim.toISOString() };
+    },
+    { equal: (a, b) => a?.retirada === b?.retirada && a?.fim === b?.fim },
+  );
+
+  #livresNoPeriodo = toSignal(
+    toObservable(this.janela).pipe(
+      debounceTime(250),
+      switchMap((j) => {
+        if (!j || this.editando()) return of(null);
+        const inicio = j.retirada ?? new Date().toISOString();
+        if (new Date(j.fim) <= new Date(inicio)) return of(null);
+        return this.#service.disponibilidade(inicio, j.fim).pipe(catchError(() => of(null)));
+      }),
+    ),
+    { initialValue: null },
+  );
+
+  /** Com o período definido, só entra o que está livre nele; sem período, tudo que está ativo. */
+  opcoesEquipamentos = computed(() => {
+    const livres = this.#livresNoPeriodo();
+    const mapa = livres ? new Map(livres.map((d) => [d.equipamentoId, d.quantidadeDisponivel])) : null;
+    return (this.equipamentos.value() ?? [])
+      .map((e) => ({ ...e, livre: mapa ? (mapa.get(e.id) ?? 0) : e.quantidadeDisponivel }))
+      .filter((e) => (mapa ? e.livre > 0 : true));
+  });
+
+  periodoDefinido = computed(() => this.#livresNoPeriodo() !== null);
+
+  /** Quanto cabe no período (lote); sem período, o que está livre agora. */
+  livreDe(e: Equipamento): number {
+    return this.opcoesEquipamentos().find((o) => o.id === e.id)?.livre ?? 0;
+  }
+
+  /** O que já estava escolhido e deixou de estar livre ao mudar as datas. */
+  indisponiveisSelecionados = computed(() =>
+    this.periodoDefinido() ? this.selecionados().filter((e) => !this.opcoesEquipamentos().some((o) => o.id === e.id)) : [],
+  );
+
+  periodoValido(): boolean {
+    const v = this.form.getRawValue();
+    return !v.retiradaPrevista || !v.previstaDevolucao || v.previstaDevolucao > v.retiradaPrevista;
+  }
 
   /** Preenchido quando o diálogo está corrigindo um pedido que espera autorização. */
   editando = signal<Emprestimo | null>(null);
@@ -144,6 +199,7 @@ export class EmprestimoLista {
       finalidade: e.finalidade ?? '',
       externo: e.externo,
       localUso: e.localUso ?? '',
+      retiradaPrevista: new Date(e.retiradaPrevista),
       previstaDevolucao: new Date(e.previstaDevolucao),
     });
     this.demandaEscolhida.set(e.demandaId ? ({ id: e.demandaId, titulo: e.demandaTitulo ?? '' } as Demanda) : null);
@@ -152,7 +208,7 @@ export class EmprestimoLista {
   }
 
   podeSalvarEdicao(): boolean {
-    return this.form.valid && this.chaveOk();
+    return this.form.valid && this.chaveOk() && this.periodoValido();
   }
 
   /** Em edição salva direto (os equipamentos e o termo não mudam); no pedido novo segue para o termo. */
@@ -175,6 +231,7 @@ export class EmprestimoLista {
           finalidade: v.finalidade.trim() || null,
           externo: v.externo,
           localUso: v.localUso.trim() || null,
+          retiradaPrevista: v.retiradaPrevista ? v.retiradaPrevista.toISOString() : null,
           previstaDevolucao: v.previstaDevolucao!.toISOString(),
           demandaId: this.demandaEscolhida()?.id ?? null,
         }),
@@ -227,7 +284,8 @@ export class EmprestimoLista {
   }
 
   podeContinuar(): boolean {
-    return this.form.valid && this.selecionados().length > 0 && this.chaveOk();
+    return this.form.valid && this.selecionados().length > 0 && this.chaveOk() && this.periodoValido()
+      && this.indisponiveisSelecionados().length === 0;
   }
 
   continuar() {
@@ -249,6 +307,7 @@ export class EmprestimoLista {
           finalidade: v.finalidade.trim() || null,
           externo: v.externo,
           localUso: v.localUso.trim() || null,
+          retiradaPrevista: v.retiradaPrevista ? v.retiradaPrevista.toISOString() : null,
           previstaDevolucao: v.previstaDevolucao!.toISOString(),
           demandaId: this.demandaEscolhida()?.id ?? null,
           atividadeId: null,

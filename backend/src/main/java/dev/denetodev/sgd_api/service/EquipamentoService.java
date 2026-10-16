@@ -3,6 +3,8 @@ package dev.denetodev.sgd_api.service;
 import dev.denetodev.sgd_api.dto.request.CategoriaEquipamentoRequest;
 import dev.denetodev.sgd_api.dto.request.EquipamentoRequest;
 import dev.denetodev.sgd_api.dto.request.TermoEquipamentoRequest;
+import dev.denetodev.sgd_api.dto.response.AgendaResponse;
+import dev.denetodev.sgd_api.dto.response.DisponibilidadeResponse;
 import dev.denetodev.sgd_api.dto.response.CategoriaEquipamentoResponse;
 import dev.denetodev.sgd_api.dto.response.EquipamentoResponse;
 import dev.denetodev.sgd_api.dto.response.TermoEquipamentoResponse;
@@ -20,13 +22,17 @@ import dev.denetodev.sgd_api.repository.EmprestimoItemRepository;
 import dev.denetodev.sgd_api.repository.EquipamentoRepository;
 import dev.denetodev.sgd_api.repository.TermoEquipamentoRepository;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.DisponibilidadePeriodo;
+import dev.denetodev.sgd_api.service.support.DisponibilidadePeriodo.Uso;
 import dev.denetodev.sgd_api.service.support.EquipamentoPermissao;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -157,6 +163,96 @@ public class EquipamentoService {
         equipamento.setAtivo(false);
     }
 
+    // ---------- disponibilidade e agenda ----------
+
+    /**
+     * O que está livre durante TODO o período [inicio, fim) para montar um empréstimo ou uma reserva.
+     * {@code ignorarEmprestimoId} tira da conta o pedido que está sendo corrigido.
+     */
+    @Transactional(readOnly = true)
+    public List<DisponibilidadeResponse> disponibilidade(Jwt jwt, OffsetDateTime inicio, OffsetDateTime fim, UUID ignorarEmprestimoId) {
+        EquipamentoPermissao.exigirOperacao(currentPessoaResolver.resolver(jwt));
+        if (inicio == null || fim == null || !fim.isAfter(inicio)) {
+            throw new IllegalArgumentException("Informe um período válido: o fim precisa ser depois do início");
+        }
+        List<Equipamento> ativos = equipamentoRepository.findAllByOrderByNomeAsc().stream().filter(Equipamento::isAtivo).toList();
+        if (ativos.isEmpty()) {
+            return List.of();
+        }
+        List<UUID> ids = ativos.stream().map(Equipamento::getId).toList();
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        Map<UUID, List<Uso>> usos = itemRepository.ocupacao(ids, OCUPAM).stream()
+                .filter(i -> ignorarEmprestimoId == null || !i.getEmprestimo().getId().equals(ignorarEmprestimoId))
+                .collect(Collectors.groupingBy(i -> i.getEquipamento().getId(),
+                        Collectors.mapping(i -> DisponibilidadePeriodo.de(i, agora), Collectors.toList())));
+        return ativos.stream()
+                .map(e -> new DisponibilidadeResponse(e.getId(),
+                        DisponibilidadePeriodo.livre(e.getQuantidadeTotal(), usos.getOrDefault(e.getId(), List.of()),
+                                inicio.toInstant(), fim.toInstant())))
+                .toList();
+    }
+
+    /**
+     * Agenda (Gantt): quem opera ou gerencia vê reservas, empréstimos e devoluções recentes; quem só consulta vê
+     * apenas o que está com alguém agora, como na lista de "quem está com quê".
+     */
+    @Transactional(readOnly = true)
+    public AgendaResponse agenda(Jwt jwt, OffsetDateTime de, OffsetDateTime ate) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        EquipamentoPermissao.exigirAcesso(usuario);
+        boolean opera = EquipamentoPermissao.opera(usuario);
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        OffsetDateTime inicioJanela = de == null ? agora.minusDays(7) : de;
+        OffsetDateTime fimJanela = ate == null ? agora.plusDays(21) : ate;
+        if (!fimJanela.isAfter(inicioJanela)) {
+            throw new IllegalArgumentException("O fim da janela precisa ser depois do início");
+        }
+        if (java.time.Duration.between(inicioJanela, fimJanela).toDays() > 120) {
+            throw new IllegalArgumentException("A janela da agenda pode ter no máximo 120 dias");
+        }
+
+        List<Equipamento> ativos = equipamentoRepository.findAllByOrderByNomeAsc().stream().filter(Equipamento::isAtivo).toList();
+        List<UUID> ids = ativos.stream().map(Equipamento::getId).toList();
+        Map<UUID, List<AgendaResponse.Bloco>> blocos = new java.util.HashMap<>();
+
+        if (!ids.isEmpty()) {
+            for (EmprestimoItem i : itemRepository.ocupacao(ids, OCUPAM)) {
+                if (!opera && i.getEmprestimo().getStatus() != StatusEmprestimo.RETIRADO) {
+                    continue;
+                }
+                adicionarBloco(blocos, i, i.getEmprestimo().getPrevistaDevolucao(), false, agora, inicioJanela, fimJanela);
+            }
+            if (opera) {
+                for (EmprestimoItem i : itemRepository.devolvidosDesde(inicioJanela)) {
+                    if (ids.contains(i.getEquipamento().getId())) {
+                        adicionarBloco(blocos, i, i.getDevolvidoEm(), true, agora, inicioJanela, fimJanela);
+                    }
+                }
+            }
+        }
+        List<AgendaResponse.Linha> linhas = ativos.stream().map(e -> new AgendaResponse.Linha(
+                e.getId(), e.getNome(), e.getPatrimonio(), e.getCategoria().getId(), e.getCategoria().getNome(),
+                e.getCategoria().getControle(), e.getQuantidadeTotal(),
+                blocos.getOrDefault(e.getId(), List.of()).stream()
+                        .sorted(Comparator.comparing(AgendaResponse.Bloco::inicio)).toList())).toList();
+        return new AgendaResponse(inicioJanela, fimJanela, agora, linhas);
+    }
+
+    private void adicionarBloco(Map<UUID, List<AgendaResponse.Bloco>> blocos, EmprestimoItem item, OffsetDateTime fim,
+                                boolean devolvido, OffsetDateTime agora, OffsetDateTime de, OffsetDateTime ate) {
+        var e = item.getEmprestimo();
+        OffsetDateTime inicio = e.inicioOcupacao();
+        boolean atrasado = !devolvido && e.atrasado(agora);
+        // retirado e vencido continua ocupando até agora, então a janela precisa enxergar isso
+        OffsetDateTime fimVisivel = atrasado && agora.isAfter(fim) ? agora : fim;
+        if (!inicio.isBefore(ate) || !fimVisivel.isAfter(de)) {
+            return;
+        }
+        blocos.computeIfAbsent(item.getEquipamento().getId(), k -> new ArrayList<>()).add(new AgendaResponse.Bloco(
+                e.getId(), e.getRetiranteNome(), e.getStatus(), devolvido, atrasado, e.isExterno(), e.getLocalUso(),
+                item.getQuantidade(), inicio, fim));
+    }
+
     // ---------- termo ----------
 
     @Transactional(readOnly = true)
@@ -222,20 +318,24 @@ public class EquipamentoService {
         Map<UUID, List<EmprestimoItem>> usos = itemRepository.ocupacao(ids, OCUPAM).stream()
                 .collect(Collectors.groupingBy(i -> i.getEquipamento().getId()));
         OffsetDateTime agora = OffsetDateTime.now(clock);
+        Instant instante = agora.toInstant();
         return equipamentos.stream().map(e -> {
             List<EmprestimoItem> doItem = usos.getOrDefault(e.getId(), List.of());
-            int ocupadas = doItem.stream().mapToInt(EmprestimoItem::getQuantidade).sum();
+            // disponível AGORA: reserva para daqui a uns dias não tira o equipamento do estúdio hoje
+            List<Uso> usosDeAgora = doItem.stream().map(i -> DisponibilidadePeriodo.de(i, agora)).toList();
+            int livreAgora = DisponibilidadePeriodo.livre(e.getQuantidadeTotal(), usosDeAgora, instante, instante.plusSeconds(1));
             List<EquipamentoResponse.UsoAtual> emUso = doItem.stream()
-                    .sorted(Comparator.comparing(i -> i.getEmprestimo().getPrevistaDevolucao()))
+                    .sorted(Comparator.comparing(i -> i.getEmprestimo().inicioOcupacao()))
                     .map(i -> new EquipamentoResponse.UsoAtual(
                             i.getEmprestimo().getId(), i.getEmprestimo().getRetiranteNome(), i.getQuantidade(),
-                            i.getEmprestimo().getPrevistaDevolucao(), i.getEmprestimo().getStatus(),
-                            i.getEmprestimo().atrasado(agora), i.getEmprestimo().isExterno(), i.getEmprestimo().getLocalUso()))
+                            i.getEmprestimo().getRetiradaPrevista(), i.getEmprestimo().getPrevistaDevolucao(),
+                            i.getEmprestimo().getStatus(), i.getEmprestimo().atrasado(agora),
+                            i.getEmprestimo().isExterno(), i.getEmprestimo().getLocalUso()))
                     .toList();
             return new EquipamentoResponse(
                     e.getId(), e.getCategoria().getId(), e.getCategoria().getNome(), e.getCategoria().getControle(),
                     e.getNome(), e.getPatrimonio(), e.getNumeroSerie(),
-                    e.getQuantidadeTotal(), Math.max(0, e.getQuantidadeTotal() - ocupadas),
+                    e.getQuantidadeTotal(), livreAgora,
                     e.getLocalizacao(), e.getObservacoes(), e.isAtivo(), emUso);
         }).toList();
     }

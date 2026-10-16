@@ -1,5 +1,5 @@
 import { normalizar } from '../util/listas';
-import type { Emprestimo, PapelEquipamentos, StatusEmprestimo } from './equipamento.model';
+import type { BlocoAgenda, Emprestimo, PapelEquipamentos, StatusEmprestimo } from './equipamento.model';
 
 type Severidade = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
@@ -83,4 +83,21 @@ export function filtrarEmprestimos(lista: Emprestimo[], f: FiltroEmprestimos): E
     if (fim !== null && prevista > fim) return false;
     return true;
   });
+}
+
+/** Cor da barra na agenda: atrasado e devolvido vencem a situação; autorizado é uma reserva. */
+export function classeBloco(b: Pick<BlocoAgenda, 'status' | 'atrasado' | 'devolvido'>): string {
+  if (b.devolvido) return 'devolvido';
+  if (b.atrasado) return 'atrasado';
+  if (b.status === 'RETIRADO') return 'retirado';
+  if (b.status === 'AUTORIZADO') return 'reservado';
+  return 'aguardando';
+}
+
+export function rotuloBloco(b: Pick<BlocoAgenda, 'status' | 'atrasado' | 'devolvido'>): string {
+  if (b.devolvido) return 'Devolvido';
+  if (b.atrasado) return 'Atrasado';
+  if (b.status === 'RETIRADO') return 'Com a pessoa';
+  if (b.status === 'AUTORIZADO') return 'Reservado';
+  return 'Aguardando autorização';
 }

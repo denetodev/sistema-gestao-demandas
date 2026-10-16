@@ -62,6 +62,85 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     expect(component.podeContinuar()).toBeFalse();
   });
 
+  it('o OK do termo leva a retirada prevista (reserva) e nulo quando é para agora', async () => {
+    await criar({ perfil: 'ADMIN' });
+    preencher();
+    const futura = new Date(Date.now() + 2 * 86400000);
+    component.form.patchValue({ retiradaPrevista: futura, previstaDevolucao: new Date(futura.getTime() + 86400000) });
+    component.continuar();
+
+    const promessa = component.confirmarTermoERegistrar();
+    const req = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/emprestimos'));
+    expect(req.request.body.retiradaPrevista).toBe(futura.toISOString());
+    req.flush({});
+    await promessa;
+
+    // sem retirada informada: agora
+    component.abrirNovo();
+    preencher();
+    component.continuar();
+    const outra = component.confirmarTermoERegistrar();
+    const req2 = http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/emprestimos'));
+    expect(req2.request.body.retiradaPrevista).toBeNull();
+    req2.flush({});
+    await outra;
+  });
+
+  it('a devolução precisa ser depois da retirada, senão não avança', async () => {
+    await criar({ perfil: 'ADMIN' });
+    preencher();
+    const base = Date.now() + 86400000;
+    component.form.patchValue({ retiradaPrevista: new Date(base + 3600_000), previstaDevolucao: new Date(base) });
+    expect(component.periodoValido()).toBeFalse();
+    expect(component.podeContinuar()).toBeFalse();
+
+    component.form.patchValue({ previstaDevolucao: new Date(base + 7200_000) });
+    expect(component.periodoValido()).toBeTrue();
+    expect(component.podeContinuar()).toBeTrue();
+  });
+
+  it('com o período definido só entram os equipamentos livres nele; sem período, todos', async () => {
+    await criar({ perfil: 'ADMIN' });
+    http.match((r) => r.url.endsWith('/equipamentos')).forEach((r) => r.flush([
+      { id: 'q1', nome: 'Câmera', categoriaNome: 'Câmeras', controle: 'INDIVIDUAL', quantidadeDisponivel: 0, quantidadeTotal: 1, emUso: [] },
+      { id: 'q2', nome: 'Tripé', categoriaNome: 'Suportes', controle: 'INDIVIDUAL', quantidadeDisponivel: 1, quantidadeTotal: 1, emUso: [] },
+    ]));
+    await new Promise((r) => setTimeout(r, 0));
+    // sem período: tudo, mesmo o que está ocupado agora (pode estar livre na semana que vem)
+    expect(component.opcoesEquipamentos().map((e) => e.id)).toEqual(['q1', 'q2']);
+
+    const ini = new Date(Date.now() + 5 * 86400000);
+    component.form.patchValue({ retiradaPrevista: ini, previstaDevolucao: new Date(ini.getTime() + 86400000) });
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 400)); // espera o debounce da consulta
+    const req = http.expectOne((r) => r.url.endsWith('/equipamentos/disponibilidade'));
+    expect(req.request.params.get('inicio')).toBe(ini.toISOString());
+    req.flush([{ equipamentoId: 'q1', quantidadeDisponivel: 1 }, { equipamentoId: 'q2', quantidadeDisponivel: 0 }]);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(component.periodoDefinido()).toBeTrue();
+    expect(component.opcoesEquipamentos().map((e) => e.id)).toEqual(['q1']); // a câmera volta a ficar livre
+  });
+
+  it('o que estava escolhido e deixou de estar livre ao mudar as datas trava o avanço', async () => {
+    await criar({ perfil: 'ADMIN' });
+    http.match((r) => r.url.endsWith('/equipamentos')).forEach((r) => r.flush([
+      { id: 'q1', nome: 'Câmera', categoriaNome: 'Câmeras', controle: 'INDIVIDUAL', quantidadeDisponivel: 1, quantidadeTotal: 1, emUso: [] },
+    ]));
+    await new Promise((r) => setTimeout(r, 0));
+    preencher(); // escolhe a câmera q... (eq1 do teste)
+    component.selecionados.set([{ id: 'q1', nome: 'Câmera', controle: 'INDIVIDUAL' } as never]);
+    const ini = new Date(Date.now() + 5 * 86400000);
+    component.form.patchValue({ retiradaPrevista: ini, previstaDevolucao: new Date(ini.getTime() + 86400000) });
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 400));
+    http.expectOne((r) => r.url.endsWith('/equipamentos/disponibilidade')).flush([{ equipamentoId: 'q1', quantidadeDisponivel: 0 }]);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(component.indisponiveisSelecionados().map((e) => e.id)).toEqual(['q1']);
+    expect(component.podeContinuar()).toBeFalse();
+  });
+
   it('o OK do termo leva a demanda escolhida', async () => {
     await criar({ perfil: 'ADMIN' });
     preencher();
@@ -87,7 +166,8 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     await criar({ perfil: 'ADMIN' });
     const e = {
       id: 'em1', status: 'AGUARDANDO_AUTORIZACAO', retiranteNome: 'João', retiranteChaveC: 'F1234567', retiranteContato: null,
-      finalidade: null, externo: false, localUso: null, previstaDevolucao: new Date(Date.now() + 86400000).toISOString(),
+      finalidade: null, externo: false, localUso: null, retiradaPrevista: new Date(Date.now() - 3600_000).toISOString(),
+      previstaDevolucao: new Date(Date.now() + 86400000).toISOString(),
       demandaId: null, demandaTitulo: null, itens: [],
     } as never;
     component.abrirEdicao(e);

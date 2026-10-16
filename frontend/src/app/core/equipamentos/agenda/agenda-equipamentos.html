@@ -1,0 +1,160 @@
+<app-barra-pagina titulo="Agenda dos equipamentos" subtitulo="Quem está com cada equipamento e as reservas dos próximos dias.">
+  <ng-container fim>
+    <a routerLink="/equipamentos"><p-button icon="pi pi-list" label="Empréstimos" severity="secondary" [outlined]="true" /></a>
+    <a routerLink="/equipamentos/inventario"><p-button icon="pi pi-box" label="Inventário" severity="secondary" [outlined]="true" /></a>
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  <app-ajuda chave="agenda" />
+
+  <section class="cartao">
+    <div class="controles">
+      <div class="navegacao">
+        <p-button icon="pi pi-chevron-left" [text]="true" severity="secondary" ariaLabel="Período anterior" (onClick)="mover(-1)" />
+        <p-button label="Hoje" severity="secondary" [outlined]="true" size="small" (onClick)="hoje()" />
+        <p-button icon="pi pi-chevron-right" [text]="true" severity="secondary" ariaLabel="Próximo período" (onClick)="mover(1)" />
+        <strong class="periodo-titulo">{{ inicio() | date: 'dd/MM' }} a {{ ultimoDia() | date: 'dd/MM/yyyy' }}</strong>
+      </div>
+      <app-pilulas [opcoes]="opcoesDias" [valor]="'' + quantidadeDias()" (valorChange)="mudarDias($event)" descricao="Tamanho da janela" />
+      <app-campo-busca class="controles__busca" placeholder="Buscar equipamento..." descricao="Buscar equipamento na agenda"
+        [valor]="busca()" (valorChange)="busca.set($event)" />
+      <p-select class="controles__campo" [options]="categorias()" optionLabel="nome" optionValue="id" placeholder="Categoria"
+        [showClear]="true" [ngModel]="categoriaId()" (ngModelChange)="categoriaId.set($event)" ariaLabel="Filtrar por categoria" />
+      @if (filtrosAtivos()) {
+        <p-button label="Limpar" icon="pi pi-filter-slash" [text]="true" severity="secondary" (onClick)="limparFiltros()" />
+      }
+    </div>
+
+    <ul class="legenda" aria-label="Legenda">
+      <li><span class="amostra amostra--retirado"></span>Com a pessoa</li>
+      <li><span class="amostra amostra--reservado"></span>Reservado (autorizado)</li>
+      <li><span class="amostra amostra--aguardando"></span>Aguardando autorização</li>
+      <li><span class="amostra amostra--atrasado"></span>Atrasado</li>
+      @if (auth.operaEquipamentos()) { <li><span class="amostra amostra--devolvido"></span>Já devolvido</li> }
+      <li><i class="pi pi-external-link" aria-hidden="true"></i>Externo (sai do prédio)</li>
+    </ul>
+
+    @if (agenda.isLoading() && !agenda.value()) {
+      <p class="carregando">Carregando agenda...</p>
+    } @else {
+      <div class="rolagem">
+        <div class="gantt" [style.--dias]="quantidadeDias()">
+          <div class="gantt__cabecalho">
+            <div class="gantt__nome gantt__nome--cabecalho">Equipamento</div>
+            <div class="gantt__pista gantt__pista--dias">
+              @for (d of colunas(); track d.rotulo) {
+                <div class="dia" [class.dia--fds]="d.fimDeSemana" [class.dia--hoje]="d.hoje" [style.left.%]="d.esquerda" [style.width.%]="d.largura">
+                  <span>{{ d.rotulo }}</span><small>{{ d.diaSemana }}</small>
+                </div>
+              }
+            </div>
+          </div>
+
+          @for (g of grupos(); track g.categoria) {
+            <div class="gantt__grupo">{{ g.categoria }}</div>
+            @for (l of g.linhas; track l.linha.equipamentoId) {
+              <div class="gantt__linha">
+                <button type="button" class="gantt__nome" (click)="abrirEquipamento(l.linha)" [attr.aria-label]="'Ver com quem está: ' + l.linha.nome">
+                  <strong>{{ l.linha.nome }}</strong>
+                  <small>{{ l.linha.patrimonio ?? (l.linha.controle === 'QUANTIDADE' ? 'Lote de ' + l.linha.quantidadeTotal : 'Sem patrimônio') }}</small>
+                </button>
+                <div class="gantt__pista" [style.height.px]="l.faixas * 30 + 10">
+                  @for (i of l.itens; track i.bloco.emprestimoId) {
+                    <button type="button" class="barra barra--{{ classeBloco(i.bloco) }}" [style.left.%]="i.esquerda" [style.width.%]="i.largura"
+                      [style.top.px]="5 + i.faixa * 30" [title]="tituloBloco(i.bloco)" (click)="abrirBloco(l.linha, i.bloco)">
+                      @if (i.bloco.externo) { <i class="pi pi-external-link" aria-hidden="true"></i> }
+                      <span>{{ i.bloco.retiranteNome }}{{ i.bloco.quantidade > 1 ? ' ×' + i.bloco.quantidade : '' }}</span>
+                    </button>
+                    @if (i.atrasoLargura > 0) {
+                      <button type="button" class="barra barra--atraso" [style.left.%]="i.atrasoEsquerda" [style.width.%]="i.atrasoLargura"
+                        [style.top.px]="5 + i.faixa * 30" [title]="'Atrasado: ' + tituloBloco(i.bloco)" (click)="abrirBloco(l.linha, i.bloco)">
+                        <span>atrasado</span>
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          } @empty {
+            <div class="vazio">
+              @if (filtrosAtivos()) {
+                <strong>Nenhum equipamento com esses filtros</strong>
+              } @else {
+                <strong>Nenhum equipamento cadastrado</strong>
+                Cadastre os equipamentos no Inventário para vê-los aqui.
+              }
+            </div>
+          }
+
+          @if (marcadorAgora() !== null) {
+            <div class="gantt__sobreposicao" aria-hidden="true">
+              <span class="agora" [style.left.%]="marcadorAgora()"><em>agora</em></span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </section>
+</div>
+
+<p-dialog [visible]="!!blocoAberto()" (visibleChange)="!$event && blocoAberto.set(null)" header="Período de uso" [modal]="true" [style]="{ width: '440px' }">
+  @if (blocoAberto(); as a) {
+    <div class="detalhe">
+      <div class="etiquetas">
+        <p-tag [value]="rotuloBloco(a.bloco)" [severity]="a.bloco.atrasado ? 'danger' : a.bloco.devolvido ? 'secondary' : a.bloco.status === 'RETIRADO' ? 'success' : a.bloco.status === 'AUTORIZADO' ? 'info' : 'warn'" />
+        @if (a.bloco.externo) { <p-tag value="EXTERNO" severity="contrast" icon="pi pi-external-link" /> }
+      </div>
+      <dl>
+        <dt>Equipamento</dt><dd>{{ a.linha.nome }}{{ a.linha.patrimonio ? ' · ' + a.linha.patrimonio : '' }}</dd>
+        <dt>Com quem</dt><dd><strong>{{ a.bloco.retiranteNome }}</strong>{{ a.bloco.quantidade > 1 ? ' (x' + a.bloco.quantidade + ')' : '' }}</dd>
+        <dt>{{ a.bloco.devolvido ? 'Período' : 'Retirada' }}</dt><dd>{{ a.bloco.inicio | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>{{ a.bloco.devolvido ? 'Devolvido em' : 'Devolução prevista' }}</dt><dd>{{ a.bloco.fim | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        @if (a.bloco.localUso) { <dt>Onde</dt><dd>{{ a.bloco.localUso }}</dd> }
+      </dl>
+      <a routerLink="/equipamentos"><p-button label="Abrir a lista de empréstimos" icon="pi pi-list" severity="secondary" [outlined]="true" size="small" /></a>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog [visible]="!!equipamentoAberto()" (visibleChange)="!$event && equipamentoAberto.set(null)" [header]="equipamentoAberto()?.nome ?? ''" [modal]="true" [style]="{ width: '480px' }">
+  @if (equipamentoAberto(); as l) {
+    <div class="detalhe">
+      <small class="sub">{{ l.categoriaNome }}{{ l.patrimonio ? ' · ' + l.patrimonio : '' }}{{ l.controle === 'QUANTIDADE' ? ' · lote de ' + l.quantidadeTotal : '' }}</small>
+
+      <h4>Com quem está agora</h4>
+      @for (b of usosDoEquipamento().agora; track b.emprestimoId) {
+        <button type="button" class="uso" (click)="blocoAberto.set({ linha: l, bloco: b }); equipamentoAberto.set(null)">
+          <strong>{{ b.retiranteNome }}</strong>{{ b.quantidade > 1 ? ' (x' + b.quantidade + ')' : '' }}
+          <small>devolve {{ b.fim | date: 'dd/MM HH:mm' }}{{ b.localUso ? ' · ' + b.localUso : '' }}</small>
+          @if (b.atrasado) { <p-tag value="Atrasado" severity="danger" /> }
+          @if (b.externo) { <p-tag value="EXTERNO" severity="contrast" /> }
+        </button>
+      } @empty {
+        <p class="sub">Ninguém. Está no estúdio.</p>
+      }
+
+      @if (usosDoEquipamento().reservas.length) {
+        <h4>Reservas</h4>
+        @for (b of usosDoEquipamento().reservas; track b.emprestimoId) {
+          <button type="button" class="uso" (click)="blocoAberto.set({ linha: l, bloco: b }); equipamentoAberto.set(null)">
+            <strong>{{ b.retiranteNome }}</strong>{{ b.quantidade > 1 ? ' (x' + b.quantidade + ')' : '' }}
+            <small>{{ b.inicio | date: 'dd/MM HH:mm' }} até {{ b.fim | date: 'dd/MM HH:mm' }}</small>
+            <p-tag [value]="rotuloBloco(b)" [severity]="b.status === 'AUTORIZADO' ? 'info' : 'warn'" />
+            @if (b.externo) { <p-tag value="EXTERNO" severity="contrast" /> }
+          </button>
+        }
+      }
+
+      @if (usosDoEquipamento().devolvidos.length) {
+        <h4>Devolvidos recentemente</h4>
+        @for (b of usosDoEquipamento().devolvidos; track b.emprestimoId) {
+          <div class="uso uso--passado">
+            <strong>{{ b.retiranteNome }}</strong>
+            <small>{{ b.inicio | date: 'dd/MM HH:mm' }} até {{ b.fim | date: 'dd/MM HH:mm' }}</small>
+          </div>
+        }
+      }
+    </div>
+  }
+</p-dialog>

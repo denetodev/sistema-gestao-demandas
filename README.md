@@ -74,6 +74,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V17 | remove `pessoa.cpf` (e as constraints dele) |
 | V18 | módulo de equipamentos: `categoria_equipamento`, `equipamento`, `emprestimo`, `emprestimo_item`, `termo_equipamento`, `area.acessa_equipamentos` e `pessoa.papel_equipamentos` |
 | V19 | `emprestimo_foto`: fotos opcionais do equipamento na saída e na devolução (arquivo no bucket privado, pasta emprestimos/) |
+| V20 | `emprestimo.retirada_prevista`: reserva por período (equipamento livre ou ocupado no intervalo, não só agora) |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

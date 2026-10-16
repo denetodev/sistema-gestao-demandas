@@ -2,6 +2,8 @@ package dev.denetodev.sgd_api.controller;
 
 import dev.denetodev.sgd_api.dto.request.EquipamentoRequest;
 import dev.denetodev.sgd_api.dto.request.TermoEquipamentoRequest;
+import dev.denetodev.sgd_api.dto.response.AgendaResponse;
+import dev.denetodev.sgd_api.dto.response.DisponibilidadeResponse;
 import dev.denetodev.sgd_api.dto.response.EquipamentoResponse;
 import dev.denetodev.sgd_api.dto.response.TermoEquipamentoResponse;
 import dev.denetodev.sgd_api.service.EquipamentoService;
@@ -12,6 +14,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +37,27 @@ public class EquipamentoController {
             @RequestParam(required = false) String busca
     ) {
         return equipamentoService.listar(jwt, categoriaId, busca);
+    }
+
+    /** Agenda (Gantt) dos equipamentos na janela pedida; sem datas, de 7 dias atrás a 21 dias à frente. */
+    @GetMapping("/agenda")
+    public AgendaResponse agenda(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime de,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime ate
+    ) {
+        return equipamentoService.agenda(jwt, de, ate);
+    }
+
+    /** O que está livre durante todo o período, para montar o pedido; ignora o empréstimo que está sendo corrigido. */
+    @GetMapping("/disponibilidade")
+    public List<DisponibilidadeResponse> disponibilidade(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime inicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fim,
+            @RequestParam(required = false) UUID ignorarEmprestimoId
+    ) {
+        return equipamentoService.disponibilidade(jwt, inicio, fim, ignorarEmprestimoId);
     }
 
     /** Termo de responsabilidade vigente (texto mostrado na tela antes do OK). */
