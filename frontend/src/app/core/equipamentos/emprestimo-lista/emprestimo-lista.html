@@ -8,6 +8,7 @@
 </app-barra-pagina>
 
 <div class="pagina-corpo">
+  <app-ajuda chave="emprestimos" />
   @if (auth.operaEquipamentos()) {
     <div class="resumo">
       <app-pilulas [opcoes]="opcoesGrupo" [valor]="grupo()" (valorChange)="mudarGrupo($event)" descricao="Situação dos empréstimos" />
@@ -21,8 +22,25 @@
   }
 
   <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por pessoa, equipamento, patrimônio ou local..." descricao="Buscar empréstimos"
+          [valor]="filtro().busca" (valorChange)="ajustarFiltro({ busca: $event })" />
+        @if (auth.operaEquipamentos()) {
+          <p-select class="filtros__campo" [options]="opcoesSituacao()" optionLabel="label" optionValue="value" placeholder="Situação"
+            [showClear]="true" [ngModel]="filtro().situacao" (ngModelChange)="ajustarFiltro({ situacao: $event })" ariaLabel="Filtrar por situação" />
+        }
+        <p-select class="filtros__campo" [options]="opcoesTipo" optionLabel="label" optionValue="value" placeholder="Interno ou externo"
+          [showClear]="true" [ngModel]="filtro().externo" (ngModelChange)="ajustarFiltro({ externo: $event ?? null })" ariaLabel="Filtrar por interno ou externo" />
+        <p-datepicker class="filtros__campo" selectionMode="range" [ngModel]="periodo()" (ngModelChange)="mudarPeriodo($event)"
+          dateFormat="dd/mm/yy" [showIcon]="true" [showClear]="true" placeholder="Devolução entre..." appendTo="body" />
+        @if (filtrosAtivos()) {
+          <p-button label="Limpar filtros" icon="pi pi-filter-slash" [text]="true" severity="secondary" (onClick)="limparFiltros()" />
+        }
+      </div>
+    </div>
     <div class="tabela-rolagem">
-      <p-table [value]="emprestimos.value() ?? []" [loading]="emprestimos.isLoading()" dataKey="id"
+      <p-table [value]="filtrados()" [loading]="emprestimos.isLoading()" dataKey="id"
         [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50]" [showCurrentPageReport]="true"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} empréstimos">
         <ng-template pTemplate="header">
@@ -55,6 +73,12 @@
             <td>{{ e.localUso ?? (e.externo ? 'Fora do prédio' : 'No prédio') }}</td>
             <td class="col-acoes">
               <p-button [text]="true" size="small" severity="secondary" icon="pi pi-eye" ariaLabel="Ver detalhes e fotos" (onClick)="abrirDetalhe(e)" />
+              @if (podeEditar(e)) {
+                <p-button [text]="true" size="small" severity="secondary" icon="pi pi-pencil" ariaLabel="Corrigir empréstimo" (onClick)="abrirEdicao(e)" />
+              }
+              @if (podeProrrogar(e)) {
+                <p-button [text]="true" size="small" severity="secondary" icon="pi pi-calendar-plus" ariaLabel="Prorrogar devolução" (onClick)="abrirProrrogacao(e)" />
+              }
               @if (podeAutorizar(e)) {
                 <p-button label="Autorizar" size="small" icon="pi pi-check" (onClick)="autorizar(e)" />
                 <p-button label="Recusar" size="small" severity="danger" [outlined]="true" icon="pi pi-times" (onClick)="abrirRecusa(e)" />
@@ -78,9 +102,14 @@
           <tr>
             <td colspan="6">
               <div class="vazio">
-                <strong>Nenhum empréstimo por aqui</strong>
-                @if (auth.operaEquipamentos()) { Use "Novo empréstimo" para registrar uma retirada. }
-                @else { Quando alguém retirar um equipamento, aparece nesta lista. }
+                @if (filtrosAtivos()) {
+                  <strong>Nenhum empréstimo com esses filtros</strong>
+                  Tente outro texto ou limpe os filtros.
+                } @else {
+                  <strong>Nenhum empréstimo por aqui</strong>
+                  @if (auth.operaEquipamentos()) { Use "Novo empréstimo" para registrar uma retirada. }
+                  @else { Quando alguém retirar um equipamento, aparece nesta lista. }
+                }
               </div>
             </td>
           </tr>
@@ -90,9 +119,9 @@
   </section>
 </div>
 
-<p-dialog [(visible)]="dialogNovo" header="Novo empréstimo" [modal]="true" [style]="{ width: '560px' }">
+<p-dialog [(visible)]="dialogNovo" [header]="editando() ? 'Corrigir empréstimo' : 'Novo empréstimo'" [modal]="true" [style]="{ width: '560px' }">
   @if (etapa() === 'dados') {
-    <form [formGroup]="form" (ngSubmit)="continuar()" class="dialog-form">
+    <form [formGroup]="form" (ngSubmit)="enviar()" class="dialog-form">
       <label for="retirante">Quem vai retirar</label>
       <input pInputText id="retirante" formControlName="retiranteNome" placeholder="Nome completo" />
 
@@ -108,6 +137,9 @@
         </div>
       </div>
 
+      @if (editando(); as ed) {
+        <p class="sub">Equipamentos: <strong>{{ resumoItens(ed) }}</strong>. Para trocar o que sai, cancele e registre de novo.</p>
+      } @else {
       <label for="itens">Equipamentos</label>
       <p-multiselect inputId="itens" [options]="disponiveis()" [ngModel]="selecionados()" (ngModelChange)="selecionados.set($event)"
         [ngModelOptions]="{ standalone: true }" optionLabel="nome" placeholder="Escolha o que vai sair" [filter]="true"
@@ -127,6 +159,8 @@
               [min]="1" [max]="e.quantidadeDisponivel" [showButtons]="true" />
           </div>
         }
+      }
+
       }
 
       <label for="demanda">Demanda (opcional)</label>
@@ -149,7 +183,11 @@
       </div>
       <input pInputText formControlName="localUso" placeholder="Onde vai ser usado (opcional)" aria-label="Local de uso" />
 
-      <p-button type="submit" label="Continuar" icon="pi pi-arrow-right" iconPos="right" [disabled]="!podeContinuar()" />
+      @if (editando()) {
+        <p-button type="submit" label="Salvar alterações" icon="pi pi-check" [loading]="salvando()" [disabled]="!podeSalvarEdicao()" />
+      } @else {
+        <p-button type="submit" label="Continuar" icon="pi pi-arrow-right" iconPos="right" [disabled]="!podeContinuar()" />
+      }
     </form>
   } @else {
     <div class="termo">
@@ -211,6 +249,20 @@
         }
       }
       <small class="sub">JPEG ou PNG, até 5 MB cada, no máximo 6 por etapa.</small>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog [visible]="!!prorrogando()" (visibleChange)="!$event && prorrogando.set(null)" header="Prorrogar devolução" [modal]="true" [style]="{ width: '420px' }">
+  @if (prorrogando(); as p) {
+    <div class="dialog-form">
+      <p>Hoje a devolução está prevista para <strong>{{ p.previstaDevolucao | date: 'dd/MM/yyyy HH:mm' }}</strong>.</p>
+      <label for="nova-prevista">Nova data de devolução</label>
+      <p-datepicker inputId="nova-prevista" [ngModel]="novaPrevista()" (ngModelChange)="novaPrevista.set($event)" [showTime]="true"
+        dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" [minDate]="agora" />
+      <label for="motivo-prorrogacao">Motivo (opcional)</label>
+      <textarea pTextarea id="motivo-prorrogacao" rows="2" [ngModel]="motivoProrrogacao()" (ngModelChange)="motivoProrrogacao.set($event)"></textarea>
+      <p-button label="Prorrogar" icon="pi pi-calendar-plus" [disabled]="!novaPrevista()" (onClick)="prorrogar()" />
     </div>
   }
 </p-dialog>

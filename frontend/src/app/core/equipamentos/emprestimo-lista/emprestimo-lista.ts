@@ -11,15 +11,22 @@ import { Textarea } from 'primeng/textarea';
 import { DatePicker } from 'primeng/datepicker';
 import { MultiSelect } from 'primeng/multiselect';
 import { Checkbox } from 'primeng/checkbox';
+import { Select } from 'primeng/select';
 import { AutoComplete } from 'primeng/autocomplete';
 import { Button } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { AuthService } from '../../auth/auth.service';
 import { BarraPagina } from '../../layout/barra-pagina/barra-pagina';
 import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
+import { CampoBusca } from '../../ui/campo-busca/campo-busca';
+import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { chaveCValida, normalizarChaveC } from '../../util/chave-c';
 import { EquipamentoService } from '../equipamento.service';
-import { pedeAtencao, resumoItens, rotuloSituacao, severidadeSituacao } from '../equipamento-apresentacao';
+import {
+  FILTRO_VAZIO, FiltroEmprestimos, SituacaoFiltro, filtroAtivo, filtrarEmprestimos, pedeAtencao, resumoItens,
+  rotuloSituacao, severidadeSituacao,
+} from '../equipamento-apresentacao';
+import { PendenciasEquipamentos } from '../pendencias-equipamentos';
 import type { Emprestimo, Equipamento, FotoEmprestimo, GrupoEmprestimos, MomentoFoto } from '../equipamento.model';
 import type { Demanda } from '../../../features/demandas/data-access/demanda.model';
 
@@ -27,7 +34,7 @@ import type { Demanda } from '../../../features/demandas/data-access/demanda.mod
   selector: 'app-emprestimo-lista',
   imports: [
     DatePipe, FormsModule, ReactiveFormsModule, RouterLink, TableModule, Dialog, InputText, InputNumber, Textarea,
-    DatePicker, MultiSelect, Checkbox, AutoComplete, Button, Tag, BarraPagina, Pilulas,
+    DatePicker, MultiSelect, Checkbox, AutoComplete, Select, Button, Tag, BarraPagina, Pilulas, CampoBusca, Ajuda,
   ],
   templateUrl: './emprestimo-lista.html',
   styleUrl: './emprestimo-lista.scss',
@@ -40,6 +47,7 @@ export class EmprestimoLista {
   emprestimos = this.#service.emprestimos;
   equipamentos = this.#service.equipamentos;
   termo = this.#service.termo;
+  #pendencias = inject(PendenciasEquipamentos);
 
   rotuloSituacao = rotuloSituacao;
   severidadeSituacao = severidadeSituacao;
@@ -53,6 +61,47 @@ export class EmprestimoLista {
   grupo = this.#service.grupo;
   mudarGrupo(valor: string) {
     this.grupo.set(valor as GrupoEmprestimos);
+    this.limparFiltros(); // as situações mudam de um grupo para o outro
+  }
+
+  // ---- busca e filtros (a lista carregada é pequena: filtra no navegador) ----
+  filtro = signal<FiltroEmprestimos>({ ...FILTRO_VAZIO });
+  periodo = signal<(Date | null)[] | null>(null);
+
+  filtrados = computed(() => filtrarEmprestimos(this.emprestimos.value() ?? [], this.filtro()));
+  filtrosAtivos = computed(() => filtroAtivo(this.filtro()));
+
+  opcoesSituacao = computed<{ label: string; value: SituacaoFiltro }[]>(() =>
+    this.grupo() === 'ATIVOS'
+      ? [
+          { label: 'Aguardando autorização', value: 'AGUARDANDO_AUTORIZACAO' },
+          { label: 'Autorizado', value: 'AUTORIZADO' },
+          { label: 'Com a pessoa', value: 'RETIRADO' },
+          { label: 'Atrasado', value: 'ATRASADO' },
+        ]
+      : [
+          { label: 'Devolvido', value: 'DEVOLVIDO' },
+          { label: 'Recusado', value: 'RECUSADO' },
+          { label: 'Cancelado', value: 'CANCELADO' },
+        ],
+  );
+  opcoesTipo = [
+    { label: 'Externos (saem do prédio)', value: true },
+    { label: 'Internos', value: false },
+  ];
+
+  ajustarFiltro(parcial: Partial<FiltroEmprestimos>) {
+    this.filtro.update((f) => ({ ...f, ...parcial }));
+  }
+
+  mudarPeriodo(valor: (Date | null)[] | null) {
+    this.periodo.set(valor);
+    this.ajustarFiltro({ de: valor?.[0] ?? null, ate: valor?.[1] ?? valor?.[0] ?? null });
+  }
+
+  limparFiltros() {
+    this.filtro.set({ ...FILTRO_VAZIO });
+    this.periodo.set(null);
   }
 
   /** Quem só consulta vê "quem está com quê": o backend já devolve só o que está retirado. */
@@ -83,7 +132,64 @@ export class EmprestimoLista {
 
   agora = new Date();
 
+  /** Preenchido quando o diálogo está corrigindo um pedido que espera autorização. */
+  editando = signal<Emprestimo | null>(null);
+
+  abrirEdicao(e: Emprestimo) {
+    this.editando.set(e);
+    this.form.reset({
+      retiranteNome: e.retiranteNome,
+      retiranteChaveC: e.retiranteChaveC ?? '',
+      retiranteContato: e.retiranteContato ?? '',
+      finalidade: e.finalidade ?? '',
+      externo: e.externo,
+      localUso: e.localUso ?? '',
+      previstaDevolucao: new Date(e.previstaDevolucao),
+    });
+    this.demandaEscolhida.set(e.demandaId ? ({ id: e.demandaId, titulo: e.demandaTitulo ?? '' } as Demanda) : null);
+    this.etapa.set('dados');
+    this.dialogNovo.set(true);
+  }
+
+  podeSalvarEdicao(): boolean {
+    return this.form.valid && this.chaveOk();
+  }
+
+  /** Em edição salva direto (os equipamentos e o termo não mudam); no pedido novo segue para o termo. */
+  enviar() {
+    if (this.editando()) void this.salvarEdicao();
+    else this.continuar();
+  }
+
+  async salvarEdicao() {
+    const e = this.editando();
+    if (!e || !this.podeSalvarEdicao()) return;
+    this.salvando.set(true);
+    const v = this.form.getRawValue();
+    try {
+      await firstValueFrom(
+        this.#service.editar(e.id, {
+          retiranteNome: v.retiranteNome.trim(),
+          retiranteChaveC: normalizarChaveC(v.retiranteChaveC) || null,
+          retiranteContato: v.retiranteContato.trim() || null,
+          finalidade: v.finalidade.trim() || null,
+          externo: v.externo,
+          localUso: v.localUso.trim() || null,
+          previstaDevolucao: v.previstaDevolucao!.toISOString(),
+          demandaId: this.demandaEscolhida()?.id ?? null,
+        }),
+      );
+      this.dialogNovo.set(false);
+      this.recarregar();
+    } catch {
+      // aviso já exibido pelo interceptor; o diálogo fica aberto para corrigir
+    } finally {
+      this.salvando.set(false);
+    }
+  }
+
   abrirNovo() {
+    this.editando.set(null);
     this.form.reset({ externo: false });
     this.selecionados.set([]);
     this.quantidades.set({});
@@ -172,6 +278,12 @@ export class EmprestimoLista {
   podeReceber(e: Emprestimo) {
     return this.auth.operaEquipamentos() && e.status === 'RETIRADO';
   }
+  podeEditar(e: Emprestimo) {
+    return this.auth.operaEquipamentos() && e.status === 'AGUARDANDO_AUTORIZACAO';
+  }
+  podeProrrogar(e: Emprestimo) {
+    return this.auth.operaEquipamentos() && e.status === 'RETIRADO';
+  }
   podeCancelar(e: Emprestimo) {
     return this.auth.operaEquipamentos() && (e.status === 'AGUARDANDO_AUTORIZACAO' || e.status === 'AUTORIZADO');
   }
@@ -179,6 +291,7 @@ export class EmprestimoLista {
   recarregar() {
     this.emprestimos.reload();
     this.equipamentos.reload();
+    this.#pendencias.resumo.reload();
   }
 
   private async agir(chamada: Promise<unknown>) {
@@ -254,6 +367,25 @@ export class EmprestimoLista {
     } catch {
       // aviso já exibido pelo interceptor
     }
+  }
+
+  // ---- prorrogar ----
+  prorrogando = signal<Emprestimo | null>(null);
+  novaPrevista = signal<Date | null>(null);
+  motivoProrrogacao = signal('');
+
+  abrirProrrogacao(e: Emprestimo) {
+    this.novaPrevista.set(null);
+    this.motivoProrrogacao.set('');
+    this.prorrogando.set(e);
+  }
+
+  async prorrogar() {
+    const e = this.prorrogando();
+    const nova = this.novaPrevista();
+    if (!e || !nova) return;
+    await this.agir(firstValueFrom(this.#service.prorrogar(e.id, nova.toISOString(), this.motivoProrrogacao().trim() || null)));
+    this.prorrogando.set(null);
   }
 
   // ---- recusar ----

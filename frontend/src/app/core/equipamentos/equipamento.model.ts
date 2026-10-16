@@ -122,6 +122,12 @@ export interface FotoEmprestimo {
   createdAt: string;
 }
 
+export interface ResumoEmprestimos {
+  aguardandoAutorizacao: number;
+  aguardandoExterno: number;
+  atrasados: number;
+}
+
 export interface Termo {
   versao: number;
   texto: string;

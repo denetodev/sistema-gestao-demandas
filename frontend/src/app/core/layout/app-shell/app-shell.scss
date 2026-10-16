@@ -653,3 +653,22 @@ img.app-avatar {
     transition: none;
   }
 }
+
+// aviso de pendências no item Equipamentos do menu
+.app-nav__selo {
+  margin-left: auto;
+  min-width: 1.35rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.35rem;
+  text-align: center;
+
+  &--urgente {
+    background: var(--p-red-500);
+    color: #fff;
+  }
+}

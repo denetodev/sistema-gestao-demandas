@@ -47,6 +47,41 @@ Só quem participa de uma demanda (e a Referência da área de alguém do time, 
 ### Relatório mensal
 A pessoa gera e aprova o próprio relatório, e depois ele fica travado. Só Gestor ou Admin reabrem.
 
+## Equipamentos (empréstimo do estúdio)
+
+**Quem entra no módulo.** Admin e Gestor sempre. Profissional entra se a equipe dele estiver marcada em *Núcleos e equipes* (coluna "Acessa equipamentos") ou se tiver um papel em *Pessoas* (campo "Papel nos equipamentos"). Visualizador nunca.
+
+**Papéis.**
+- *Operador de estúdio*: registra o empréstimo (com o OK do termo), entrega, recebe a devolução, corrige pedido que espera autorização, prorroga e anexa fotos.
+- *Gestor de equipamentos* (e Gestor e Admin): autoriza ou recusa, edita o inventário e o texto do termo. Quem registrou um pedido não o autoriza, exceto o Admin.
+- Quem só tem acesso consulta o inventário e vê "quem está com quê".
+
+**Caminho de um empréstimo.** Aguardando autorização, autorizado, retirado (com a pessoa), devolvido. Pode terminar recusado ou cancelado. Todo empréstimo passa por autorização, dentro ou fora do prédio. Externo (sai do prédio) e atrasado ficam em vermelho e vão para o topo. "Atrasado" não é um status: é retirado com a devolução prevista já vencida. O selo no menu mostra pedidos esperando e atrasados e se atualiza a cada 2 minutos.
+
+**Dia a dia.**
+- Trocar os equipamentos de um pedido: cancele e registre de novo (o OK do termo vale para aquela lista). Dados do pedido (pessoa, data, local, demanda) podem ser corrigidos enquanto ele espera autorização.
+- Quem já está com o equipamento pode ter a devolução prorrogada; o motivo e quem prorrogou ficam na auditoria.
+- Equipamento não se apaga: é desativado, e só quando não está em empréstimo em aberto.
+- O termo é versionado. Mudar o texto cria uma versão nova e os empréstimos antigos guardam a versão aceita.
+- Fotos de saída e devolução são opcionais: JPEG ou PNG, até 5 MB, no máximo 6 por etapa, no bucket privado (pasta `emprestimos/`).
+
+**Consultas úteis no banco** (somente leitura):
+```sql
+-- quem está com quê e se está atrasado
+select e.retirante_nome, q.nome as equipamento, e.prevista_devolucao, e.prevista_devolucao < now() as atrasado
+from emprestimo e
+join emprestimo_item i on i.emprestimo_id = e.id and i.devolvido_em is null
+join equipamento q on q.id = i.equipamento_id
+where e.status = 'RETIRADO'
+order by e.prevista_devolucao;
+
+-- trilha de um empréstimo (mudanças de situação, correções e prorrogações)
+select campo, valor_anterior, valor_novo, motivo, created_at
+from auditoria where tabela = 'emprestimo' and registro_id = '<id do empréstimo>' order by created_at;
+```
+
+**Dados de teste.** Empréstimos de teste em ambiente real levam `[TESTE]` na finalidade e só são apagados por quem os criou, com confirmação.
+
 ## Quando algo dá errado
 
 Comece pelo mais barato: abra `https://sistema-gestao-demandas-production-7ad0.up.railway.app/health`.
