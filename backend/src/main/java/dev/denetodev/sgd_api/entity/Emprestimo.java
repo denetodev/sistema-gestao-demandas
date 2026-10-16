@@ -116,6 +116,8 @@ public class Emprestimo {
 
     public UUID getId() { return id; }
     public String getRetiranteNome() { return retiranteNome; }
+    public void setRetiranteNome(String v) { this.retiranteNome = v; }
+    public void setPrevistaDevolucao(OffsetDateTime v) { this.previstaDevolucao = v; }
     public String getRetiranteChaveC() { return retiranteChaveC; }
     public void setRetiranteChaveC(String v) { this.retiranteChaveC = v; }
     public String getRetiranteContato() { return retiranteContato; }

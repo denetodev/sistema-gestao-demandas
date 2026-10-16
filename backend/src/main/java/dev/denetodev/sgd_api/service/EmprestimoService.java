@@ -1,7 +1,10 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.DevolucaoRequest;
+import dev.denetodev.sgd_api.dto.request.EmprestimoEdicaoRequest;
 import dev.denetodev.sgd_api.dto.request.EmprestimoRequest;
+import dev.denetodev.sgd_api.dto.request.ProrrogacaoRequest;
+import dev.denetodev.sgd_api.dto.response.ResumoEmprestimosResponse;
 import dev.denetodev.sgd_api.dto.request.RecusarEmprestimoRequest;
 import dev.denetodev.sgd_api.dto.response.EmprestimoResponse;
 import dev.denetodev.sgd_api.entity.Emprestimo;
@@ -134,6 +137,22 @@ public class EmprestimoService {
         return paraResponse(emprestimo, OffsetDateTime.now(clock));
     }
 
+    /** Contadores do aviso no menu. */
+    @Transactional(readOnly = true)
+    public ResumoEmprestimosResponse resumo(Jwt jwt) {
+        Pessoa usuario = currentPessoaResolver.resolver(jwt);
+        EquipamentoPermissao.exigirAcesso(usuario);
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        List<Emprestimo> abertos = emprestimoRepository.findByStatusIn(EM_ANDAMENTO);
+        long atrasados = abertos.stream().filter(e -> e.atrasado(agora)).count();
+        if (!EquipamentoPermissao.opera(usuario)) {
+            return new ResumoEmprestimosResponse(0, 0, atrasados);
+        }
+        List<Emprestimo> aguardando = abertos.stream()
+                .filter(e -> e.getStatus() == StatusEmprestimo.AGUARDANDO_AUTORIZACAO).toList();
+        return new ResumoEmprestimosResponse(aguardando.size(), aguardando.stream().filter(Emprestimo::isExterno).count(), atrasados);
+    }
+
     /** Fila de atenção: aguardando autorização primeiro, externo antes do interno, depois o que vence antes. */
     private Comparator<Emprestimo> fila() {
         return Comparator
@@ -212,6 +231,71 @@ public class EmprestimoService {
                         : e.getNome() + ": só há " + livre + " unidade(s) disponível(is)");
             }
             emprestimo.getItens().add(new EmprestimoItem(emprestimo, e, quantidade));
+        }
+    }
+
+    // ---------- correção e prorrogação ----------
+
+    /** Corrige dados enquanto o pedido espera autorização; cada campo alterado vai para a auditoria. */
+    public EmprestimoResponse editar(Jwt jwt, UUID id, EmprestimoEdicaoRequest request) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        EquipamentoPermissao.exigirOperacao(ator);
+        Emprestimo e = buscarEntidade(id);
+        if (e.getStatus() != StatusEmprestimo.AGUARDANDO_AUTORIZACAO) {
+            throw new EstadoInvalidoException("Só dá para corrigir um empréstimo que ainda espera autorização. "
+                    + "Depois disso, cancele e registre de novo");
+        }
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        if (!request.previstaDevolucao().isAfter(agora)) {
+            throw new IllegalArgumentException("A devolução prevista precisa ser uma data futura");
+        }
+        String nome = request.retiranteNome().trim();
+        String chave = chaveOpcional(request.retiranteChaveC(), e.getRetirantePessoa());
+
+        auditarSeMudou(e, "retirante_nome", e.getRetiranteNome(), nome, ator);
+        auditarSeMudou(e, "retirante_chave_c", e.getRetiranteChaveC(), chave, ator);
+        auditarSeMudou(e, "retirante_contato", e.getRetiranteContato(), vazioParaNulo(request.retiranteContato()), ator);
+        auditarSeMudou(e, "finalidade", e.getFinalidade(), vazioParaNulo(request.finalidade()), ator);
+        auditarSeMudou(e, "externo", String.valueOf(e.isExterno()), String.valueOf(request.externo()), ator);
+        auditarSeMudou(e, "local_uso", e.getLocalUso(), vazioParaNulo(request.localUso()), ator);
+        auditarSeMudou(e, "prevista_devolucao", String.valueOf(e.getPrevistaDevolucao()), String.valueOf(request.previstaDevolucao()), ator);
+        UUID demandaAtual = e.getDemanda() == null ? null : e.getDemanda().getId();
+        auditarSeMudou(e, "demanda_id", demandaAtual == null ? null : demandaAtual.toString(),
+                request.demandaId() == null ? null : request.demandaId().toString(), ator);
+
+        e.setRetiranteNome(nome);
+        e.setRetiranteChaveC(chave);
+        e.setRetiranteContato(vazioParaNulo(request.retiranteContato()));
+        e.setFinalidade(vazioParaNulo(request.finalidade()));
+        e.setExterno(request.externo());
+        e.setLocalUso(vazioParaNulo(request.localUso()));
+        e.setPrevistaDevolucao(request.previstaDevolucao());
+        e.setDemanda(request.demandaId() == null ? null : demandaRepository.findById(request.demandaId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Demanda não encontrada: " + request.demandaId())));
+        return paraResponse(e, agora);
+    }
+
+    /** Estende a devolução prevista de quem já está com o equipamento. Fica na auditoria, com o motivo. */
+    public EmprestimoResponse prorrogar(Jwt jwt, UUID id, ProrrogacaoRequest request) {
+        Pessoa ator = currentPessoaResolver.resolver(jwt);
+        EquipamentoPermissao.exigirOperacao(ator);
+        Emprestimo e = buscarEntidade(id);
+        exigirStatus(e, StatusEmprestimo.RETIRADO, "prorrogar");
+        OffsetDateTime agora = OffsetDateTime.now(clock);
+        if (!request.novaPrevista().isAfter(e.getPrevistaDevolucao()) || !request.novaPrevista().isAfter(agora)) {
+            throw new IllegalArgumentException("A nova data precisa ser futura e depois da devolução prevista atual");
+        }
+        Auditoria a = new Auditoria("emprestimo", e.getId(), "prevista_devolucao",
+                String.valueOf(e.getPrevistaDevolucao()), String.valueOf(request.novaPrevista()), ator.getId());
+        a.setMotivo(vazioParaNulo(request.motivo()));
+        auditoriaRepository.save(a);
+        e.setPrevistaDevolucao(request.novaPrevista());
+        return paraResponse(e, agora);
+    }
+
+    private void auditarSeMudou(Emprestimo e, String campo, String anterior, String novo, Pessoa ator) {
+        if (!java.util.Objects.equals(anterior, novo)) {
+            auditoriaRepository.save(new Auditoria("emprestimo", e.getId(), campo, anterior, novo, ator.getId()));
         }
     }
 
@@ -331,6 +415,7 @@ public class EmprestimoService {
     private void registrarAuditoria(Emprestimo e, StatusEmprestimo anterior, StatusEmprestimo novo, Pessoa ator, String motivo) {
         Auditoria a = new Auditoria("emprestimo", e.getId(), "status",
                 anterior == null ? null : anterior.name(), novo.name(), ator.getId());
+        a.setMotivo(vazioParaNulo(motivo));
         auditoriaRepository.save(a);
     }
 
