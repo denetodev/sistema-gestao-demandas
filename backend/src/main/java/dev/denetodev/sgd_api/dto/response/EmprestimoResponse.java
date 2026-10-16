@@ -11,7 +11,7 @@ public record EmprestimoResponse(
         /** Sai do prédio: o frontend destaca para quem autoriza. */
         boolean externo, String localUso,
         String retiranteNome, String retiranteChaveC, String retiranteContato, UUID retirantePessoaId,
-        String finalidade, OffsetDateTime previstaDevolucao,
+        String finalidade, OffsetDateTime retiradaPrevista, OffsetDateTime previstaDevolucao,
         UUID demandaId, String demandaTitulo, UUID atividadeId,
         UUID registradoPorId, String registradoPorNome,
         int termoVersao, OffsetDateTime termoAceitoEm,

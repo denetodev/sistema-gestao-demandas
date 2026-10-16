@@ -16,7 +16,7 @@ public record EquipamentoResponse(
         List<UsoAtual> emUso
 ) {
     public record UsoAtual(
-            UUID emprestimoId, String retiranteNome, int quantidade, OffsetDateTime previstaDevolucao,
+            UUID emprestimoId, String retiranteNome, int quantidade, OffsetDateTime retiradaPrevista, OffsetDateTime previstaDevolucao,
             StatusEmprestimo status, boolean atrasado, boolean externo, String localUso
     ) {
     }

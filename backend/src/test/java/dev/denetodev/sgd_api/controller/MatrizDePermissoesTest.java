@@ -187,7 +187,8 @@ class MatrizDePermissoesTest {
         // módulo de equipamentos: a barreira HTTP só trava o Visualizador nas escritas. Quem tem acesso ao módulo
         // (equipe liberada, papel, Gestor, Admin) e quem opera ou gerencia é decidido nos serviços
         // (EquipamentoPermissaoTest, EmprestimoServiceTest).
-        for (String caminho : List.of("/equipamentos", "/equipamentos/" + ID, "/equipamentos/termo",
+        for (String caminho : List.of("/equipamentos", "/equipamentos/" + ID, "/equipamentos/termo", "/equipamentos/agenda",
+                "/equipamentos/disponibilidade?inicio=2026-10-20T10:00:00Z&fim=2026-10-21T10:00:00Z",
                 "/categorias-equipamento", "/emprestimos", "/emprestimos/resumo", "/emprestimos/" + ID, "/emprestimos/" + ID + "/fotos")) {
             c.add(new Caso(G, caminho, TODOS_VINCULADOS));
         }

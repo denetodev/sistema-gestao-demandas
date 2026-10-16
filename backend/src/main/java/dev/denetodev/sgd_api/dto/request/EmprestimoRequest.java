@@ -23,6 +23,8 @@ public record EmprestimoRequest(
         /** Sai do prédio. */
         boolean externo,
         @Size(max = 160, message = "local de uso deve ter no máximo 160 caracteres") String localUso,
+        /** Quando vai retirar; vazio significa agora. Pode ser uma data futura (reserva). */
+        OffsetDateTime retiradaPrevista,
         @NotNull(message = "data prevista de devolução é obrigatória") OffsetDateTime previstaDevolucao,
         UUID demandaId,
         UUID atividadeId,

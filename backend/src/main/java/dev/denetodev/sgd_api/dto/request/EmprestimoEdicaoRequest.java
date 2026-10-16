@@ -19,6 +19,8 @@ public record EmprestimoEdicaoRequest(
         String finalidade,
         boolean externo,
         @Size(max = 160, message = "local de uso deve ter no máximo 160 caracteres") String localUso,
+        /** Vazio mantém a retirada prevista atual. */
+        OffsetDateTime retiradaPrevista,
         @NotNull(message = "data prevista de devolução é obrigatória") OffsetDateTime previstaDevolucao,
         UUID demandaId
 ) {
