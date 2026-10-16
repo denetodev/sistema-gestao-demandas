@@ -1,4 +1,5 @@
 import type { Perfil } from '../auth/auth.model';
+import type { PapelEquipamentos } from '../equipamentos/equipamento.model';
 
 export type StatusPessoa = 'ATIVO' | 'INATIVO' | 'AFASTADO' | 'REJEITADO';
 
@@ -20,6 +21,8 @@ export interface Pessoa {
   referenciaAreaId: string | null;
   referenciaAreaNome: string | null;
   fotoUrl: string | null;
+  /** Papel no módulo de equipamentos (nulo = só consulta, se a equipe tiver acesso). */
+  papelEquipamentos?: PapelEquipamentos | null;
   status: StatusPessoa;
   perfil: Perfil;
   authUserId: string | null;

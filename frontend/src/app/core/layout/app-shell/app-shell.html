@@ -40,6 +40,12 @@
       </a>
       }
 
+      @if (auth.acessaEquipamentos()) {
+      <a routerLink="/equipamentos" routerLinkActive="ativo" class="app-nav__item" title="Equipamentos">
+        <i class="pi pi-camera"></i><span class="app-nav__rotulo">Equipamentos</span>
+      </a>
+      }
+
       <span class="app-nav__secao"><span>Cadastros</span></span>
       <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">
         <i class="pi pi-users"></i><span class="app-nav__rotulo">Demandantes</span>

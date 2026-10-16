@@ -1,3 +1,5 @@
+import type { PapelEquipamentos } from '../equipamentos/equipamento.model';
+
 export type Perfil = 'ADMIN' | 'GESTOR' | 'PROFISSIONAL' | 'VISUALIZADOR';
 
 export interface PessoaMe {
@@ -25,6 +27,9 @@ export interface PessoaMe {
   createdAt: string;
   updatedAt: string;
   fotoUrl: string | null;
+  /** Papel no módulo de equipamentos e se a pessoa entra nele (equipe liberada, papel, Gestor ou Admin). */
+  papelEquipamentos?: PapelEquipamentos | null;
+  acessaEquipamentos?: boolean;
 }
 
 export interface PessoaMeResponse {

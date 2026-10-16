@@ -7,6 +7,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { providePrimeNG } from 'primeng/config';
 import { AuthService } from '../app/core/auth/auth.service';
 import type { Perfil, PessoaMe } from '../app/core/auth/auth.model';
+import type { PapelEquipamentos } from '../app/core/equipamentos/equipamento.model';
 import { PRIMENG_PT_BR } from '../app/core/theme/primeng-pt-br';
 import { podeMexerNoItem } from '../app/core/auth/pode-mexer-no-item';
 
@@ -15,6 +16,9 @@ export interface OpcoesTeste {
   referenciaAreaId?: string | null;
   /** false simula conta ainda não aprovada */
   vinculado?: boolean;
+  /** Papel no módulo de equipamentos; a pessoa entra no módulo se tiver papel ou se a equipe for liberada. */
+  papelEquipamentos?: PapelEquipamentos | null;
+  acessaEquipamentos?: boolean;
 }
 
 export function pessoaDeTeste(opcoes: OpcoesTeste = {}): PessoaMe {
@@ -42,6 +46,9 @@ export function pessoaDeTeste(opcoes: OpcoesTeste = {}): PessoaMe {
     createdAt: '',
     updatedAt: '',
     fotoUrl: null,
+    papelEquipamentos: opcoes.papelEquipamentos ?? null,
+    acessaEquipamentos:
+      opcoes.acessaEquipamentos ?? (opcoes.perfil === 'ADMIN' || opcoes.perfil === 'GESTOR' || !!opcoes.papelEquipamentos),
   };
 }
 
@@ -77,6 +84,17 @@ export function criarAuthFalso(opcoes: OpcoesTeste = {}) {
     },
     trocarSenha: () => Promise.resolve(),
     perfil: computed(() => pessoa()!.perfil),
+    acessaEquipamentos: computed(() => pessoa()!.acessaEquipamentos === true),
+    gerenciaEquipamentos: computed(
+      () =>
+        pessoa()!.acessaEquipamentos === true &&
+        (['ADMIN', 'GESTOR'].includes(pessoa()!.perfil) || pessoa()!.papelEquipamentos === 'GESTOR_DE_EQUIPAMENTOS'),
+    ),
+    operaEquipamentos: computed(
+      () =>
+        pessoa()!.acessaEquipamentos === true &&
+        (['ADMIN', 'GESTOR'].includes(pessoa()!.perfil) || !!pessoa()!.papelEquipamentos),
+    ),
   };
 }
 

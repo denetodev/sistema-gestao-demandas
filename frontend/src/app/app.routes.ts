@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
+import { equipamentosGuard, naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
 
 export const routes: Routes = [
   {
@@ -52,6 +52,18 @@ export const routes: Routes = [
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
+      {
+        path: 'equipamentos',
+        canActivate: [equipamentosGuard],
+        loadComponent: () =>
+          import('./core/equipamentos/emprestimo-lista/emprestimo-lista').then((m) => m.EmprestimoLista),
+      },
+      {
+        path: 'equipamentos/inventario',
+        canActivate: [equipamentosGuard],
+        loadComponent: () =>
+          import('./core/equipamentos/inventario/inventario').then((m) => m.Inventario),
+      },
       {
         path: 'demandantes',
         canActivate: [perfilGuard('ADMIN', 'GESTOR')],

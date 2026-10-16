@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { Dialog } from 'primeng/dialog';
@@ -7,6 +7,8 @@ import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
+import { Checkbox } from 'primeng/checkbox';
+import { EquipamentoService } from '../../equipamentos/equipamento.service';
 import { BarraPagina } from '../../layout/barra-pagina/barra-pagina';
 import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { AreaService, type Area } from '../area/area.service';
@@ -16,7 +18,7 @@ import { NucleoService, type Nucleo } from '../nucleo/nucleo.service';
 /** Diretoria > núcleo > equipe: cadastra os núcleos e diz em qual núcleo cada equipe está. */
 @Component({
   selector: 'app-estrutura',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Select, Button, Message, BarraPagina, Ajuda],
+  imports: [FormsModule, Checkbox, ReactiveFormsModule, TableModule, Dialog, InputText, Select, Button, Message, BarraPagina, Ajuda],
   templateUrl: './estrutura.html',
   styleUrl: './estrutura.scss',
 })
@@ -24,6 +26,16 @@ export class Estrutura {
   #fb = inject(FormBuilder);
   #nucleoService = inject(NucleoService);
   #areaService = inject(AreaService);
+  #equipamentoService = inject(EquipamentoService);
+
+  /** Liga ou desliga o acesso da equipe inteira ao módulo de equipamentos. */
+  async alternarEquipamentos(a: Area, acessa: boolean) {
+    try {
+      await firstValueFrom(this.#equipamentoService.definirAcessoEquipe(a.id, acessa));
+    } finally {
+      this.areas.reload();
+    }
+  }
 
   nucleos = this.#nucleoService.listar;
   areas = this.#areaService.listar;

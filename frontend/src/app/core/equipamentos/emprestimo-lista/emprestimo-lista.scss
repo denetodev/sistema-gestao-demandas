@@ -1,0 +1,101 @@
+.resumo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.situacao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.sub {
+  display: block;
+  color: var(--p-text-muted-color);
+}
+
+.col-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+// externo esperando decisão e atrasado: o gestor enxerga antes de ler
+:host ::ng-deep tr.linha-destaque > td {
+  background: color-mix(in srgb, var(--p-red-500) 9%, transparent);
+}
+:host ::ng-deep tr.linha-destaque > td:first-child {
+  box-shadow: inset 4px 0 0 var(--p-red-500);
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}
+
+.opcao-equip {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.quantidade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.externo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erro {
+  color: var(--p-red-500);
+}
+
+.termo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__texto {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: var(--p-content-hover-background);
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  &__acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .duas-colunas {
+    grid-template-columns: 1fr;
+  }
+}

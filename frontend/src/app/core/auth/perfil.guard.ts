@@ -21,6 +21,15 @@ export function perfilGuard(...perfisPermitidos: Perfil[]): CanActivateFn {
   };
 }
 
+/** Módulo de equipamentos: equipe liberada, papel no módulo, Gestor ou Admin. */
+export const equipamentosGuard: CanActivateFn = async (_route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.ready;
+  await auth.aguardarPessoa();
+  return auth.acessaEquipamentos() ? true : acessoNegado(router, state.url);
+};
+
 export const naoVisualizadorGuard: CanActivateFn = async (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);

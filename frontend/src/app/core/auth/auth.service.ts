@@ -43,6 +43,14 @@ export class AuthService {
 
   erroAoCarregarPessoa = computed(() => this.me.status() === 'error');
 
+  // módulo de equipamentos: só esconde menu e botão; o backend decide de verdade
+  acessaEquipamentos = computed(() => this.pessoa()?.acessaEquipamentos === true);
+  gerenciaEquipamentos = computed(() => {
+    const p = this.pessoa();
+    return this.acessaEquipamentos() && (p?.perfil === 'ADMIN' || p?.perfil === 'GESTOR' || p?.papelEquipamentos === 'GESTOR_DE_EQUIPAMENTOS');
+  });
+  operaEquipamentos = computed(() => this.gerenciaEquipamentos() || (this.acessaEquipamentos() && this.pessoa()?.papelEquipamentos === 'OPERADOR_DE_ESTUDIO'));
+
   temPerfil(...perfis: Perfil[]): boolean {
     const perfil = this.pessoa()?.perfil;
     return perfil ? perfis.includes(perfil) : false;
