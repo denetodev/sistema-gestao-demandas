@@ -14,6 +14,7 @@ import { Tag } from 'primeng/tag';
 import { AuthService } from '../../auth/auth.service';
 import { BarraPagina } from '../../layout/barra-pagina/barra-pagina';
 import { CampoBusca } from '../../ui/campo-busca/campo-busca';
+import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { contemTexto } from '../../util/listas';
 import { EquipamentoService } from '../equipamento.service';
 import type { ControleEquipamento, Equipamento } from '../equipamento.model';
@@ -22,7 +23,7 @@ import type { ControleEquipamento, Equipamento } from '../equipamento.model';
   selector: 'app-inventario',
   imports: [
     DatePipe, FormsModule, ReactiveFormsModule, RouterLink, TableModule, Dialog, InputText, InputNumber, Textarea,
-    Select, Button, Tag, BarraPagina, CampoBusca,
+    Select, Button, Tag, BarraPagina, CampoBusca, Ajuda,
   ],
   templateUrl: './inventario.html',
   styleUrl: './inventario.scss',

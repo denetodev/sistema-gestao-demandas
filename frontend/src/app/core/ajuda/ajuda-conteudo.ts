@@ -28,7 +28,9 @@ export type ChaveAjuda =
   | 'tipos-peca'
   | 'pessoas'
   | 'estrutura'
-  | 'relatorio';
+  | 'relatorio'
+  | 'emprestimos'
+  | 'inventario';
 
 export const AJUDA: Record<ChaveAjuda, Ajuda> = {
   dashboard: {
@@ -303,6 +305,51 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
         pergunta: 'Como envio o relatório?',
         resposta:
           'Depois de aprovado, use Baixar DOCX ou Imprimir / Salvar PDF.',
+      },
+    ],
+  },
+  emprestimos: {
+    titulo: 'Como funciona o empréstimo de equipamentos?',
+    itens: [
+      {
+        pergunta: 'Qual é o caminho de um empréstimo?',
+        resposta:
+          'O Operador registra o pedido e o termo (OK na tela). O Gestor de equipamentos autoriza ou recusa. Autorizado, o Operador entrega e, na volta, recebe a devolução. Todo empréstimo passa por autorização, dentro ou fora do prédio.',
+      },
+      {
+        pergunta: 'O que significa EXTERNO e a linha em vermelho?',
+        resposta:
+          'EXTERNO é o equipamento que sai do prédio. Pedido externo esperando decisão e empréstimo atrasado ficam em destaque e vão para o topo da fila.',
+      },
+      {
+        pergunta: 'Posso corrigir ou prorrogar?',
+        resposta:
+          'Enquanto o pedido espera autorização dá para corrigir os dados (lápis). Quem já está com o equipamento pode ter a devolução prorrogada (calendário); fica registrado quem prorrogou e por quê. Para trocar os equipamentos, cancele e registre de novo.',
+      },
+      {
+        pergunta: 'Quem vê o quê?',
+        resposta:
+          'Operador e gestores veem todos os empréstimos. Quem só tem acesso ao módulo vê "quem está com quê". As fotos de saída e de devolução são opcionais e ficam nos detalhes (olho).',
+      },
+    ],
+  },
+  inventario: {
+    titulo: 'Como funciona o inventário?',
+    itens: [
+      {
+        pergunta: 'Individual ou por quantidade?',
+        resposta:
+          'Na categoria individual cada peça tem o seu registro (câmera, lente), e dá para saber com quem ela está. Na categoria por quantidade o lote é um registro só (cabos, pilhas) e cada retirada diz quantas unidades saíram.',
+      },
+      {
+        pergunta: 'Quem edita o inventário e o termo?',
+        resposta:
+          'Gestor de equipamentos, Gestor e Admin. Mudar o termo cria uma versão nova: os empréstimos antigos guardam a versão que foi aceita.',
+      },
+      {
+        pergunta: 'Posso apagar um equipamento?',
+        resposta:
+          'Ele é desativado, não apagado, para o histórico continuar completo. Não dá para desativar enquanto estiver em um empréstimo em aberto.',
       },
     ],
   },

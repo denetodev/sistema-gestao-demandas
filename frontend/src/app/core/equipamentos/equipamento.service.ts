@@ -70,6 +70,15 @@ export class EquipamentoService {
     return this.#http.patch<Emprestimo>(`${this.#base}/emprestimos/${id}/devolver`, { itemIds, observacoes });
   }
 
+  /** Corrige dados de um empréstimo que ainda espera autorização (equipamentos e termo não mudam). */
+  editar(id: string, payload: Omit<EmprestimoPayload, 'itens' | 'termoAceito' | 'retirantePessoaId' | 'atividadeId'>) {
+    return this.#http.put<Emprestimo>(`${this.#base}/emprestimos/${id}`, payload);
+  }
+
+  prorrogar(id: string, novaPrevista: string, motivo: string | null) {
+    return this.#http.patch<Emprestimo>(`${this.#base}/emprestimos/${id}/prorrogar`, { novaPrevista, motivo });
+  }
+
   cancelar(id: string) {
     return this.#http.patch<Emprestimo>(`${this.#base}/emprestimos/${id}/cancelar`, {});
   }

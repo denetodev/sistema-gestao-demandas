@@ -1,7 +1,10 @@
 package dev.denetodev.sgd_api.controller;
 
 import dev.denetodev.sgd_api.dto.request.DevolucaoRequest;
+import dev.denetodev.sgd_api.dto.request.EmprestimoEdicaoRequest;
 import dev.denetodev.sgd_api.dto.request.EmprestimoRequest;
+import dev.denetodev.sgd_api.dto.request.ProrrogacaoRequest;
+import dev.denetodev.sgd_api.dto.response.ResumoEmprestimosResponse;
 import dev.denetodev.sgd_api.dto.request.RecusarEmprestimoRequest;
 import dev.denetodev.sgd_api.dto.response.EmprestimoResponse;
 import dev.denetodev.sgd_api.dto.response.FotoEmprestimoResponse;
@@ -39,6 +42,12 @@ public class EmprestimoController {
         return emprestimoService.listar(jwt, grupo);
     }
 
+    /** Contadores do aviso no menu (aguardando autorização, externos esperando, atrasados). */
+    @GetMapping("/resumo")
+    public ResumoEmprestimosResponse resumo(@AuthenticationPrincipal Jwt jwt) {
+        return emprestimoService.resumo(jwt);
+    }
+
     @GetMapping("/{id}")
     public EmprestimoResponse buscar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
         return emprestimoService.buscar(jwt, id);
@@ -48,6 +57,20 @@ public class EmprestimoController {
     public ResponseEntity<EmprestimoResponse> registrar(
             @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody EmprestimoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(emprestimoService.registrar(jwt, request));
+    }
+
+    /** Corrige dados de um empréstimo que ainda espera autorização. */
+    @PutMapping("/{id}")
+    public EmprestimoResponse editar(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody EmprestimoEdicaoRequest request) {
+        return emprestimoService.editar(jwt, id, request);
+    }
+
+    /** Estende a devolução prevista de quem já está com o equipamento. */
+    @PatchMapping("/{id}/prorrogar")
+    public EmprestimoResponse prorrogar(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody ProrrogacaoRequest request) {
+        return emprestimoService.prorrogar(jwt, id, request);
     }
 
     @PatchMapping("/{id}/autorizar")

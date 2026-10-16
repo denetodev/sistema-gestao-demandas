@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme/theme.service';
+import { PendenciasEquipamentos } from '../../equipamentos/pendencias-equipamentos';
 import { Menu } from 'primeng/menu';
 import { ContaPendente } from '../../../features/acesso/conta-pendente/conta-pendente';
 import { CompletarCadastro } from '../../../features/acesso/completar-cadastro/completar-cadastro';
@@ -26,6 +27,7 @@ const ROTULO_PERFIL: Record<string, string> = {
 export class AppShell {
   auth = inject(AuthService);
   tema = inject(ThemeService);
+  pendencias = inject(PendenciasEquipamentos);
   #router = inject(Router);
 
   /** No computador o menu recolhe para só os ícones; a escolha fica guardada neste navegador. */

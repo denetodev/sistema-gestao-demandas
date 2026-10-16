@@ -43,6 +43,10 @@
       @if (auth.acessaEquipamentos()) {
       <a routerLink="/equipamentos" routerLinkActive="ativo" class="app-nav__item" title="Equipamentos">
         <i class="pi pi-camera"></i><span class="app-nav__rotulo">Equipamentos</span>
+        @if (pendencias.total() > 0) {
+        <span class="app-nav__selo" [class.app-nav__selo--urgente]="pendencias.urgente()"
+          [attr.aria-label]="pendencias.total() + ' pendência(s) em equipamentos'">{{ pendencias.total() }}</span>
+        }
       </a>
       }
 

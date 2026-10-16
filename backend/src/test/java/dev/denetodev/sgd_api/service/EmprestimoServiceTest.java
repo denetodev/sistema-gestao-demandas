@@ -1,7 +1,10 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.DevolucaoRequest;
+import dev.denetodev.sgd_api.dto.request.EmprestimoEdicaoRequest;
 import dev.denetodev.sgd_api.dto.request.EmprestimoRequest;
+import dev.denetodev.sgd_api.dto.request.ProrrogacaoRequest;
+import dev.denetodev.sgd_api.dto.response.ResumoEmprestimosResponse;
 import dev.denetodev.sgd_api.dto.request.RecusarEmprestimoRequest;
 import dev.denetodev.sgd_api.dto.response.EmprestimoResponse;
 import dev.denetodev.sgd_api.entity.*;
@@ -369,6 +372,105 @@ class EmprestimoServiceTest {
 
         assertEquals(List.of(externo.getId(), interno.getId(), autorizado.getId()), fila.stream().map(EmprestimoResponse::id).toList());
         assertTrue(fila.get(0).externo());
+    }
+
+    // ---------- correção, prorrogação e resumo ----------
+
+    private OffsetDateTime agora() {
+        return OffsetDateTime.now(Clock.fixed(AGORA, ZoneOffset.UTC));
+    }
+
+    private EmprestimoEdicaoRequest edicao(OffsetDateTime prevista) {
+        return new EmprestimoEdicaoRequest("João da Silva Júnior", "c7654321", null, "Nova finalidade", true, "Estúdio B", prevista, null);
+    }
+
+    @Test
+    void corrigeDadosEnquantoAguardaAutorizacaoEAuditaSoOQueMudou() {
+        Emprestimo e = registrarComoOperador(false);
+
+        EmprestimoResponse r = service.editar(jwt, e.getId(), edicao(agora().plusDays(5)));
+
+        assertEquals("João da Silva Júnior", r.retiranteNome());
+        assertEquals("C7654321", r.retiranteChaveC());
+        assertTrue(r.externo());
+        assertEquals(agora().plusDays(5), r.previstaDevolucao());
+        verify(auditoriaRepository).save(argThat((Auditoria a) -> "externo".equals(a.getCampo())
+                && "false".equals(a.getValorAnterior()) && "true".equals(a.getValorNovo())));
+        verify(auditoriaRepository).save(argThat((Auditoria a) -> "retirante_nome".equals(a.getCampo())
+                && "João da Silva".equals(a.getValorAnterior())));
+        // contato continuava "ramal 123"? o pedido novo o apagou: também fica registrado
+        verify(auditoriaRepository).save(argThat((Auditoria a) -> "retirante_contato".equals(a.getCampo()) && a.getValorNovo() == null));
+    }
+
+    @Test
+    void naoCorrigeDepoisDeAutorizadoNemComDataPassadaNemSemPermissao() {
+        Emprestimo e = registrarComoOperador(false);
+        assertThrows(IllegalArgumentException.class, () -> service.editar(jwt, e.getId(), edicao(agora().minusHours(1))));
+
+        agir(consulta);
+        assertThrows(AccessDeniedException.class, () -> service.editar(jwt, e.getId(), edicao(agora().plusDays(1))));
+
+        agir(gestorEquip);
+        service.autorizar(jwt, e.getId());
+        agir(operador);
+        assertThrows(EstadoInvalidoException.class, () -> service.editar(jwt, e.getId(), edicao(agora().plusDays(1))));
+    }
+
+    @Test
+    void prorrogaSoQuemJaEstaComOEquipamentoEGravaOMotivo() {
+        Emprestimo aguardando = registrarComoOperador(false);
+        assertThrows(EstadoInvalidoException.class,
+                () -> service.prorrogar(jwt, aguardando.getId(), new ProrrogacaoRequest(agora().plusDays(9), "x")));
+
+        Emprestimo e = retiradoComDoisItens();
+        OffsetDateTime nova = e.getPrevistaDevolucao().plusDays(3);
+        EmprestimoResponse r = service.prorrogar(jwt, e.getId(), new ProrrogacaoRequest(nova, "  Gravação estendida  "));
+
+        assertEquals(nova, r.previstaDevolucao());
+        verify(auditoriaRepository).save(argThat((Auditoria a) -> "prevista_devolucao".equals(a.getCampo())
+                && "Gravação estendida".equals(a.getMotivo()) && operador.getId().equals(a.getAlteradoPor())));
+    }
+
+    @Test
+    void prorrogacaoPrecisaSerDepoisDaPrevistaAtual() {
+        Emprestimo e = retiradoComDoisItens();
+        assertThrows(IllegalArgumentException.class,
+                () -> service.prorrogar(jwt, e.getId(), new ProrrogacaoRequest(e.getPrevistaDevolucao().minusHours(1), null)));
+        agir(consulta);
+        assertThrows(AccessDeniedException.class,
+                () -> service.prorrogar(jwt, e.getId(), new ProrrogacaoRequest(e.getPrevistaDevolucao().plusDays(1), null)));
+    }
+
+    @Test
+    void resumoContaAguardandoExternosEAtrasadosParaQuemOpera() {
+        Emprestimo externo = service_registrarOutro(true);
+        service_registrarOutro(false);
+        Emprestimo retirado = retiradoComDoisItens();
+        ReflectionTestUtils.setField(retirado, "previstaDevolucao", agora().minusHours(2));
+        when(emprestimoRepository.findByStatusIn(anyCollection())).thenReturn(List.copyOf(banco.values()));
+        agir(gestorEquip);
+
+        ResumoEmprestimosResponse r = service.resumo(jwt);
+
+        assertEquals(2, r.aguardandoAutorizacao());
+        assertEquals(1, r.aguardandoExterno());
+        assertEquals(1, r.atrasados());
+        assertTrue(externo.isExterno());
+    }
+
+    @Test
+    void resumoParaQuemSoConsultaTrazSoOsAtrasados() {
+        service_registrarOutro(true);
+        Emprestimo retirado = retiradoComDoisItens();
+        ReflectionTestUtils.setField(retirado, "previstaDevolucao", agora().minusHours(2));
+        when(emprestimoRepository.findByStatusIn(anyCollection())).thenReturn(List.copyOf(banco.values()));
+        agir(consulta);
+
+        ResumoEmprestimosResponse r = service.resumo(jwt);
+
+        assertEquals(0, r.aguardandoAutorizacao());
+        assertEquals(0, r.aguardandoExterno());
+        assertEquals(1, r.atrasados());
     }
 
     private Emprestimo service_registrarOutro(boolean externo) {

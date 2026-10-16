@@ -83,6 +83,74 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     expect(component.podeFotografar({ status: 'RETIRADO' } as never, 'DEVOLUCAO')).toBeTrue();
   });
 
+  it('corrigir abre o diálogo preenchido e salva direto, sem passar pelo termo', async () => {
+    await criar({ perfil: 'ADMIN' });
+    const e = {
+      id: 'em1', status: 'AGUARDANDO_AUTORIZACAO', retiranteNome: 'João', retiranteChaveC: 'F1234567', retiranteContato: null,
+      finalidade: null, externo: false, localUso: null, previstaDevolucao: new Date(Date.now() + 86400000).toISOString(),
+      demandaId: null, demandaTitulo: null, itens: [],
+    } as never;
+    component.abrirEdicao(e);
+    expect(component.form.controls.retiranteNome.value).toBe('João');
+    expect(component.etapa()).toBe('dados');
+
+    component.form.patchValue({ externo: true, retiranteChaveC: 'c7654321' });
+    const promessa = component.salvarEdicao();
+    const req = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/emprestimos/em1'));
+    expect(req.request.body.externo).toBeTrue();
+    expect(req.request.body.retiranteChaveC).toBe('C7654321');
+    expect(req.request.body.itens).toBeUndefined();
+    req.flush({});
+    await promessa;
+    expect(component.dialogNovo()).toBeFalse();
+  });
+
+  it('só quem opera corrige pedido aguardando e prorroga o que está com a pessoa', async () => {
+    await criar({ perfil: 'PROFISSIONAL', papelEquipamentos: 'OPERADOR_DE_ESTUDIO' });
+    expect(component.podeEditar({ status: 'AGUARDANDO_AUTORIZACAO' } as never)).toBeTrue();
+    expect(component.podeEditar({ status: 'AUTORIZADO' } as never)).toBeFalse();
+    expect(component.podeProrrogar({ status: 'RETIRADO' } as never)).toBeTrue();
+    expect(component.podeProrrogar({ status: 'DEVOLVIDO' } as never)).toBeFalse();
+  });
+
+  it('quem só consulta não corrige nem prorroga', async () => {
+    await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
+    expect(component.podeEditar({ status: 'AGUARDANDO_AUTORIZACAO' } as never)).toBeFalse();
+    expect(component.podeProrrogar({ status: 'RETIRADO' } as never)).toBeFalse();
+  });
+
+  it('prorrogar manda a nova data e o motivo', async () => {
+    await criar({ perfil: 'ADMIN' });
+    component.abrirProrrogacao({ id: 'em1', previstaDevolucao: new Date().toISOString() } as never);
+    component.novaPrevista.set(new Date('2026-12-01T12:00:00Z'));
+    component.motivoProrrogacao.set('  mais um dia  ');
+
+    const promessa = component.prorrogar();
+    const req = http.expectOne((r) => r.method === 'PATCH' && r.url.endsWith('/emprestimos/em1/prorrogar'));
+    expect(req.request.body).toEqual({ novaPrevista: '2026-12-01T12:00:00.000Z', motivo: 'mais um dia' });
+    req.flush({});
+    await promessa;
+    expect(component.prorrogando()).toBeNull();
+  });
+
+  it('o filtro da tela esconde o que não bate e limpar volta tudo', async () => {
+    await criar({ perfil: 'ADMIN' });
+    http.expectOne((r) => r.url.includes('/emprestimos?grupo=')).flush([
+      { id: '1', status: 'RETIRADO', atrasado: false, externo: false, retiranteNome: 'João', itens: [], previstaDevolucao: '2026-10-20T15:00:00Z' },
+      { id: '2', status: 'RETIRADO', atrasado: false, externo: true, retiranteNome: 'Maria', itens: [], previstaDevolucao: '2026-10-20T15:00:00Z' },
+    ]);
+    await new Promise((r) => setTimeout(r, 0)); // as outras chamadas da tela seguem pendentes: não dá para esperar a aplicação estabilizar
+    fixture.detectChanges();
+    expect(component.filtrados().length).toBe(2);
+
+    component.ajustarFiltro({ busca: 'maria' });
+    expect(component.filtrados().map((e) => e.id)).toEqual(['2']);
+    expect(component.filtrosAtivos()).toBeTrue();
+
+    component.limparFiltros();
+    expect(component.filtrados().length).toBe(2);
+  });
+
   it('quem só consulta não fotografa', async () => {
     await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
     expect(component.podeFotografar({ status: 'RETIRADO' } as never, 'DEVOLUCAO')).toBeFalse();

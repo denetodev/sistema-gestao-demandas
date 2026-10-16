@@ -56,6 +56,23 @@ describe('EquipamentoService', () => {
     req.flush({ content: [] });
   });
 
+  it('corrige o pedido com PUT e prorroga com PATCH levando o motivo', () => {
+    service.editar('e1', {
+      retiranteNome: 'João', retiranteChaveC: null, retiranteContato: null, finalidade: null, externo: true,
+      localUso: null, previstaDevolucao: '2026-10-20T15:00:00.000Z', demandaId: null,
+    }).subscribe();
+    const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/emprestimos/e1'));
+    expect(put.request.body.externo).toBeTrue();
+    expect(put.request.body.itens).toBeUndefined();
+    put.flush({});
+
+    service.prorrogar('e1', '2026-10-25T15:00:00.000Z', 'gravação estendida').subscribe();
+    const patch = http.expectOne((r) => r.url.endsWith('/emprestimos/e1/prorrogar'));
+    expect(patch.request.method).toBe('PATCH');
+    expect(patch.request.body).toEqual({ novaPrevista: '2026-10-25T15:00:00.000Z', motivo: 'gravação estendida' });
+    patch.flush({});
+  });
+
   it('liga o acesso da equipe e define o papel da pessoa nos endpoints certos', () => {
     service.definirAcessoEquipe('a1', true).subscribe();
     const equipe = http.expectOne((r) => r.url.endsWith('/areas/a1/acesso-equipamentos'));
