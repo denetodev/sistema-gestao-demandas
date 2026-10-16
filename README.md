@@ -72,7 +72,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V15 | `pessoa.vinculo_sugerido_id`: conta nova que informou a chave C de um cadastro importado fica pendente com a sugestão; só a aprovação de Gestor/Admin passa o login para o cadastro |
 | V16 | `pessoa.chave_c` (única, C ou F + 7 dígitos): substitui o CPF como identidade do vínculo. A coluna `cpf` saiu na V17 |
 | V17 | remove `pessoa.cpf` (e as constraints dele) |
-| V18 | módulo de equipamentos: `categoria_equipamento`, `equipamento`, `emprestimo`, `emprestimo_item`, `termo_equipamento`, `area.acessa_equipamentos` e `pessoa.papel_equipamentos` |
+| V18 | módulo de equipamentos: `categoria_equipamento`, `equipamento`, `emprestimo`, `emprestimo_item`, `termo_equipamento`, `area.acessa_equipamentos` (hoje sem uso: o acesso é só por papel; a coluna sai numa V21) e `pessoa.papel_equipamentos` |
 | V19 | `emprestimo_foto`: fotos opcionais do equipamento na saída e na devolução (arquivo no bucket privado, pasta emprestimos/) |
 | V20 | `emprestimo.retirada_prevista`: reserva por período (equipamento livre ou ocupado no intervalo, não só agora) |
 

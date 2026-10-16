@@ -49,12 +49,11 @@ A pessoa gera e aprova o próprio relatório, e depois ele fica travado. Só Ges
 
 ## Equipamentos (empréstimo do estúdio)
 
-**Quem entra no módulo.** Admin e Gestor sempre. Profissional entra se a equipe dele estiver marcada em *Núcleos e equipes* (coluna "Acessa equipamentos") ou se tiver um papel em *Pessoas* (campo "Papel nos equipamentos"). Visualizador nunca.
+**Quem entra no módulo.** Admin e Gestor veem e fazem tudo. Profissional só entra com um papel dado em *Pessoas* (campo "Papel nos equipamentos"): sem papel, nem para consultar. Visualizador nunca entra e não recebe papel. Para um Admin ou Gestor que também queira ser Operador ou Gestor de equipamentos, o papel não é necessário.
 
 **Papéis.**
 - *Operador de estúdio*: registra o empréstimo (com o OK do termo), entrega, recebe a devolução, corrige pedido que espera autorização, prorroga e anexa fotos.
 - *Gestor de equipamentos* (e Gestor e Admin): autoriza ou recusa, edita o inventário e o texto do termo. Quem registrou um pedido não o autoriza, exceto o Admin.
-- Quem só tem acesso consulta o inventário e vê "quem está com quê".
 
 **Caminho de um empréstimo.** Aguardando autorização, autorizado, retirado (com a pessoa), devolvido. Pode terminar recusado ou cancelado. Todo empréstimo passa por autorização, dentro ou fora do prédio. Externo (sai do prédio) e atrasado ficam em vermelho e vão para o topo. "Atrasado" não é um status: é retirado com a devolução prevista já vencida. O selo no menu mostra pedidos esperando e atrasados e se atualiza a cada 2 minutos.
 

@@ -18,7 +18,7 @@ export class PendenciasEquipamentos {
     this.#auth.acessaEquipamentos() ? `${environment.apiUrl}/emprestimos/resumo` : undefined,
   );
 
-  /** Gestor vê pedidos esperando mais os atrasados; quem só opera ou consulta, os atrasados. */
+  /** Gestor vê pedidos esperando mais os atrasados; o Operador, só os atrasados. */
   total = computed(() => {
     const r = this.resumo.value();
     if (!r) return 0;

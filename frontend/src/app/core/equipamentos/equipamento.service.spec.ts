@@ -90,14 +90,14 @@ describe('EquipamentoService', () => {
     expect(http.expectOne((r) => r.url.endsWith('/equipamentos/disponibilidade')).request.params.has('ignorarEmprestimoId')).toBeFalse();
   });
 
-  it('liga o acesso da equipe e define o papel da pessoa nos endpoints certos', () => {
-    service.definirAcessoEquipe('a1', true).subscribe();
-    const equipe = http.expectOne((r) => r.url.endsWith('/areas/a1/acesso-equipamentos'));
-    expect(equipe.request.method).toBe('PATCH');
-    expect(equipe.request.body).toEqual({ acessa: true });
+  it('define o papel da pessoa no endpoint certo (nulo remove)', () => {
+    service.definirPapel('p1', 'OPERADOR_DE_ESTUDIO').subscribe();
+    const papel = http.expectOne((r) => r.url.endsWith('/pessoas/p1/papel-equipamentos'));
+    expect(papel.request.method).toBe('PATCH');
+    expect(papel.request.body).toEqual({ papel: 'OPERADOR_DE_ESTUDIO' });
+    papel.flush({});
 
     service.definirPapel('p1', null).subscribe();
-    const papel = http.expectOne((r) => r.url.endsWith('/pessoas/p1/papel-equipamentos'));
-    expect(papel.request.body).toEqual({ papel: null });
+    expect(http.expectOne((r) => r.url.endsWith('/pessoas/p1/papel-equipamentos')).request.body).toEqual({ papel: null });
   });
 });

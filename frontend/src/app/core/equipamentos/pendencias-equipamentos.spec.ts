@@ -21,8 +21,8 @@ describe('PendenciasEquipamentos (selo do menu)', () => {
     expect(servico.urgente()).toBeTrue();
   });
 
-  it('quem só consulta conta só os atrasados', async () => {
-    const { servico, http } = montar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
+  it('o Operador de estúdio conta só os atrasados (autorizar não é com ele)', async () => {
+    const { servico, http } = montar({ perfil: 'PROFISSIONAL', papelEquipamentos: 'OPERADOR_DE_ESTUDIO' });
     http.expectOne((r) => r.url.endsWith('/emprestimos/resumo')).flush({ aguardandoAutorizacao: 0, aguardandoExterno: 0, atrasados: 2 });
     await TestBed.inject(ApplicationRef).whenStable();
     expect(servico.total()).toBe(2);
@@ -37,8 +37,8 @@ describe('PendenciasEquipamentos (selo do menu)', () => {
     expect(servico.urgente()).toBeFalse();
   });
 
-  it('quem não tem acesso ao módulo nem chama o backend', () => {
-    const { http } = montar({ perfil: 'PROFISSIONAL', acessaEquipamentos: false });
+  it('Profissional sem papel não tem acesso e nem chama o backend', () => {
+    const { http } = montar({ perfil: 'PROFISSIONAL' });
     http.expectNone((r) => r.url.endsWith('/emprestimos/resumo'));
   });
 });

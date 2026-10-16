@@ -124,8 +124,8 @@
 
         <label for="ed-papel-equip">Papel nos equipamentos</label>
         <p-select inputId="ed-papel-equip" formControlName="papelEquipamentos" [options]="opcoesPapel" optionLabel="label"
-            optionValue="value" placeholder="Sem papel (só consulta)" [showClear]="true" />
-        <small class="dica">Operador de estúdio registra e entrega; Gestor de equipamentos autoriza e edita o inventário. A equipe também precisa ter acesso ao módulo.</small>
+            optionValue="value" placeholder="Sem papel (sem acesso)" [showClear]="true" />
+        <small class="dica">Operador de estúdio registra e entrega; Gestor de equipamentos autoriza e edita o inventário. Sem papel, o Profissional não entra no módulo, nem para consultar. Admin e Gestor veem tudo.</small>
 
         <label for="ed-status">Situação</label>
         <p-select inputId="ed-status" formControlName="status" [options]="opcoesStatus" />

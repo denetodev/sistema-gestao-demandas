@@ -193,8 +193,8 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     expect(component.podeProrrogar({ status: 'DEVOLVIDO' } as never)).toBeFalse();
   });
 
-  it('quem só consulta não corrige nem prorroga', async () => {
-    await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
+  it('Profissional sem papel não corrige nem prorroga', async () => {
+    await criar({ perfil: 'PROFISSIONAL' });
     expect(component.podeEditar({ status: 'AGUARDANDO_AUTORIZACAO' } as never)).toBeFalse();
     expect(component.podeProrrogar({ status: 'RETIRADO' } as never)).toBeFalse();
   });
@@ -231,18 +231,18 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     expect(component.filtrados().length).toBe(2);
   });
 
-  it('quem só consulta não fotografa', async () => {
-    await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
+  it('Profissional sem papel não fotografa', async () => {
+    await criar({ perfil: 'PROFISSIONAL' });
     expect(component.podeFotografar({ status: 'RETIRADO' } as never, 'DEVOLUCAO')).toBeFalse();
   });
 
-  it('quem só consulta não vê os botões de operar nem de autorizar', async () => {
-    await criar({ perfil: 'PROFISSIONAL', acessaEquipamentos: true });
+  it('Profissional sem papel não tem acesso ao módulo nem aos botões de operar e autorizar', async () => {
+    await criar({ perfil: 'PROFISSIONAL' });
+    expect(component.auth.acessaEquipamentos()).toBeFalse();
     expect(component.auth.operaEquipamentos()).toBeFalse();
     const e = { status: 'AGUARDANDO_AUTORIZACAO' } as never;
     expect(component.podeAutorizar(e)).toBeFalse();
     expect(component.podeEntregar({ status: 'AUTORIZADO' } as never)).toBeFalse();
-    expect(component.titulo()).toBe('Quem está com quê');
   });
 
   it('o gestor de equipamentos autoriza e recusa; o operador entrega e recebe', async () => {
