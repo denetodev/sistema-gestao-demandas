@@ -1,0 +1,146 @@
+<app-barra-pagina titulo="Inventário" subtitulo="Cada equipamento, onde está e com quem.">
+  <ng-container fim>
+    <a routerLink="/equipamentos"><p-button icon="pi pi-list" label="Empréstimos" severity="secondary" [outlined]="true" /></a>
+    @if (auth.gerenciaEquipamentos()) {
+      <p-button icon="pi pi-file-edit" label="Termo" severity="secondary" [outlined]="true" (onClick)="abrirTermo()" />
+      <p-button icon="pi pi-tags" label="Nova categoria" severity="secondary" [outlined]="true" (onClick)="abrirCategoria()" />
+      <p-button icon="pi pi-plus" label="Novo equipamento" (onClick)="abrirNovo()" />
+    }
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por nome, patrimônio, série ou local..." descricao="Buscar equipamentos"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+        <p-select class="filtros__campo" [options]="categoriasAtivas()" optionLabel="nome" optionValue="id"
+          placeholder="Categoria" [showClear]="true" [ngModel]="categoriaFiltro()" (ngModelChange)="categoriaFiltro.set($event)"
+          ariaLabel="Filtrar por categoria" />
+      </div>
+    </div>
+    <div class="tabela-rolagem">
+      <p-table [value]="filtrados()" [loading]="equipamentos.isLoading()" dataKey="id" [paginator]="true" [rows]="10"
+        [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} equipamentos">
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="nome">Equipamento <p-sortIcon field="nome" /></th>
+            <th>Categoria</th>
+            <th>Patrimônio</th>
+            <th>Onde fica</th>
+            <th>Disponível</th>
+            <th>Com quem está</th>
+            @if (auth.gerenciaEquipamentos()) { <th class="col-acoes"></th> }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-e>
+          <tr>
+            <td>
+              <strong>{{ e.nome }}</strong>
+              @if (e.numeroSerie) { <small class="sub">Série {{ e.numeroSerie }}</small> }
+            </td>
+            <td>{{ e.categoriaNome }}</td>
+            <td>{{ e.patrimonio ?? '—' }}</td>
+            <td>{{ e.localizacao ?? '—' }}</td>
+            <td>
+              @if (e.controle === 'QUANTIDADE') {
+                {{ e.quantidadeDisponivel }} de {{ e.quantidadeTotal }}
+              } @else {
+                <p-tag [value]="e.quantidadeDisponivel > 0 ? 'Disponível' : 'Em uso'" [severity]="e.quantidadeDisponivel > 0 ? 'success' : 'warn'" />
+              }
+            </td>
+            <td>
+              @for (u of e.emUso; track u.emprestimoId) {
+                <div class="uso">
+                  <span>{{ u.retiranteNome }}{{ e.controle === 'QUANTIDADE' ? ' (x' + u.quantidade + ')' : '' }}</span>
+                  <small class="sub">até {{ u.previstaDevolucao | date: 'dd/MM HH:mm' }}{{ u.localUso ? ' · ' + u.localUso : '' }}</small>
+                  @if (u.atrasado) { <p-tag value="Atrasado" severity="danger" /> }
+                  @else if (u.status === 'AGUARDANDO_AUTORIZACAO') { <p-tag value="Aguardando autorização" severity="warn" /> }
+                  @else if (u.status === 'AUTORIZADO') { <p-tag value="Reservado" severity="info" /> }
+                </div>
+              } @empty { — }
+            </td>
+            @if (auth.gerenciaEquipamentos()) {
+              <td class="col-acoes">
+                <p-button [text]="true" icon="pi pi-pencil" ariaLabel="Editar equipamento" (onClick)="abrirEdicao(e)" />
+                <p-button [text]="true" severity="danger" icon="pi pi-trash" ariaLabel="Desativar equipamento" (onClick)="desativar(e)" />
+              </td>
+            }
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7">
+              <div class="vazio">
+                @if (busca() || categoriaFiltro()) {
+                  <strong>Nenhum equipamento com esses filtros</strong>
+                } @else {
+                  <strong>O inventário está vazio</strong>
+                  @if (auth.gerenciaEquipamentos()) { Crie as categorias e cadastre os equipamentos. } @else { O Gestor de equipamentos ainda não cadastrou nada. }
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+</div>
+
+<p-dialog [(visible)]="dialogEquip" [header]="editandoId() ? 'Editar equipamento' : 'Novo equipamento'" [modal]="true" [style]="{ width: '480px' }">
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+    <label for="categoria">Categoria</label>
+    <p-select inputId="categoria" [options]="categoriasAtivas()" optionLabel="nome" optionValue="id" placeholder="Selecione"
+      [ngModel]="form.controls.categoriaId.value" (ngModelChange)="escolherCategoria($event)" [ngModelOptions]="{ standalone: true }" appendTo="body" />
+    @if (!categoriasAtivas().length) { <small class="sub">Crie uma categoria primeiro (botão "Nova categoria").</small> }
+
+    <label for="nome">Nome</label>
+    <input pInputText id="nome" formControlName="nome" placeholder="Ex.: Câmera Sony A7 IV" />
+
+    <div class="duas-colunas">
+      <div>
+        <label for="patrimonio">Patrimônio (opcional)</label>
+        <input pInputText id="patrimonio" formControlName="patrimonio" />
+      </div>
+      <div>
+        <label for="serie">Número de série (opcional)</label>
+        <input pInputText id="serie" formControlName="numeroSerie" />
+      </div>
+    </div>
+
+    @if (porQuantidade()) {
+      <label for="qtd">Quantidade total</label>
+      <p-inputnumber inputId="qtd" formControlName="quantidadeTotal" [min]="1" [showButtons]="true" />
+    }
+
+    <label for="local">Onde fica (opcional)</label>
+    <input pInputText id="local" formControlName="localizacao" placeholder="Armário, sala..." />
+
+    <label for="obs">Observações (opcional)</label>
+    <textarea pTextarea id="obs" formControlName="observacoes" rows="2"></textarea>
+
+    <p-button type="submit" label="Salvar" [loading]="salvando()" [disabled]="form.invalid" />
+  </form>
+</p-dialog>
+
+<p-dialog [(visible)]="dialogCategoria" header="Nova categoria" [modal]="true" [style]="{ width: '420px' }">
+  <div class="dialog-form">
+    <label for="catNome">Nome</label>
+    <input pInputText id="catNome" [ngModel]="nomeCategoria()" (ngModelChange)="nomeCategoria.set($event)" placeholder="Ex.: Câmeras" />
+    <label for="catControle">Como controlar</label>
+    <p-select inputId="catControle" [options]="opcoesControle" optionLabel="label" optionValue="value"
+      [ngModel]="controleCategoria()" (ngModelChange)="controleCategoria.set($event)" appendTo="body" />
+    <small class="sub">Individual: cada peça tem o seu registro (câmera, lente). Por quantidade: um registro para o lote (cabos, pilhas).</small>
+    <p-button label="Criar categoria" [disabled]="!nomeCategoria().trim()" (onClick)="salvarCategoria()" />
+  </div>
+</p-dialog>
+
+<p-dialog [(visible)]="dialogTermo" header="Termo de responsabilidade" [modal]="true" [style]="{ width: '480px' }">
+  <div class="dialog-form">
+    <small class="sub">Texto curto mostrado na tela antes do OK. Ao salvar, vira a versão {{ (termo.value()?.versao ?? 0) + 1 }}; os empréstimos antigos guardam a versão que foi aceita.</small>
+    <textarea pTextarea rows="4" maxlength="600" [ngModel]="textoTermo()" (ngModelChange)="textoTermo.set($event)"></textarea>
+    <p-button label="Publicar nova versão" [disabled]="!textoTermo().trim()" (onClick)="salvarTermo()" />
+  </div>
+</p-dialog>

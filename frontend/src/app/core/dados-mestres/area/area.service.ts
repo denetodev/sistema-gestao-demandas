@@ -10,6 +10,8 @@ export interface Area {
   nucleoId: string | null;
   nucleoNome: string | null;
   ativo: boolean;
+  /** A equipe inteira entra no módulo de equipamentos. */
+  acessaEquipamentos?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

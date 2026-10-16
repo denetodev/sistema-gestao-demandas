@@ -1,0 +1,39 @@
+.sub {
+  display: block;
+  color: var(--p-text-muted-color);
+}
+
+.uso {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.4rem;
+}
+
+.col-acoes {
+  white-space: nowrap;
+}
+
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .duas-colunas {
+    grid-template-columns: 1fr;
+  }
+}

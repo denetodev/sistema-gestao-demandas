@@ -21,6 +21,9 @@ import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { candidatosAVinculo } from '../candidatos-vinculo';
 import type { Pessoa, StatusPessoa, VinculoSugerido } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
+import { EquipamentoService } from '../../equipamentos/equipamento.service';
+import { ROTULO_PAPEL } from '../../equipamentos/equipamento-apresentacao';
+import type { PapelEquipamentos } from '../../equipamentos/equipamento.model';
 import { CampoBusca } from '../../ui/campo-busca/campo-busca';
 import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
 import { contemTexto } from '../../util/listas';
@@ -43,6 +46,9 @@ export class PessoaLista {
   #confirmationService = inject(ConfirmationService);
   #messageService = inject(MessageService);
   #cargoService = inject(CargoService);
+  #equipamentoService = inject(EquipamentoService);
+
+  opcoesPapel = (Object.keys(ROTULO_PAPEL) as PapelEquipamentos[]).map((p) => ({ label: ROTULO_PAPEL[p], value: p }));
 
   auth = inject(AuthService);
   pessoas = this.#service.listar;
@@ -276,6 +282,7 @@ export class PessoaLista {
         status: pessoa.status,
         perfil: pessoa.perfil,
         referenciaAreaId: pessoa.referenciaAreaId,
+        papelEquipamentos: pessoa.papelEquipamentos ?? null,
       });
       this.dialogEdicao.set(true);
     }
@@ -298,6 +305,9 @@ export class PessoaLista {
         perfil: v.perfil,
         referenciaAreaId: v.referenciaAreaId,
       }));
+      if ((v.papelEquipamentos ?? null) !== (pessoa.papelEquipamentos ?? null)) {
+        await firstValueFrom(this.#equipamentoService.definirPapel(pessoa.id, v.papelEquipamentos));
+      }
       this.dialogEdicao.set(false);
       this.pessoas.reload();
       this.#messageService.add({ severity: 'success', summary: 'Pessoa atualizada', life: 4000 });
@@ -382,6 +392,7 @@ export class PessoaLista {
     status: this.#fb.control<StatusPessoa | null>(null),
     perfil: this.#fb.control<Perfil | null>(null),
     referenciaAreaId: this.#fb.control<string | null>(null),
+    papelEquipamentos: this.#fb.control<PapelEquipamentos | null>(null),
   });
 
   mascararChaveC() {

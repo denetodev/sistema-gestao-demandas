@@ -1,0 +1,184 @@
+<app-barra-pagina [titulo]="titulo()" subtitulo="Retirada, autorização e devolução dos equipamentos do estúdio.">
+  <ng-container fim>
+    <a routerLink="/equipamentos/inventario"><p-button icon="pi pi-box" label="Inventário" severity="secondary" [outlined]="true" /></a>
+    @if (auth.operaEquipamentos()) {
+      <p-button icon="pi pi-plus" label="Novo empréstimo" (onClick)="abrirNovo()" />
+    }
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  @if (auth.operaEquipamentos()) {
+    <div class="resumo">
+      <app-pilulas [opcoes]="opcoesGrupo" [valor]="grupo()" (valorChange)="mudarGrupo($event)" descricao="Situação dos empréstimos" />
+      @if (aguardando() > 0) {
+        <p-tag severity="warn" [value]="aguardando() + ' aguardando autorização'" />
+      }
+      @if (atrasados() > 0) {
+        <p-tag severity="danger" [value]="atrasados() + ' atrasado(s)'" />
+      }
+    </div>
+  }
+
+  <section class="cartao cartao--tabela">
+    <div class="tabela-rolagem">
+      <p-table [value]="emprestimos.value() ?? []" [loading]="emprestimos.isLoading()" dataKey="id"
+        [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50]" [showCurrentPageReport]="true"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} empréstimos">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Situação</th>
+            <th>Quem retirou</th>
+            <th>Equipamentos</th>
+            <th>Devolução prevista</th>
+            <th>Onde</th>
+            <th class="col-acoes">Ações</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-e>
+          <tr [class.linha-destaque]="pedeAtencao(e)">
+            <td>
+              <div class="situacao">
+                <p-tag [value]="rotuloSituacao(e)" [severity]="severidadeSituacao(e)" />
+                @if (e.externo) {
+                  <p-tag value="EXTERNO" severity="contrast" icon="pi pi-external-link" />
+                }
+              </div>
+            </td>
+            <td>
+              <strong>{{ e.retiranteNome }}</strong>
+              @if (e.retiranteChaveC) { <small class="sub">{{ e.retiranteChaveC }}</small> }
+              @if (e.retiranteContato) { <small class="sub">{{ e.retiranteContato }}</small> }
+            </td>
+            <td>{{ resumoItens(e) }}</td>
+            <td>{{ e.previstaDevolucao | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ e.localUso ?? (e.externo ? 'Fora do prédio' : 'No prédio') }}</td>
+            <td class="col-acoes">
+              @if (podeAutorizar(e)) {
+                <p-button label="Autorizar" size="small" icon="pi pi-check" (onClick)="autorizar(e)" />
+                <p-button label="Recusar" size="small" severity="danger" [outlined]="true" icon="pi pi-times" (onClick)="abrirRecusa(e)" />
+              }
+              @if (podeEntregar(e)) {
+                <p-button label="Entregar" size="small" icon="pi pi-arrow-right" (onClick)="entregar(e)" />
+              }
+              @if (podeReceber(e)) {
+                <p-button label="Receber" size="small" icon="pi pi-replay" (onClick)="abrirDevolucao(e)" />
+              }
+              @if (podeCancelar(e)) {
+                <p-button [text]="true" size="small" severity="secondary" icon="pi pi-ban" ariaLabel="Cancelar empréstimo" (onClick)="cancelar(e)" />
+              }
+              @if (e.status === 'RECUSADO' && e.motivoRecusa) {
+                <small class="sub">Motivo: {{ e.motivoRecusa }}</small>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6">
+              <div class="vazio">
+                <strong>Nenhum empréstimo por aqui</strong>
+                @if (auth.operaEquipamentos()) { Use "Novo empréstimo" para registrar uma retirada. }
+                @else { Quando alguém retirar um equipamento, aparece nesta lista. }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+</div>
+
+<p-dialog [(visible)]="dialogNovo" header="Novo empréstimo" [modal]="true" [style]="{ width: '560px' }">
+  @if (etapa() === 'dados') {
+    <form [formGroup]="form" (ngSubmit)="continuar()" class="dialog-form">
+      <label for="retirante">Quem vai retirar</label>
+      <input pInputText id="retirante" formControlName="retiranteNome" placeholder="Nome completo" />
+
+      <div class="duas-colunas">
+        <div>
+          <label for="chave">Chave C (opcional)</label>
+          <input pInputText id="chave" formControlName="retiranteChaveC" maxlength="8" placeholder="C0000000 ou F0000000" />
+          @if (!chaveOk()) { <small class="erro">Use C ou F seguido de 7 números.</small> }
+        </div>
+        <div>
+          <label for="contato">Contato (opcional)</label>
+          <input pInputText id="contato" formControlName="retiranteContato" placeholder="Ramal, e-mail..." />
+        </div>
+      </div>
+
+      <label for="itens">Equipamentos</label>
+      <p-multiselect inputId="itens" [options]="disponiveis()" [ngModel]="selecionados()" (ngModelChange)="selecionados.set($event)"
+        [ngModelOptions]="{ standalone: true }" optionLabel="nome" placeholder="Escolha o que vai sair" [filter]="true"
+        filterBy="nome,patrimonio,categoriaNome" appendTo="body" display="chip">
+        <ng-template let-e pTemplate="item">
+          <div class="opcao-equip">
+            <span>{{ e.nome }} <small class="sub">{{ e.categoriaNome }}{{ e.patrimonio ? ' · ' + e.patrimonio : '' }}</small></span>
+            @if (e.controle === 'QUANTIDADE') { <small>{{ e.quantidadeDisponivel }} disponível(is)</small> }
+          </div>
+        </ng-template>
+      </p-multiselect>
+      @for (e of selecionados(); track e.id) {
+        @if (e.controle === 'QUANTIDADE') {
+          <div class="quantidade">
+            <span>{{ e.nome }}</span>
+            <p-inputnumber [ngModel]="quantidadeDe(e)" (ngModelChange)="mudarQuantidade(e, $event)" [ngModelOptions]="{ standalone: true }"
+              [min]="1" [max]="e.quantidadeDisponivel" [showButtons]="true" />
+          </div>
+        }
+      }
+
+      <label for="prevista">Devolução prevista</label>
+      <p-datepicker inputId="prevista" formControlName="previstaDevolucao" [showTime]="true" dateFormat="dd/mm/yy"
+        [showIcon]="true" appendTo="body" [minDate]="agora" />
+
+      <label for="finalidade">Para que vai usar (opcional)</label>
+      <textarea pTextarea id="finalidade" formControlName="finalidade" rows="2"></textarea>
+
+      <div class="externo">
+        <p-checkbox inputId="externo" formControlName="externo" [binary]="true" />
+        <label for="externo">Vai sair do prédio (uso externo)</label>
+      </div>
+      <input pInputText formControlName="localUso" placeholder="Onde vai ser usado (opcional)" aria-label="Local de uso" />
+
+      <p-button type="submit" label="Continuar" icon="pi pi-arrow-right" iconPos="right" [disabled]="!podeContinuar()" />
+    </form>
+  } @else {
+    <div class="termo">
+      <h3>Termo de responsabilidade</h3>
+      <p class="termo__texto">{{ termo.value()?.texto }}</p>
+      <p class="termo__aviso">Confira com quem está retirando: <strong>{{ form.controls.retiranteNome.value }}</strong>.</p>
+      <div class="termo__acoes">
+        <p-button label="Voltar" severity="secondary" [text]="true" (onClick)="etapa.set('dados')" />
+        <p-button label="OK, registrar empréstimo" icon="pi pi-check" [loading]="salvando()" (onClick)="confirmarTermoERegistrar()" />
+      </div>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog [visible]="!!recusando()" (visibleChange)="!$event && recusando.set(null)" header="Recusar empréstimo" [modal]="true" [style]="{ width: '420px' }">
+  <div class="dialog-form">
+    <label for="motivo">Motivo da recusa</label>
+    <textarea pTextarea id="motivo" rows="3" [ngModel]="motivo()" (ngModelChange)="motivo.set($event)"></textarea>
+    <p-button label="Recusar" severity="danger" [disabled]="!motivo().trim()" (onClick)="recusar()" />
+  </div>
+</p-dialog>
+
+<p-dialog [visible]="!!devolvendo()" (visibleChange)="!$event && devolvendo.set(null)" header="Receber devolução" [modal]="true" [style]="{ width: '460px' }">
+  @if (devolvendo(); as d) {
+    <div class="dialog-form">
+      <p>Marque o que voltou. Quem trouxe só uma parte deixa o resto como pendente.</p>
+      @for (i of d.itens; track i.id) {
+        @if (!i.devolvidoEm) {
+          <div class="externo">
+            <p-checkbox [inputId]="'item-' + i.id" [binary]="true" [ngModel]="itensDevolvidos().has(i.id)" (ngModelChange)="alternarItem(i.id, $event)" />
+            <label [for]="'item-' + i.id">{{ i.equipamentoNome }}{{ i.quantidade > 1 ? ' (x' + i.quantidade + ')' : '' }}</label>
+          </div>
+        }
+      }
+      <label for="obs">Observações (opcional)</label>
+      <textarea pTextarea id="obs" rows="2" [ngModel]="observacoesDevolucao()" (ngModelChange)="observacoesDevolucao.set($event)" placeholder="Avarias, itens faltando..."></textarea>
+      <p-button label="Registrar devolução" icon="pi pi-check" [disabled]="itensDevolvidos().size === 0" (onClick)="devolver()" />
+    </div>
+  }
+</p-dialog>
