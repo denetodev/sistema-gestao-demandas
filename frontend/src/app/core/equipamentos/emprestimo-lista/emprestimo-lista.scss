@@ -12,6 +12,18 @@
   gap: 0.35rem;
 }
 
+.periodo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+
+  i {
+    font-size: 0.7rem;
+    color: var(--p-text-muted-color);
+  }
+}
+
 .sub {
   display: block;
   color: var(--p-text-muted-color);

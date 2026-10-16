@@ -20,6 +20,7 @@ export interface UsoAtual {
   emprestimoId: string;
   retiranteNome: string;
   quantidade: number;
+  retiradaPrevista: string;
   previstaDevolucao: string;
   status: StatusEmprestimo;
   atrasado: boolean;
@@ -74,6 +75,7 @@ export interface Emprestimo {
   retiranteContato: string | null;
   retirantePessoaId: string | null;
   finalidade: string | null;
+  retiradaPrevista: string;
   previstaDevolucao: string;
   demandaId: string | null;
   demandaTitulo: string | null;
@@ -102,6 +104,8 @@ export interface EmprestimoPayload {
   finalidade: string | null;
   externo: boolean;
   localUso: string | null;
+  /** Nulo significa retirar agora; uma data futura reserva o equipamento. */
+  retiradaPrevista: string | null;
   previstaDevolucao: string;
   demandaId: string | null;
   atividadeId: string | null;
@@ -120,6 +124,44 @@ export interface FotoEmprestimo {
   tamanho: number;
   enviadaPorNome: string;
   createdAt: string;
+}
+
+export interface Disponibilidade {
+  equipamentoId: string;
+  /** Quanto está livre durante TODO o período consultado (o pior momento manda). */
+  quantidadeDisponivel: number;
+}
+
+export interface BlocoAgenda {
+  emprestimoId: string;
+  retiranteNome: string;
+  status: StatusEmprestimo;
+  devolvido: boolean;
+  atrasado: boolean;
+  externo: boolean;
+  localUso: string | null;
+  quantidade: number;
+  inicio: string;
+  /** Devolução prevista (ou a real, se já devolveu). Atrasado segue com a pessoa até "agora". */
+  fim: string;
+}
+
+export interface LinhaAgenda {
+  equipamentoId: string;
+  nome: string;
+  patrimonio: string | null;
+  categoriaId: string;
+  categoriaNome: string;
+  controle: ControleEquipamento;
+  quantidadeTotal: number;
+  blocos: BlocoAgenda[];
+}
+
+export interface Agenda {
+  de: string;
+  ate: string;
+  agora: string;
+  equipamentos: LinhaAgenda[];
 }
 
 export interface ResumoEmprestimos {

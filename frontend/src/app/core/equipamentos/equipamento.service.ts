@@ -6,6 +6,8 @@ import type { Pagina } from '../http/pagina.model';
 import {
   CategoriaEquipamento,
   ControleEquipamento,
+  Agenda,
+  Disponibilidade,
   Emprestimo,
   EmprestimoPayload,
   Equipamento,
@@ -96,6 +98,18 @@ export class EquipamentoService {
 
   removerFoto(emprestimoId: string, fotoId: string) {
     return this.#http.delete<void>(`${this.#base}/emprestimos/${emprestimoId}/fotos/${fotoId}`);
+  }
+
+  // ---- agenda e disponibilidade por período ----
+  agenda(de: string, ate: string) {
+    return this.#http.get<Agenda>(`${this.#base}/equipamentos/agenda`, { params: { de, ate } });
+  }
+
+  /** O que está livre durante todo o período; `ignorarEmprestimoId` tira da conta o pedido em correção. */
+  disponibilidade(inicio: string, fim: string, ignorarEmprestimoId: string | null = null) {
+    return this.#http.get<Disponibilidade[]>(`${this.#base}/equipamentos/disponibilidade`, {
+      params: { inicio, fim, ...(ignorarEmprestimoId ? { ignorarEmprestimoId } : {}) },
+    });
   }
 
   // ---- vínculo opcional com demanda ----

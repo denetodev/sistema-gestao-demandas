@@ -59,6 +59,12 @@ export const routes: Routes = [
           import('./core/equipamentos/emprestimo-lista/emprestimo-lista').then((m) => m.EmprestimoLista),
       },
       {
+        path: 'equipamentos/agenda',
+        canActivate: [equipamentosGuard],
+        loadComponent: () =>
+          import('./core/equipamentos/agenda/agenda-equipamentos').then((m) => m.AgendaEquipamentos),
+      },
+      {
         path: 'equipamentos/inventario',
         canActivate: [equipamentosGuard],
         loadComponent: () =>

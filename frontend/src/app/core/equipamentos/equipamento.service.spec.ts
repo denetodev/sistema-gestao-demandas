@@ -59,7 +59,7 @@ describe('EquipamentoService', () => {
   it('corrige o pedido com PUT e prorroga com PATCH levando o motivo', () => {
     service.editar('e1', {
       retiranteNome: 'João', retiranteChaveC: null, retiranteContato: null, finalidade: null, externo: true,
-      localUso: null, previstaDevolucao: '2026-10-20T15:00:00.000Z', demandaId: null,
+      localUso: null, retiradaPrevista: null, previstaDevolucao: '2026-10-20T15:00:00.000Z', demandaId: null,
     }).subscribe();
     const put = http.expectOne((r) => r.method === 'PUT' && r.url.endsWith('/emprestimos/e1'));
     expect(put.request.body.externo).toBeTrue();
@@ -71,6 +71,23 @@ describe('EquipamentoService', () => {
     expect(patch.request.method).toBe('PATCH');
     expect(patch.request.body).toEqual({ novaPrevista: '2026-10-25T15:00:00.000Z', motivo: 'gravação estendida' });
     patch.flush({});
+  });
+
+  it('pede a agenda da janela e a disponibilidade do período (com o pedido em correção ignorado)', () => {
+    service.agenda('2026-10-18T03:00:00.000Z', '2026-11-01T03:00:00.000Z').subscribe();
+    const agenda = http.expectOne((r) => r.url.endsWith('/equipamentos/agenda'));
+    expect(agenda.request.params.get('de')).toBe('2026-10-18T03:00:00.000Z');
+    expect(agenda.request.params.get('ate')).toBe('2026-11-01T03:00:00.000Z');
+    agenda.flush({});
+
+    service.disponibilidade('2026-10-20T12:00:00.000Z', '2026-10-22T12:00:00.000Z', 'em1').subscribe();
+    const disp = http.expectOne((r) => r.url.endsWith('/equipamentos/disponibilidade'));
+    expect(disp.request.params.get('inicio')).toBe('2026-10-20T12:00:00.000Z');
+    expect(disp.request.params.get('ignorarEmprestimoId')).toBe('em1');
+    disp.flush([]);
+
+    service.disponibilidade('2026-10-20T12:00:00.000Z', '2026-10-22T12:00:00.000Z').subscribe();
+    expect(http.expectOne((r) => r.url.endsWith('/equipamentos/disponibilidade')).request.params.has('ignorarEmprestimoId')).toBeFalse();
   });
 
   it('liga o acesso da equipe e define o papel da pessoa nos endpoints certos', () => {

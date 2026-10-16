@@ -58,7 +58,10 @@ A pessoa gera e aprova o próprio relatório, e depois ele fica travado. Só Ges
 
 **Caminho de um empréstimo.** Aguardando autorização, autorizado, retirado (com a pessoa), devolvido. Pode terminar recusado ou cancelado. Todo empréstimo passa por autorização, dentro ou fora do prédio. Externo (sai do prédio) e atrasado ficam em vermelho e vão para o topo. "Atrasado" não é um status: é retirado com a devolução prevista já vencida. O selo no menu mostra pedidos esperando e atrasados e se atualiza a cada 2 minutos.
 
+**Reserva e agenda.** O pedido tem retirada prevista (em branco é agora) e devolução prevista, e a lista de equipamentos do pedido mostra só o que está livre em todo esse período. Um equipamento que volta amanhã pode ser reservado para a semana que vem; dois pedidos nunca ocupam a mesma peça ao mesmo tempo (lote: nunca passam da quantidade total). Devolver às 12h e outra pessoa retirar às 12h não é conflito. Equipamento retirado e vencido continua bloqueado até ser devolvido. Ao entregar, o sistema confere que o equipamento voltou do empréstimo anterior e não deixa uma retirada adiantada invadir a reserva de outra pessoa. A tela *Agenda* mostra tudo isso em um Gantt: uma linha por equipamento, uma barra por período, a linha vermelha é o agora; clicar no nome mostra com quem está.
+
 **Dia a dia.**
+- Prorrogar e corrigir a data também conferem conflito: não dá para estender por cima da reserva de outra pessoa.
 - Trocar os equipamentos de um pedido: cancele e registre de novo (o OK do termo vale para aquela lista). Dados do pedido (pessoa, data, local, demanda) podem ser corrigidos enquanto ele espera autorização.
 - Quem já está com o equipamento pode ter a devolução prorrogada; o motivo e quem prorrogou ficam na auditoria.
 - Equipamento não se apaga: é desativado, e só quando não está em empréstimo em aberto.

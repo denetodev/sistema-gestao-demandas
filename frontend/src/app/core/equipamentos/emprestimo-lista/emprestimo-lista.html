@@ -1,5 +1,6 @@
 <app-barra-pagina [titulo]="titulo()" subtitulo="Retirada, autorização e devolução dos equipamentos do estúdio.">
   <ng-container fim>
+    <a routerLink="/equipamentos/agenda"><p-button icon="pi pi-calendar" label="Agenda" severity="secondary" [outlined]="true" /></a>
     <a routerLink="/equipamentos/inventario"><p-button icon="pi pi-box" label="Inventário" severity="secondary" [outlined]="true" /></a>
     @if (auth.operaEquipamentos()) {
       <p-button icon="pi pi-plus" label="Novo empréstimo" (onClick)="abrirNovo()" />
@@ -48,7 +49,7 @@
             <th>Situação</th>
             <th>Quem retirou</th>
             <th>Equipamentos</th>
-            <th>Devolução prevista</th>
+            <th>Período</th>
             <th>Onde</th>
             <th class="col-acoes">Ações</th>
           </tr>
@@ -69,7 +70,9 @@
               @if (e.retiranteContato) { <small class="sub">{{ e.retiranteContato }}</small> }
             </td>
             <td>{{ resumoItens(e) }}</td>
-            <td>{{ e.previstaDevolucao | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <span class="periodo">{{ e.retiradaPrevista | date: 'dd/MM HH:mm' }}<i class="pi pi-arrow-right" aria-hidden="true"></i>{{ e.previstaDevolucao | date: 'dd/MM HH:mm' }}</span>
+            </td>
             <td>{{ e.localUso ?? (e.externo ? 'Fora do prédio' : 'No prédio') }}</td>
             <td class="col-acoes">
               <p-button [text]="true" size="small" severity="secondary" icon="pi pi-eye" ariaLabel="Ver detalhes e fotos" (onClick)="abrirDetalhe(e)" />
@@ -137,17 +140,31 @@
         </div>
       </div>
 
+      <div class="duas-colunas">
+        <div>
+          <label for="retirada">Retirada prevista</label>
+          <p-datepicker inputId="retirada" formControlName="retiradaPrevista" [showTime]="true" dateFormat="dd/mm/yy"
+            [showIcon]="true" [showClear]="true" placeholder="Agora" appendTo="body" [minDate]="agora" />
+        </div>
+        <div>
+          <label for="prevista">Devolução prevista</label>
+          <p-datepicker inputId="prevista" formControlName="previstaDevolucao" [showTime]="true" dateFormat="dd/mm/yy"
+            [showIcon]="true" appendTo="body" [minDate]="agora" />
+        </div>
+      </div>
+      @if (!periodoValido()) { <small class="erro">A devolução precisa ser depois da retirada.</small> }
+
       @if (editando(); as ed) {
         <p class="sub">Equipamentos: <strong>{{ resumoItens(ed) }}</strong>. Para trocar o que sai, cancele e registre de novo.</p>
       } @else {
       <label for="itens">Equipamentos</label>
-      <p-multiselect inputId="itens" [options]="disponiveis()" [ngModel]="selecionados()" (ngModelChange)="selecionados.set($event)"
+      <p-multiselect inputId="itens" [options]="opcoesEquipamentos()" dataKey="id" [ngModel]="selecionados()" (ngModelChange)="selecionados.set($event)"
         [ngModelOptions]="{ standalone: true }" optionLabel="nome" placeholder="Escolha o que vai sair" [filter]="true"
         filterBy="nome,patrimonio,categoriaNome" appendTo="body" display="chip">
         <ng-template let-e pTemplate="item">
           <div class="opcao-equip">
             <span>{{ e.nome }} <small class="sub">{{ e.categoriaNome }}{{ e.patrimonio ? ' · ' + e.patrimonio : '' }}</small></span>
-            @if (e.controle === 'QUANTIDADE') { <small>{{ e.quantidadeDisponivel }} disponível(is)</small> }
+            @if (e.controle === 'QUANTIDADE') { <small>{{ e.livre }} disponível(is)</small> }
           </div>
         </ng-template>
       </p-multiselect>
@@ -156,11 +173,17 @@
           <div class="quantidade">
             <span>{{ e.nome }}</span>
             <p-inputnumber [ngModel]="quantidadeDe(e)" (ngModelChange)="mudarQuantidade(e, $event)" [ngModelOptions]="{ standalone: true }"
-              [min]="1" [max]="e.quantidadeDisponivel" [showButtons]="true" />
+              [min]="1" [max]="livreDe(e)" [showButtons]="true" />
           </div>
         }
       }
 
+      @if (!periodoDefinido()) {
+        <small class="sub">Informe a devolução para ver só o que está livre no período.</small>
+      }
+      @if (indisponiveisSelecionados().length) {
+        <small class="erro">Não está livre nesse período: {{ indisponiveisSelecionados()[0].nome }}. Tire da lista ou mude as datas.</small>
+      }
       }
 
       <label for="demanda">Demanda (opcional)</label>
@@ -169,10 +192,6 @@
         optionLabel="titulo" [dropdown]="true" [forceSelection]="true" placeholder="Buscar por título ou código" appendTo="body">
         <ng-template let-d pTemplate="item">{{ d.codigo ? d.codigo + ' · ' : '' }}{{ d.titulo }}</ng-template>
       </p-autocomplete>
-
-      <label for="prevista">Devolução prevista</label>
-      <p-datepicker inputId="prevista" formControlName="previstaDevolucao" [showTime]="true" dateFormat="dd/mm/yy"
-        [showIcon]="true" appendTo="body" [minDate]="agora" />
 
       <label for="finalidade">Para que vai usar (opcional)</label>
       <textarea pTextarea id="finalidade" formControlName="finalidade" rows="2"></textarea>
@@ -212,6 +231,7 @@
       <dl>
         <dt>Quem retirou</dt><dd>{{ d.retiranteNome }}{{ d.retiranteChaveC ? ' · ' + d.retiranteChaveC : '' }}{{ d.retiranteContato ? ' · ' + d.retiranteContato : '' }}</dd>
         <dt>Equipamentos</dt><dd>{{ resumoItens(d) }}</dd>
+        <dt>Retirada prevista</dt><dd>{{ d.retiradaPrevista | date: 'dd/MM/yyyy HH:mm' }}</dd>
         <dt>Devolução prevista</dt><dd>{{ d.previstaDevolucao | date: 'dd/MM/yyyy HH:mm' }}</dd>
         @if (d.localUso) { <dt>Onde vai ser usado</dt><dd>{{ d.localUso }}</dd> }
         @if (d.finalidade) { <dt>Finalidade</dt><dd>{{ d.finalidade }}</dd> }
