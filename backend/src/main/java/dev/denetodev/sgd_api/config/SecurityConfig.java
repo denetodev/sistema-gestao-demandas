@@ -45,6 +45,8 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.GET, "/areas", "/cargos").authenticated();
                     // Visualizador é somente leitura, mas edita o próprio perfil
                     auth.requestMatchers(HttpMethod.PUT, "/pessoas/me").hasAuthority("VINCULADO");
+                    // marcar os próprios avisos como vistos não é escrita de dados do sistema: vale para todo vinculado
+                    auth.requestMatchers(HttpMethod.POST, "/notificacoes/vistas").hasAuthority("VINCULADO");
 
                     // gestão de pessoas (o serviço ainda barra o Gestor de mexer em ADMIN)
                     auth.requestMatchers(HttpMethod.PATCH, "/pessoas/*/vincular-auth").hasRole("ADMIN");

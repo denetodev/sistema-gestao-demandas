@@ -19,6 +19,10 @@ public interface PessoaDemandaRepository extends JpaRepository<PessoaDemanda, UU
 
     List<PessoaDemanda> findByDemandaIdIn(Collection<UUID> demandaIds);
 
+    /** As últimas vezes em que a pessoa foi colocada no time (e ainda está nele), da mais nova para a mais antiga. */
+    List<PessoaDemanda> findTop20ByPessoaIdAndAdicionadoEmAfterAndDataSaidaIsNullOrderByAdicionadoEmDesc(
+            UUID pessoaId, java.time.OffsetDateTime desde);
+
     Optional<PessoaDemanda> findByPessoaIdAndDemandaIdAndDataSaidaIsNull(UUID pessoaId, UUID demandaId);
 
     List<PessoaDemanda> findByPessoa_IdAndDataSaidaIsNull(UUID pessoaId);

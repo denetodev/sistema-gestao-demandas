@@ -4,6 +4,7 @@ import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme/theme.service';
 import { PendenciasEquipamentos } from '../../equipamentos/pendencias-equipamentos';
 import { Menu } from 'primeng/menu';
+import { Sino } from '../../notificacoes/sino/sino';
 import { ContaPendente } from '../../../features/acesso/conta-pendente/conta-pendente';
 import { CompletarCadastro } from '../../../features/acesso/completar-cadastro/completar-cadastro';
 import type { MenuItem } from 'primeng/api';
@@ -20,7 +21,7 @@ const ROTULO_PERFIL: Record<string, string> = {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Menu, ContaPendente, CompletarCadastro],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Menu, ContaPendente, CompletarCadastro, Sino],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })

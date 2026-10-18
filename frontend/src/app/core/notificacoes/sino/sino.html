@@ -1,0 +1,38 @@
+<button type="button" class="sino" (click)="alternar($event)" aria-haspopup="dialog"
+  [attr.aria-label]="naoLidas() > 0 ? 'Avisos: ' + naoLidas() + ' sem ler' : 'Avisos'">
+  <i class="pi pi-bell" aria-hidden="true"></i>
+  @if (naoLidas() > 0) {
+    <span class="sino__selo" aria-hidden="true">{{ selo() }}</span>
+  }
+</button>
+
+<p-popover (onShow)="aoAbrir()" (onHide)="aoFechar()" styleClass="sino-painel">
+  <div class="painel" role="dialog" aria-label="Avisos">
+    <h2 class="painel__titulo">Avisos</h2>
+    @if (itens().length === 0) {
+      <p class="painel__vazio">
+        <i class="pi pi-check-circle" aria-hidden="true"></i>
+        Tudo em dia. Quando alguém te colocar numa demanda ou houver algo para você decidir, aparece aqui.
+      </p>
+    } @else {
+      <ul class="painel__lista">
+        @for (item of itens(); track item.id) {
+          <li>
+            <button type="button" class="aviso" [class.aviso--nova]="!item.lida" (click)="abrir(item)">
+              <span class="aviso__icone" [class]="'aviso__icone aviso__icone--' + item.tipo">
+                <i class="pi" [class]="'pi ' + icone(item.tipo)" aria-hidden="true"></i>
+              </span>
+              <span class="aviso__texto">
+                <strong>{{ item.titulo }}</strong>
+                <span>{{ item.texto }}</span>
+                @if (item.em) {
+                  <small>{{ item.em | date: "dd/MM 'às' HH:mm" }}</small>
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</p-popover>
