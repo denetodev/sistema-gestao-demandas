@@ -374,6 +374,7 @@ export class EmprestimoLista {
   detalhe = signal<Emprestimo | null>(null);
   fotos = signal<FotoEmprestimo[]>([]);
   enviandoFoto = signal(false);
+  erroFoto = signal<string | null>(null);
 
   fotosDe(momento: MomentoFoto) {
     return this.fotos().filter((f) => f.momento === momento);
@@ -406,11 +407,14 @@ export class EmprestimoLista {
     input.value = '';
     if (!arquivo) return;
     this.enviandoFoto.set(true);
+    this.erroFoto.set(null);
     try {
       await firstValueFrom(this.#service.enviarFoto(e.id, momento, arquivo));
       await this.carregarFotos(e.id);
-    } catch {
-      // aviso já exibido pelo interceptor
+    } catch (erro) {
+      // o interceptor só avisa em alguns casos: a foto que não subiu precisa aparecer na própria janela
+      const mensagem = (erro as { error?: { mensagem?: string } })?.error?.mensagem;
+      this.erroFoto.set(mensagem ? mensagem : 'Não foi possível enviar a foto. Tente de novo.');
     } finally {
       this.enviandoFoto.set(false);
     }

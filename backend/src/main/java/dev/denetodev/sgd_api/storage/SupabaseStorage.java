@@ -39,7 +39,8 @@ public class SupabaseStorage implements ArquivoStorage {
     /** Para testes: permite trocar o cliente HTTP. */
     SupabaseStorage(String url, String chave, RestClient http) {
         this.baseUrl = url == null ? "" : url.replaceAll("/+$", "");
-        this.chave = chave == null ? "" : chave;
+        // chave colada com quebra de linha ou espaço no meio (acontece ao copiar do painel) vira cabeçalho inválido
+        this.chave = chave == null ? "" : chave.replaceAll("\\s+", "");
         this.http = http;
     }
 
@@ -54,8 +55,9 @@ public class SupabaseStorage implements ArquivoStorage {
                     .body(conteudo)
                     .retrieve()
                     .toBodilessEntity();
-        } catch (RestClientException e) {
-            throw new ArmazenamentoIndisponivelException("Não foi possível guardar o arquivo no Storage", e);
+        } catch (RestClientException | IllegalArgumentException e) {
+            // IllegalArgumentException vem do cabeçalho inválido e traz o valor da chave na mensagem: nunca vai adiante
+            throw new ArmazenamentoIndisponivelException("Não foi possível guardar o arquivo no Storage", causaSegura(e));
         }
     }
 
@@ -77,8 +79,8 @@ public class SupabaseStorage implements ArquivoStorage {
             }
             String relativa = assinada.toString();
             return baseUrl + "/storage/v1" + (relativa.startsWith("/") ? relativa : "/" + relativa);
-        } catch (RestClientException e) {
-            throw new ArmazenamentoIndisponivelException("Não foi possível gerar a URL do arquivo", e);
+        } catch (RestClientException | IllegalArgumentException e) {
+            throw new ArmazenamentoIndisponivelException("Não foi possível gerar a URL do arquivo", causaSegura(e));
         }
     }
 
@@ -93,9 +95,14 @@ public class SupabaseStorage implements ArquivoStorage {
                     .headers(this::autenticar)
                     .retrieve()
                     .toBodilessEntity();
-        } catch (RestClientException e) {
-            log.warn("Falha ao remover {} do Storage; o arquivo ficou órfão", caminho, e);
+        } catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Falha ao remover {} do Storage; o arquivo ficou órfão ({})", caminho, e.getClass().getSimpleName());
         }
+    }
+
+    /** Só erro de rede ou resposta do Storage segue como causa; a mensagem de erro de cabeçalho pode conter a chave. */
+    private static Throwable causaSegura(RuntimeException e) {
+        return e instanceof RestClientException ? e : null;
     }
 
     private synchronized RestClient http() {
