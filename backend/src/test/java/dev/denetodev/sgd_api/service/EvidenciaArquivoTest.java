@@ -48,6 +48,19 @@ class EvidenciaArquivoTest {
         public void remover(String caminho) {
             removidos.add(caminho);
         }
+
+        // fotos de perfil: não entram nestes testes de evidência
+        public String enviarPublico(String caminho, byte[] conteudo, String contentType) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void removerPublico(String caminho) {
+            throw new UnsupportedOperationException();
+        }
+
+        public String caminhoPublico(String url) {
+            return null;
+        }
     }
 
     private EvidenciaRepository evidenciaRepository;

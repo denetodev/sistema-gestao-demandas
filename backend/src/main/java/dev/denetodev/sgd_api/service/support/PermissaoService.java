@@ -125,6 +125,13 @@ public class PermissaoService {
         return usuario.getPerfil() == PerfilPessoa.PROFISSIONAL && usuario.getReferenciaArea() != null;
     }
 
+    /** Demandante segue a mesma regra de projeto e campanha: Admin, Gestor e Referência de equipe. */
+    public void exigirGerenciarDemandantes(Pessoa usuario) {
+        if (!podeGerenciarProjetosECampanhas(usuario)) {
+            throw new AccessDeniedException("Só Gestor, Admin ou Referência de equipe criam e editam demandantes");
+        }
+    }
+
     public void exigirGerenciarProjetosECampanhas(Pessoa usuario) {
         if (!podeGerenciarProjetosECampanhas(usuario)) {
             throw new AccessDeniedException("Só Gestor, Admin ou Referência de equipe criam e editam projetos e campanhas");

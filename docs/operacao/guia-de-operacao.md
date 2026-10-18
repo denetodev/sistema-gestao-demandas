@@ -40,8 +40,8 @@ Só quem participa de uma demanda (e a Referência da área de alguém do time, 
 - Cancelar uma demanda é só do Gestor, do Admin ou do Responsável principal.
 
 ### Campanhas e projetos
-- Criam e editam projeto e campanha: Admin, Gestor e a Referência de equipe. O Profissional comum não. Só Gestor e Admin excluem ou encerram.
-- Os demais cadastros base (diretorias, núcleos, áreas, cargos, tipos de atividade, demandantes) são só de Gestor e Admin.
+- Criam e editam projeto, campanha e demandante: Admin, Gestor e a Referência de equipe. O Profissional comum não. Só Gestor e Admin excluem ou encerram.
+- Os demais cadastros base (diretorias, núcleos, áreas, cargos, tipos de atividade) são só de Gestor e Admin.
 - A página da campanha mostra quantas pessoas e demandas ela reuniu e o valor gerado, sem as demandas canceladas.
 
 ### Relatório mensal

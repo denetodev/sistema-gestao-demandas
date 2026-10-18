@@ -11,4 +11,16 @@ public interface ArquivoStorage {
 
     /** Remove o arquivo; falha de limpeza não deve derrubar quem chamou. */
     void remover(String caminho);
+
+    /**
+     * Foto de perfil: vai para um bucket público (avatares), porque a imagem aparece em listas e no topo da tela
+     * e uma tag de imagem não manda o token. Devolve a URL pública permanente.
+     */
+    String enviarPublico(String caminho, byte[] conteudo, String contentType);
+
+    /** Remove uma foto pública pelo caminho (o que vem depois do nome do bucket na URL). */
+    void removerPublico(String caminho);
+
+    /** O caminho de uma URL pública nossa, ou nulo se a URL não for do bucket de avatares. */
+    String caminhoPublico(String url);
 }

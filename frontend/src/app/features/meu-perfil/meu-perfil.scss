@@ -52,3 +52,50 @@
     font-weight: 600;
   }
 }
+
+.foto__linha {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.foto__imagem {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--sgd-borda);
+  box-shadow: var(--sgd-sombra-leve);
+
+  &--iniciais {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    color: #fff;
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+  }
+}
+
+.foto__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+
+  small {
+    flex-basis: 100%;
+  }
+}
+
+.foto__input {
+  display: none;
+}
+
+.erro-campo {
+  color: #d92d20;
+  font-weight: 600;
+}

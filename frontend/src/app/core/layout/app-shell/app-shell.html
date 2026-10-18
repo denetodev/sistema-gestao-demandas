@@ -51,7 +51,7 @@
       }
 
       <span class="app-nav__secao"><span>Cadastros</span></span>
-      @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+      @if (auth.podeGerenciarDemandantes()) {
       <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">
         <i class="pi pi-users"></i><span class="app-nav__rotulo">Demandantes</span>
       </a>
@@ -125,7 +125,7 @@
 
       <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)" aria-haspopup="menu">
         <span class="app-usuario">
-          <span class="app-usuario__nome">{{ nomeExibido() }}</span>
+          <span class="app-usuario__nome">{{ nomeComMatricula() }}</span>
           <span class="app-usuario__perfil">{{ perfilRotulo() }}</span>
         </span>
         @if (auth.pessoa()?.fotoUrl) {

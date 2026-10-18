@@ -359,7 +359,7 @@ public class PessoaService {
         // o nome completo é do cadastro da empresa: quem muda é Gestor/Admin. A própria pessoa escolhe como ser chamada.
         String exibicao = request.nomeExibicao() == null ? "" : request.nomeExibicao().trim();
         pessoa.setNomeExibicao(exibicao.isEmpty() ? null : exibicao);
-        pessoa.setFotoUrl(request.fotoUrl());
+        // a foto tem endpoint próprio (PessoaFotoService): aqui a URL enviada é ignorada, para não apagar nem trocar a foto sem querer
         return paraResponse(pessoa);
     }
 
@@ -441,6 +441,11 @@ public class PessoaService {
     private Pessoa buscarEntidade(UUID id) {
         return pessoaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pessoa não encontrada: " + id));
+    }
+
+    /** Para quem já tem a Pessoa em mãos (foto de perfil). */
+    PessoaResponse paraResposta(Pessoa pessoa) {
+        return paraResponse(pessoa);
     }
 
     private PessoaResponse paraResponse(Pessoa pessoa) {

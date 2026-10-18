@@ -71,6 +71,11 @@ export class AuthService {
     return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
   }
 
+  /** Demandantes seguem a mesma regra de projetos e campanhas. */
+  podeGerenciarDemandantes(): boolean {
+    return this.podeGerenciarProjetosECampanhas();
+  }
+
   /** Todo perfil vinculado exceto VISUALIZADOR. */
   podeEditar(): boolean {
     const perfil = this.pessoa()?.perfil;
@@ -122,6 +127,17 @@ export class AuthService {
 
   atualizarPerfil(payload: { nomeExibicao: string | null; fotoUrl: string | null }) {
     return this.#http.put<PessoaMe>(`${environment.apiUrl}/pessoas/me`, payload);
+  }
+
+  /** Foto de perfil já reduzida pelo navegador (JPEG quadrado); o servidor guarda e devolve a pessoa atualizada. */
+  enviarFotoDePerfil(imagem: Blob) {
+    const corpo = new FormData();
+    corpo.append('arquivo', imagem, 'perfil.jpg');
+    return this.#http.post<PessoaMe>(`${environment.apiUrl}/pessoas/me/foto`, corpo);
+  }
+
+  removerFotoDePerfil() {
+    return this.#http.delete<PessoaMe>(`${environment.apiUrl}/pessoas/me/foto`);
   }
 
   /** Cria o cadastro de pessoa da conta logada; fica aguardando aprovação de Gestor/Admin. */

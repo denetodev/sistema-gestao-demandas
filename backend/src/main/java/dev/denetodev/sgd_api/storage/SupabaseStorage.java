@@ -22,6 +22,8 @@ public class SupabaseStorage implements ArquivoStorage {
 
     private static final Logger log = LoggerFactory.getLogger(SupabaseStorage.class);
     static final String BUCKET = "evidencias";
+    /** Bucket público das fotos de perfil. */
+    static final String BUCKET_PUBLICO = "avatares";
 
     private final String baseUrl;
     private final String chave;
@@ -103,6 +105,45 @@ public class SupabaseStorage implements ArquivoStorage {
     /** Só erro de rede ou resposta do Storage segue como causa; a mensagem de erro de cabeçalho pode conter a chave. */
     private static Throwable causaSegura(RuntimeException e) {
         return e instanceof RestClientException ? e : null;
+    }
+
+    @Override
+    public String enviarPublico(String caminho, byte[] conteudo, String contentType) {
+        exigirConfigurado();
+        try {
+            http().post()
+                    .uri(baseUrl + "/storage/v1/object/" + BUCKET_PUBLICO + "/" + caminho)
+                    .headers(this::autenticar)
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(conteudo)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException | IllegalArgumentException e) {
+            throw new ArmazenamentoIndisponivelException("Não foi possível guardar a foto no Storage", causaSegura(e));
+        }
+        return baseUrl + "/storage/v1/object/public/" + BUCKET_PUBLICO + "/" + caminho;
+    }
+
+    @Override
+    public void removerPublico(String caminho) {
+        if (!configurado()) {
+            return;
+        }
+        try {
+            http().delete()
+                    .uri(baseUrl + "/storage/v1/object/" + BUCKET_PUBLICO + "/" + caminho)
+                    .headers(this::autenticar)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException | IllegalArgumentException e) {
+            log.warn("Falha ao remover {} do bucket público; o arquivo ficou órfão ({})", caminho, e.getClass().getSimpleName());
+        }
+    }
+
+    @Override
+    public String caminhoPublico(String url) {
+        String prefixo = baseUrl + "/storage/v1/object/public/" + BUCKET_PUBLICO + "/";
+        return url != null && !baseUrl.isBlank() && url.startsWith(prefixo) ? url.substring(prefixo.length()) : null;
     }
 
     private synchronized RestClient http() {

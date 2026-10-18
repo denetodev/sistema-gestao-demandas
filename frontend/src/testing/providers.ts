@@ -26,6 +26,7 @@ export function pessoaDeTeste(opcoes: OpcoesTeste = {}): PessoaMe {
     id: 'p-teste',
     nome: 'Pessoa de Teste',
     nomeExibicao: null,
+    chaveC: 'C1349864',
     email: 'teste@exemplo.com',
     diretoriaId: 'd1',
     diretoriaNome: 'COE/CRM',
@@ -78,11 +79,17 @@ export function criarAuthFalso(opcoes: OpcoesTeste = {}) {
       const p = pessoa()!;
       return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
     },
+    podeGerenciarDemandantes: () => {
+      const p = pessoa()!;
+      return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
+    },
     podeMexerNoItem: (pessoaIdDoItem: string | null) => podeMexerNoItem(pessoa(), pessoaIdDoItem),
     login: () => Promise.resolve(),
     cadastrar: () => Promise.resolve({ confirmado: true }),
     logout: () => Promise.resolve(),
     accessToken: 'token-de-teste',
+    enviarFotoDePerfil: () => { throw new Error('use um spy no teste'); },
+    removerFotoDePerfil: () => { throw new Error('use um spy no teste'); },
     atualizarPerfil: () => {
       throw new Error('não usado nos testes');
     },

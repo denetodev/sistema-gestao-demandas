@@ -4,15 +4,18 @@ import dev.denetodev.sgd_api.dto.request.*;
 import dev.denetodev.sgd_api.dto.response.MeResponse;
 import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.dto.response.VinculoSugeridoResponse;
+import dev.denetodev.sgd_api.service.PessoaFotoService;
 import dev.denetodev.sgd_api.service.PessoaService;
 import dev.denetodev.sgd_api.service.VinculoSugeridoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URI;
 import java.util.List;
@@ -24,8 +27,11 @@ public class PessoaController {
 
     private final PessoaService pessoaService;
     private final VinculoSugeridoService vinculoSugeridoService;
+    private final PessoaFotoService pessoaFotoService;
 
-    public PessoaController(PessoaService pessoaService, VinculoSugeridoService vinculoSugeridoService) {
+    public PessoaController(PessoaService pessoaService, VinculoSugeridoService vinculoSugeridoService,
+                            PessoaFotoService pessoaFotoService) {
+        this.pessoaFotoService = pessoaFotoService;
         this.pessoaService = pessoaService;
         this.vinculoSugeridoService = vinculoSugeridoService;
     }
@@ -52,6 +58,16 @@ public class PessoaController {
     @PutMapping("/me")
     public PessoaResponse atualizarPerfilProprio(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody AtualizarPerfilRequest request) {
         return pessoaService.atualizarPerfilProprio(jwt, request);
+    }
+
+    @PostMapping(path = "/me/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public PessoaResponse enviarMinhaFoto(@AuthenticationPrincipal Jwt jwt, @RequestParam("arquivo") MultipartFile arquivo) {
+        return pessoaFotoService.enviar(jwt, arquivo);
+    }
+
+    @DeleteMapping("/me/foto")
+    public PessoaResponse removerMinhaFoto(@AuthenticationPrincipal Jwt jwt) {
+        return pessoaFotoService.remover(jwt);
     }
 
     @PostMapping

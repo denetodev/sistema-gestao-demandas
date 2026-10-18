@@ -7,6 +7,12 @@ export type StatusDemanda =
 export type Prioridade = 'BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE';
 export type EscopoDemanda = 'MINHAS' | 'EQUIPE' | 'NUCLEO' | 'DIRETORIA' | 'TODAS';
 
+export interface ParticipanteResumo {
+  pessoaId: string;
+  nome: string;
+  fotoUrl: string | null;
+}
+
 export interface Demanda {
   id: string;
   titulo: string;
@@ -32,6 +38,8 @@ export interface Demanda {
   updatedAt: string;
   /** A pessoa logada pode alterar esta demanda (participa, Referência da área do time, Gestor ou Admin). */
   podeAlterar: boolean;
+  /** Quem está no time agora; o Responsável principal vem primeiro. */
+  participantes: ParticipanteResumo[];
   valorCalculado: number | null;
 }
 

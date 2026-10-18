@@ -3,9 +3,13 @@ import { AJUDA, ChaveAjuda } from '../ajuda-conteudo';
 
 const PREFIXO = 'sgd.ajuda.';
 
+/** Telas cuja ajuda já foi mostrada nesta sessão (vale quando o navegador não deixa gravar no localStorage). */
+const vistasNaSessao = new Set<string>();
+
 /**
- * Faixa recolhível de ajuda no topo de cada tela, em perguntas e respostas curtas.
- * Abre sozinha na primeira visita (em tela larga) e lembra, por navegador, se a pessoa recolheu.
+ * Faixa de ajuda no topo de cada tela, em perguntas e respostas curtas.
+ * Na primeira vez que a pessoa abre a tela ela aparece aberta e destacada em laranja; nas outras vezes
+ * fica recolhida, e a pessoa abre quando quiser. Recolher ou abrir não é lembrado: toda entrada na tela recomeça recolhida.
  * O texto vem de ajuda-conteudo.ts.
  */
 @Component({
@@ -15,38 +19,47 @@ const PREFIXO = 'sgd.ajuda.';
 })
 export class Ajuda implements OnInit {
   chave = input.required<ChaveAjuda>();
-  /** Telas cheias de informação (como o detalhe da demanda) começam recolhidas; a escolha da pessoa vale depois. */
-  abrirNaPrimeiraVisita = input(true);
 
   conteudo = computed(() => AJUDA[this.chave()]);
-  aberta = signal(true);
+  aberta = signal(false);
+  /** Só na primeira visita: fundo laranja para chamar a atenção. */
+  destaque = signal(false);
 
   ngOnInit() {
-    const guardada = lerPreferencia(this.chave());
-    // sem escolha guardada: abre em tela larga e fica recolhida no celular, para não empurrar a lista
-    this.aberta.set(guardada ? guardada !== 'fechada' : this.abrirNaPrimeiraVisita() && window.innerWidth >= 640);
+    const primeiraVisita = !jaFoiVista(this.chave());
+    this.aberta.set(primeiraVisita);
+    this.destaque.set(primeiraVisita);
+    if (primeiraVisita) marcarComoVista(this.chave());
   }
 
   alternar(evento: Event) {
     const aberta = (evento.target as HTMLDetailsElement).open;
     this.aberta.set(aberta);
-    gravarPreferencia(this.chave(), aberta ? 'aberta' : 'fechada');
+    // fechou: o destaque cumpriu o papel
+    if (!aberta) this.destaque.set(false);
   }
 }
 
 // localStorage pode lançar (janela privada, dados bloqueados): a ajuda funciona sem ele.
-function lerPreferencia(chave: string): string | null {
+function jaFoiVista(chave: string): boolean {
+  if (vistasNaSessao.has(chave)) return true;
   try {
-    return localStorage.getItem(PREFIXO + chave);
+    return localStorage.getItem(PREFIXO + chave) !== null;
   } catch {
-    return null;
+    return false;
   }
 }
 
-function gravarPreferencia(chave: string, valor: string) {
+function marcarComoVista(chave: string) {
+  vistasNaSessao.add(chave);
   try {
-    localStorage.setItem(PREFIXO + chave, valor);
+    localStorage.setItem(PREFIXO + chave, 'vista');
   } catch {
-    /* sem persistência, tudo bem */
+    /* sem persistência: vale só nesta sessão */
   }
+}
+
+/** Para os testes: esquece o que já foi visto na sessão. */
+export function esquecerAjudasVistas() {
+  vistasNaSessao.clear();
 }

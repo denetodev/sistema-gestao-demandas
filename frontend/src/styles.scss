@@ -600,3 +600,8 @@ button,
 .dialog-form__duas-colunas label {
   margin-top: 0;
 }
+
+/* texto do time ao passar o mouse: um nome por linha */
+.tooltip-time .p-tooltip-text {
+  white-space: pre-line;
+}

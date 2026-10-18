@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { naoVisualizadorGuard, perfilGuard } from './perfil.guard';
+import { gestaoOuReferenciaGuard, naoVisualizadorGuard, perfilGuard } from './perfil.guard';
 import { provideTesteApp } from '../../../testing/providers';
 import type { Perfil } from './auth.model';
 
@@ -36,5 +36,21 @@ describe('guards de perfil', () => {
     TestBed.resetTestingModule();
     configurar('PROFISSIONAL');
     expect(await executar(naoVisualizadorGuard, '/relatorio')).toBe(true);
+  });
+
+  it('gestaoOuReferenciaGuard libera Admin, Gestor e Referência de equipe, e barra Profissional comum e Visualizador', async () => {
+    const guard = gestaoOuReferenciaGuard as ReturnType<typeof perfilGuard>;
+    for (const [perfil, referencia, libera] of [
+      ['ADMIN', null, true],
+      ['GESTOR', null, true],
+      ['PROFISSIONAL', 'a1', true],
+      ['PROFISSIONAL', null, false],
+      ['VISUALIZADOR', null, false],
+    ] as const) {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers: provideTesteApp({ perfil, referenciaAreaId: referencia }) });
+      const resultado = await executar(guard, '/demandantes');
+      expect(resultado === true).withContext(perfil + ' ' + referencia).toBe(libera);
+    }
   });
 });

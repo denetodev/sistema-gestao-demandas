@@ -1,7 +1,10 @@
-<details class="ajuda" [open]="aberta()" (toggle)="alternar($event)">
+<details class="ajuda" [class.ajuda--destaque]="destaque()" [open]="aberta()" (toggle)="alternar($event)">
   <summary class="ajuda__titulo">
     <i class="pi pi-question-circle" aria-hidden="true"></i>
     <span>{{ conteudo().titulo }}</span>
+    @if (destaque()) {
+      <span class="ajuda__selo">Primeira vez aqui</span>
+    }
     <i class="pi pi-chevron-down ajuda__seta" aria-hidden="true"></i>
   </summary>
   <dl class="ajuda__lista">
