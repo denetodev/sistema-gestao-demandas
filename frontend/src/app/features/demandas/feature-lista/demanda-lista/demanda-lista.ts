@@ -7,6 +7,8 @@ import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
 import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
+import { Avatar } from 'primeng/avatar';
+import { AvatarGroup } from 'primeng/avatargroup';
 import { Tooltip } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
@@ -36,7 +38,7 @@ const STATUS_VALIDOS = Object.keys(ROTULO_STATUS) as StatusDemanda[];
 @Component({
   selector: 'app-demanda-lista',
   imports: [
-    Ajuda, FormsModule, TableModule, Tag, Select, Tooltip, DatePipe, CurrencyPipe, Button, BarraPagina,
+    Ajuda, FormsModule, TableModule, Tag, Select, Tooltip, Avatar, AvatarGroup, DatePipe, CurrencyPipe, Button, BarraPagina,
     DemandaForm, RouterLink, Pilulas, CampoBusca,
   ],
   templateUrl: './demanda-lista.html',
@@ -92,6 +94,27 @@ export class DemandaLista {
       rotulo: a.diretoriaNome ? `${a.nome} · ${a.diretoriaNome}` : a.nome,
     })),
   );
+
+  /** Quantos rostos aparecem; o resto vira o "+N". */
+  readonly maxRostos = 4;
+
+  rostos(d: Demanda) {
+    return (d.participantes ?? []).slice(0, this.maxRostos);
+  }
+
+  restantes(d: Demanda): number {
+    return Math.max(0, (d.participantes ?? []).length - this.maxRostos);
+  }
+
+  iniciaisDe(nome: string): string {
+    const partes = nome.trim().split(/\s+/);
+    return ((partes[0]?.[0] ?? '?') + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase();
+  }
+
+  /** Todos os nomes, para o texto que aparece ao passar o mouse. */
+  nomesDoTime(d: Demanda): string {
+    return (d.participantes ?? []).map((p) => p.nome).join('\n');
+  }
 
   filtrosAtivos = computed(() => {
     const f = this.filtro();

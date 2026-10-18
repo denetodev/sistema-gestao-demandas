@@ -62,6 +62,7 @@
         <ng-template pTemplate="header">
           <tr>
             <th pSortableColumn="titulo">Demanda <p-sortIcon field="titulo" /></th>
+            <th>Time</th>
             <th pSortableColumn="status">Situação <p-sortIcon field="status" /></th>
             <th pSortableColumn="prioridade">Prioridade <p-sortIcon field="prioridade" /></th>
             <th>Diretoria</th>
@@ -83,6 +84,24 @@
               </a>
               @if (demanda.campanhaNome) {
                 <span class="sub"><i class="pi pi-megaphone"></i> {{ demanda.campanhaNome }}</span>
+              }
+            </td>
+            <td class="col-time">
+              @if (demanda.participantes?.length) {
+                <p-avatargroup class="time" [pTooltip]="nomesDoTime(demanda)" tooltipPosition="top" [tooltipOptions]="{ tooltipStyleClass: 'tooltip-time' }">
+                  @for (p of rostos(demanda); track p.pessoaId) {
+                    @if (p.fotoUrl) {
+                      <p-avatar [image]="p.fotoUrl" shape="circle" size="normal" [attr.aria-label]="p.nome" />
+                    } @else {
+                      <p-avatar [label]="iniciaisDe(p.nome)" shape="circle" size="normal" [attr.aria-label]="p.nome" class="avatar-iniciais" />
+                    }
+                  }
+                  @if (restantes(demanda) > 0) {
+                    <p-avatar [label]="'+' + restantes(demanda)" shape="circle" size="normal" class="avatar-mais" />
+                  }
+                </p-avatargroup>
+              } @else {
+                <span class="sub">Sem time</span>
               }
             </td>
             <td><p-tag [value]="rotuloStatus[demanda.status]" [severity]="severityStatus(demanda.status)" /></td>
@@ -110,7 +129,7 @@
         </ng-template>
         <ng-template pTemplate="emptymessage">
           <tr>
-            <td colspan="8">
+            <td colspan="9">
               <div class="vazio">
                 @if (filtrosAtivos()) {
                   <strong>Nenhuma demanda com esses filtros</strong>

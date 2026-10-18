@@ -4,6 +4,7 @@ import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.request.FiltroDemanda;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
+import dev.denetodev.sgd_api.dto.response.ParticipanteResumo;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.*;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +92,8 @@ public class DemandaService {
                 : pessoaDemandaRepository.findByDemandaIdIn(pagina.getContent().stream().map(Demanda::getId).toList())
                         .stream().collect(Collectors.groupingBy(v -> v.getDemanda().getId()));
         return pagina.map(d -> paraResponse(d,
-                permissaoService.podeAlterarDemanda(usuario, times.getOrDefault(d.getId(), List.of()))));
+                permissaoService.podeAlterarDemanda(usuario, times.getOrDefault(d.getId(), List.of())),
+                times.getOrDefault(d.getId(), List.of())));
     }
 
     @Transactional(readOnly = true)
@@ -237,6 +240,21 @@ public class DemandaService {
     }
 
     private DemandaResponse paraResponse(Demanda demanda, boolean podeAlterar) {
+        return paraResponse(demanda, podeAlterar, pessoaDemandaRepository.findByDemandaId(demanda.getId()));
+    }
+
+    /** O time ativo da demanda, com o Responsável principal primeiro e depois por nome. */
+    static List<ParticipanteResumo> resumirTime(List<PessoaDemanda> time) {
+        return time.stream()
+                .filter(v -> v.getDataSaida() == null)
+                .sorted(Comparator
+                        .comparing((PessoaDemanda v) -> v.getPapel() != PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL)
+                        .thenComparing(v -> v.getPessoa().getNome(), String.CASE_INSENSITIVE_ORDER))
+                .map(v -> new ParticipanteResumo(v.getPessoa().getId(), v.getPessoa().getNome(), v.getPessoa().getFotoUrl()))
+                .toList();
+    }
+
+    private DemandaResponse paraResponse(Demanda demanda, boolean podeAlterar, List<PessoaDemanda> time) {
         Demandante demandante = demanda.getDemandante();
         Projeto projeto = demanda.getProjeto();
         Campanha campanha = demanda.getCampanha();
@@ -272,7 +290,8 @@ public class DemandaService {
                 valorCalculado,
                 demanda.getCreatedAt(),
                 demanda.getUpdatedAt(),
-                podeAlterar
+                podeAlterar,
+                resumirTime(time)
         );
     }
 
