@@ -1,5 +1,6 @@
 <app-barra-pagina titulo="Núcleos e equipes" subtitulo="Diretoria, núcleo e equipe: de onde vem cada demanda e quem trabalha nela.">
   <ng-container fim>
+    <p-button icon="pi pi-building" label="Nova diretoria" severity="secondary" [outlined]="true" (onClick)="novaDiretoria()" />
     <p-button icon="pi pi-plus" label="Novo núcleo" (onClick)="novoNucleo()" />
   </ng-container>
 </app-barra-pagina>
@@ -7,85 +8,169 @@
 <div class="pagina-corpo">
   <app-ajuda chave="estrutura" />
 
-  <section class="cartao cartao--tabela">
-    <h2 class="secao-titulo">Núcleos</h2>
-    <div class="tabela-rolagem">
-      <p-table [value]="nucleosAtivos()" [loading]="nucleos.isLoading()" dataKey="id">
-        <ng-template pTemplate="header">
-          <tr><th>Núcleo</th><th>Diretoria</th><th class="col-numero">Equipes</th><th class="col-acoes"></th></tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-n>
-          <tr>
-            <td>{{ n.nome }}</td>
-            <td>{{ n.diretoriaNome ?? '—' }}</td>
-            <td class="col-numero">{{ qtdEquipes(n.id) }}</td>
-            <td class="col-acoes">
-              <p-button [text]="true" icon="pi pi-pencil" ariaLabel="Editar núcleo" (onClick)="editarNucleo(n)" />
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="emptymessage">
-          <tr>
-            <td colspan="4">
-              <div class="vazio"><strong>Nenhum núcleo cadastrado</strong>Crie o primeiro núcleo para agrupar as equipes.</div>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-  </section>
+  @if (equipesSemNucleo().length > 0) {
+    <section class="aviso-soltas" role="status">
+      <div class="aviso-soltas__texto">
+        <strong>{{ equipesSemNucleo().length }} equipe(s) sem núcleo</strong>
+        Elas ficam de fora do botão Meu núcleo e do filtro por núcleo. Escolha o núcleo de cada uma.
+      </div>
+      <ul class="aviso-soltas__lista">
+        @for (a of equipesSemNucleo(); track a.id) {
+          <li>
+            <span>{{ a.nome }} <small>{{ a.diretoriaNome }}</small></span>
+            <p-button label="Escolher núcleo" size="small" [outlined]="true" (onClick)="editarEquipe(a)" />
+          </li>
+        }
+      </ul>
+    </section>
+  }
 
-  <section class="cartao cartao--tabela">
-    <h2 class="secao-titulo">Equipes</h2>
-    @if (equipesSemNucleo() > 0) {
-      <p-message severity="warn" class="aviso">
-        {{ equipesSemNucleo() }} equipe(s) ainda sem núcleo. Elas não entram no botão Meu núcleo nem no filtro por núcleo.
-      </p-message>
-    }
-    <div class="tabela-rolagem">
-      <p-table [value]="equipes()" [loading]="areas.isLoading()" dataKey="id">
-        <ng-template pTemplate="header">
-          <tr><th>Equipe</th><th>Núcleo</th><th>Diretoria</th><th class="col-acoes"></th></tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-a>
-          <tr>
-            <td>{{ a.nome }}</td>
-            <td>{{ a.nucleoNome ?? '—' }}</td>
-            <td>{{ a.diretoriaNome ?? '—' }}</td>
-            <td class="col-acoes">
-              <p-button [text]="true" icon="pi pi-pencil" ariaLabel="Mudar núcleo da equipe" (onClick)="editarEquipe(a)" />
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+  <section class="cartao">
+    <div class="filtros">
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar diretoria, núcleo ou equipe..."
+          descricao="Buscar na estrutura" [valor]="busca()" (valorChange)="busca.set($event)" />
+        <app-pilulas [opcoes]="opcoesFiltro" [valor]="filtro()" (valorChange)="filtro.set($any($event))"
+          descricao="Quais diretorias mostrar" />
+      </div>
     </div>
+
+    @if (carregando() && visiveis().length === 0) {
+      <p class="vazio">Carregando...</p>
+    } @else if (semDiretoriasComNucleo() && filtro() === 'com' && !busca()) {
+      <div class="vazio">
+        <strong>Nenhum núcleo cadastrado ainda</strong>
+        Crie o primeiro núcleo e depois as equipes dentro dele.
+        <p-button class="vazio__acao" label="Novo núcleo" icon="pi pi-plus" (onClick)="novoNucleo()" />
+      </div>
+    } @else if (visiveis().length === 0) {
+      <div class="vazio">
+        <strong>Nada encontrado</strong>
+        Tente outro texto ou mostre todas as diretorias.
+      </div>
+    }
+
+    <ul class="arvore">
+      @for (no of visiveis(); track no.diretoria.id) {
+        <li class="diretoria" [class.diretoria--aberta]="estaAberta(no.diretoria.id)">
+          <div class="diretoria__cab">
+            <button type="button" class="diretoria__titulo" (click)="alternar(no.diretoria.id)"
+              [attr.aria-expanded]="estaAberta(no.diretoria.id)">
+              <i class="pi" [class.pi-chevron-right]="!estaAberta(no.diretoria.id)" [class.pi-chevron-down]="estaAberta(no.diretoria.id)"></i>
+              <strong>{{ no.diretoria.nome }}</strong>
+              @if (no.diretoria.sigla) { <span class="sigla">{{ no.diretoria.sigla }}</span> }
+              <span class="contagem">
+                {{ no.nucleos.length }} {{ no.nucleos.length === 1 ? 'núcleo' : 'núcleos' }} ·
+                {{ no.totalEquipes }} {{ no.totalEquipes === 1 ? 'equipe' : 'equipes' }}
+              </span>
+            </button>
+            <p-button icon="pi pi-plus" label="Núcleo" size="small" [text]="true" (onClick)="novoNucleo(no.diretoria.id)"
+              [ariaLabel]="'Novo núcleo em ' + no.diretoria.nome" />
+          </div>
+
+          @if (estaAberta(no.diretoria.id)) {
+            <div class="diretoria__corpo">
+              @for (n of no.nucleos; track n.nucleo.id) {
+                <div class="nucleo">
+                  <div class="nucleo__cab">
+                    <i class="pi pi-sitemap" aria-hidden="true"></i>
+                    <strong>{{ n.nucleo.nome }}</strong>
+                    <span class="contagem">{{ n.equipes.length }} {{ n.equipes.length === 1 ? 'equipe' : 'equipes' }}</span>
+                    <span class="acoes">
+                      <p-button icon="pi pi-plus" label="Equipe" size="small" [text]="true" (onClick)="novaEquipe(n.nucleo.id)"
+                        [ariaLabel]="'Nova equipe em ' + n.nucleo.nome" />
+                      <p-button icon="pi pi-pencil" size="small" [text]="true" severity="secondary" (onClick)="editarNucleo(n.nucleo)"
+                        ariaLabel="Editar núcleo" />
+                      <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="desativarNucleo(n)"
+                        ariaLabel="Desativar núcleo" />
+                    </span>
+                  </div>
+                  @if (n.equipes.length) {
+                    <ul class="equipes">
+                      @for (e of n.equipes; track e.id) {
+                        <li class="equipe">
+                          <span>{{ e.nome }}</span>
+                          <span class="acoes">
+                            <p-button icon="pi pi-pencil" size="small" [text]="true" severity="secondary" (onClick)="editarEquipe(e)"
+                              [ariaLabel]="'Editar equipe ' + e.nome" />
+                            <p-button icon="pi pi-trash" size="small" [text]="true" severity="danger" (onClick)="desativarEquipe(e)"
+                              [ariaLabel]="'Desativar equipe ' + e.nome" />
+                          </span>
+                        </li>
+                      }
+                    </ul>
+                  } @else {
+                    <p class="equipes__vazio">Sem equipes. Use "+ Equipe" para criar a primeira.</p>
+                  }
+                </div>
+              } @empty {
+                <p class="equipes__vazio">Nenhum núcleo nesta diretoria. Use "+ Núcleo" para criar.</p>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
   </section>
 </div>
 
-<p-dialog [(visible)]="nucleoAberto" [header]="nucleoEditando() ? 'Editar núcleo' : 'Novo núcleo'" [modal]="true" [style]="{ width: '400px' }">
-  <form [formGroup]="formNucleo" (ngSubmit)="salvarNucleo()" class="dialog-form">
-    <label for="nome">Nome</label>
-    <input pInputText id="nome" formControlName="nome" />
+<p-dialog [visible]="aberta()" (visibleChange)="!$event && fecharJanela()" [header]="tituloJanela()" [modal]="true"
+  [style]="{ width: '28rem', maxWidth: '94vw' }" [draggable]="false">
+  @switch (janela()) {
+    @case ('diretoria') {
+      <form [formGroup]="formDiretoria" (ngSubmit)="salvar()" class="dialog-form">
+        <label for="d-nome">Nome</label>
+        <input pInputText id="d-nome" formControlName="nome" maxlength="120" placeholder="Ex.: Diretoria de Marketing" />
+        @if (mostrarErro('diretoria', 'nome')) { <small class="erro-campo">Informe o nome da diretoria.</small> }
 
-    <label for="diretoria">Diretoria</label>
-    <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
-      optionLabel="nome" optionValue="id" placeholder="Selecione" [filter]="true" filterBy="nome" />
+        <label for="d-sigla">Sigla <span class="opcional">(opcional)</span></label>
+        <input pInputText id="d-sigla" formControlName="sigla" maxlength="20" placeholder="Ex.: DIMAC" />
 
-    @if (erro()) {
-      <p-message severity="error">{{ erro() }}</p-message>
+        @if (erro()) { <p-message severity="error">{{ erro() }}</p-message> }
+        <p-button type="submit" label="Criar diretoria" [loading]="salvando()" [disabled]="formDiretoria.invalid" />
+      </form>
     }
-    <p-button type="submit" [loading]="salvando()" [disabled]="formNucleo.invalid">Salvar</p-button>
-  </form>
-</p-dialog>
+    @case ('nucleo') {
+      <form [formGroup]="formNucleo" (ngSubmit)="salvar()" class="dialog-form">
+        <label for="n-nome">Nome do núcleo</label>
+        <input pInputText id="n-nome" formControlName="nome" maxlength="120" placeholder="Ex.: Multimídia" />
+        @if (mostrarErro('nucleo', 'nome')) { <small class="erro-campo">Informe o nome do núcleo.</small> }
 
-<p-dialog [(visible)]="equipeAberta" [header]="'Núcleo da equipe ' + (equipeEditando()?.nome ?? '')" [modal]="true" [style]="{ width: '400px' }">
-  <div class="dialog-form">
-    <label for="nucleo-equipe">Núcleo ({{ equipeEditando()?.diretoriaNome }})</label>
-    <p-select inputId="nucleo-equipe" [formControl]="nucleoDaEquipe" [options]="nucleosDaEquipe()"
-      optionLabel="nome" optionValue="id" placeholder="Sem núcleo" [showClear]="true" />
-    @if (erro()) {
-      <p-message severity="error">{{ erro() }}</p-message>
+        <label for="n-diretoria">Diretoria</label>
+        <p-select inputId="n-diretoria" formControlName="diretoriaId" [options]="opcoesDiretoria()" optionLabel="rotulo"
+          optionValue="id" placeholder="Escolha a diretoria" [filter]="true" filterBy="rotulo" appendTo="body"
+          [scrollHeight]="'16rem'" [virtualScroll]="false" />
+        @if (mostrarErro('nucleo', 'diretoriaId')) { <small class="erro-campo">Escolha a diretoria do núcleo.</small> }
+        @if (editando()) {
+          <small class="dica">Para mudar a diretoria, o núcleo não pode ter equipes.</small>
+        }
+
+        @if (erro()) { <p-message severity="error">{{ erro() }}</p-message> }
+        <p-button type="submit" [label]="editando() ? 'Salvar alterações' : 'Criar núcleo'" [loading]="salvando()"
+          [disabled]="formNucleo.invalid" />
+      </form>
     }
-    <p-button [loading]="salvando()" (onClick)="salvarEquipe()">Salvar</p-button>
-  </div>
+    @case ('equipe') {
+      <form [formGroup]="formEquipe" (ngSubmit)="salvar()" class="dialog-form">
+        <label for="e-nome">Nome da equipe</label>
+        <input pInputText id="e-nome" formControlName="nome" maxlength="120" placeholder="Ex.: Videomaker" />
+        @if (mostrarErro('equipe', 'nome')) { <small class="erro-campo">Informe o nome da equipe.</small> }
+
+        <label for="e-nucleo">Núcleo</label>
+        <p-select inputId="e-nucleo" formControlName="nucleoId" [options]="opcoesNucleo()" [group]="true"
+          optionLabel="rotulo" optionValue="id" optionGroupLabel="rotulo" optionGroupChildren="itens"
+          placeholder="Escolha o núcleo" [filter]="true" filterBy="rotulo" appendTo="body" [scrollHeight]="'16rem'" />
+        @if (mostrarErro('equipe', 'nucleoId')) { <small class="erro-campo">Escolha o núcleo da equipe.</small> }
+        @if (editando()) {
+          <small class="dica">Só aparecem os núcleos da mesma diretoria da equipe.</small>
+        } @else if (opcoesNucleo().length === 0) {
+          <small class="dica">Crie um núcleo primeiro: a equipe sempre fica dentro de um núcleo.</small>
+        }
+
+        @if (erro()) { <p-message severity="error">{{ erro() }}</p-message> }
+        <p-button type="submit" [label]="editando() ? 'Salvar alterações' : 'Criar equipe'" [loading]="salvando()"
+          [disabled]="formEquipe.invalid" />
+      </form>
+    }
+  }
 </p-dialog>

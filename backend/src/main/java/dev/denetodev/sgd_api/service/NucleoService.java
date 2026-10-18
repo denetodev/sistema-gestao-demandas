@@ -5,6 +5,8 @@ import dev.denetodev.sgd_api.dto.response.NucleoResponse;
 import dev.denetodev.sgd_api.entity.Diretoria;
 import dev.denetodev.sgd_api.entity.Nucleo;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
+import dev.denetodev.sgd_api.exception.EstadoInvalidoException;
+import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.DiretoriaRepository;
 import dev.denetodev.sgd_api.repository.NucleoRepository;
 import org.springframework.stereotype.Service;
@@ -19,9 +21,12 @@ public class NucleoService {
 
     private final NucleoRepository nucleoRepository;
     private final DiretoriaRepository diretoriaRepository;
+    private final AreaRepository areaRepository;
 
-    public NucleoService(NucleoRepository nucleoRepository, DiretoriaRepository diretoriaRepository) {
+    public NucleoService(NucleoRepository nucleoRepository, DiretoriaRepository diretoriaRepository,
+                         AreaRepository areaRepository) {
         this.nucleoRepository = nucleoRepository;
+        this.areaRepository = areaRepository;
         this.diretoriaRepository = diretoriaRepository;
     }
 
@@ -36,17 +41,32 @@ public class NucleoService {
     }
 
     public NucleoResponse criar(NucleoRequest request) {
-        return paraResponse(nucleoRepository.save(new Nucleo(buscarDiretoria(request.diretoriaId()), request.nome())));
+        String nome = request.nome().trim();
+        if (nucleoRepository.existsByDiretoriaIdAndNomeIgnoreCaseAndAtivoTrue(request.diretoriaId(), nome)) {
+            throw new EstadoInvalidoException("Já existe um núcleo com esse nome nessa diretoria");
+        }
+        return paraResponse(nucleoRepository.save(new Nucleo(buscarDiretoria(request.diretoriaId()), nome)));
     }
 
     public NucleoResponse atualizar(UUID id, NucleoRequest request) {
         Nucleo nucleo = buscarEntidade(id);
-        nucleo.setNome(request.nome());
+        String nome = request.nome().trim();
+        if (nucleoRepository.existsByDiretoriaIdAndNomeIgnoreCaseAndAtivoTrueAndIdNot(request.diretoriaId(), nome, id)) {
+            throw new EstadoInvalidoException("Já existe um núcleo com esse nome nessa diretoria");
+        }
+        boolean mudouDeDiretoria = !nucleo.getDiretoria().getId().equals(request.diretoriaId());
+        if (mudouDeDiretoria && areaRepository.existsByNucleoIdAndAtivoTrue(id)) {
+            throw new EstadoInvalidoException("Mude as equipes para outro núcleo antes de mover este núcleo de diretoria");
+        }
+        nucleo.setNome(nome);
         nucleo.setDiretoria(buscarDiretoria(request.diretoriaId()));
         return paraResponse(nucleo);
     }
 
     public void desativar(UUID id) {
+        if (areaRepository.existsByNucleoIdAndAtivoTrue(id)) {
+            throw new EstadoInvalidoException("Este núcleo ainda tem equipes. Mude ou desative as equipes antes");
+        }
         buscarEntidade(id).setAtivo(false);
     }
 

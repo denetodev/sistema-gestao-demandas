@@ -6,7 +6,10 @@ import dev.denetodev.sgd_api.entity.Area;
 import dev.denetodev.sgd_api.entity.Diretoria;
 import dev.denetodev.sgd_api.entity.Nucleo;
 import dev.denetodev.sgd_api.repository.NucleoRepository;
+import dev.denetodev.sgd_api.entity.StatusPessoa;
+import dev.denetodev.sgd_api.exception.EstadoInvalidoException;
 import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
+import dev.denetodev.sgd_api.repository.PessoaRepository;
 import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.DiretoriaRepository;
 import org.springframework.stereotype.Service;
@@ -22,10 +25,12 @@ public class AreaService {
     private final AreaRepository areaRepository;
     private final DiretoriaRepository diretoriaRepository;
     private final NucleoRepository nucleoRepository;
+    private final PessoaRepository pessoaRepository;
 
     public AreaService(AreaRepository areaRepository, DiretoriaRepository diretoriaRepository,
-                       NucleoRepository nucleoRepository) {
+                       NucleoRepository nucleoRepository, PessoaRepository pessoaRepository) {
         this.nucleoRepository = nucleoRepository;
+        this.pessoaRepository = pessoaRepository;
         this.areaRepository = areaRepository;
         this.diretoriaRepository = diretoriaRepository;
     }
@@ -42,7 +47,11 @@ public class AreaService {
 
     public AreaResponse criar(AreaRequest request) {
         Nucleo nucleo = buscarNucleo(request);
-        Area area = new Area(diretoriaDe(request, nucleo), request.nome());
+        String nome = request.nome().trim();
+        if (areaRepository.existsByDiretoriaIdAndNomeIgnoreCaseAndAtivoTrue(request.diretoriaId(), nome)) {
+            throw new EstadoInvalidoException("Já existe uma equipe com esse nome nessa diretoria");
+        }
+        Area area = new Area(diretoriaDe(request, nucleo), nome);
         area.setNucleo(nucleo);
         return paraResponse(areaRepository.save(area));
     }
@@ -50,13 +59,20 @@ public class AreaService {
     public AreaResponse atualizar(UUID id, AreaRequest request) {
         Area area = buscarEntidade(id);
         Nucleo nucleo = buscarNucleo(request);
-        area.setNome(request.nome());
+        String nome = request.nome().trim();
+        if (areaRepository.existsByDiretoriaIdAndNomeIgnoreCaseAndAtivoTrueAndIdNot(request.diretoriaId(), nome, id)) {
+            throw new EstadoInvalidoException("Já existe uma equipe com esse nome nessa diretoria");
+        }
+        area.setNome(nome);
         area.setDiretoria(diretoriaDe(request, nucleo));
         area.setNucleo(nucleo);
         return paraResponse(area);
     }
 
     public void desativar(UUID id) {
+        if (pessoaRepository.existsByAreaIdAndStatus(id, StatusPessoa.ATIVO)) {
+            throw new EstadoInvalidoException("Esta equipe ainda tem pessoas ativas. Mude as pessoas de equipe antes");
+        }
         buscarEntidade(id).setAtivo(false);
     }
 

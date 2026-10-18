@@ -131,6 +131,11 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
           'Diretoria é a área do banco que pede ou recebe o trabalho (UGR, CRM, COMIN...). Núcleo é o grupo de produção dentro dela (House-CRM, Multimídia...). Equipe é a especialidade dentro do núcleo (Design, HTML, Videomaker, Motion...).',
       },
       {
+        pergunta: 'Como crio um núcleo ou uma equipe?',
+        resposta:
+          'Abra a diretoria na lista e use + Núcleo. Dentro do núcleo, use + Equipe. Dá para renomear no lápis e desativar na lixeira. Um núcleo só desativa sem equipes, e uma equipe só desativa sem pessoas ativas. Se a diretoria não aparece, escolha Todas as diretorias ou crie com Nova diretoria.',
+      },
+      {
         pergunta: 'Para que serve ligar a equipe a um núcleo?',
         resposta:
           'É o que faz o botão Meu núcleo e o filtro por núcleo funcionarem. Equipe sem núcleo fica de fora deles.',
