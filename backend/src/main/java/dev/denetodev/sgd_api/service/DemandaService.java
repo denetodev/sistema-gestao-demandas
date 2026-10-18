@@ -142,6 +142,7 @@ public class DemandaService {
         // quem cria a demanda entra no time como Responsável principal
         Pessoa criador = currentPessoaResolver.resolver(jwt);
         PessoaDemanda vinculo = new PessoaDemanda(criador, salva);
+        vinculo.registrarAdicao(criador, java.time.OffsetDateTime.now());
         vinculo.setPapel(PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL);
         pessoaDemandaRepository.save(vinculo);
 

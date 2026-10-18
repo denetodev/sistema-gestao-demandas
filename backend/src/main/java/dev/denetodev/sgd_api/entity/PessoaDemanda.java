@@ -2,6 +2,7 @@ package dev.denetodev.sgd_api.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
@@ -36,6 +37,14 @@ public class PessoaDemanda {
     @Column(name = "observacao", columnDefinition = "text")
     private String observacao;
 
+    /** Quem colocou a pessoa no time; nulo nas linhas antigas. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "adicionado_por")
+    private Pessoa adicionadoPor;
+
+    @Column(name = "adicionado_em")
+    private OffsetDateTime adicionadoEm;
+
     protected PessoaDemanda() {
     }
 
@@ -43,6 +52,20 @@ public class PessoaDemanda {
         this.pessoa = pessoa;
         this.demanda = demanda;
         this.dataEntrada = LocalDate.now();
+    }
+
+    /** Guarda quem adicionou e quando: é o que alimenta o aviso "te adicionaram na demanda". */
+    public void registrarAdicao(Pessoa por, OffsetDateTime quando) {
+        this.adicionadoPor = por;
+        this.adicionadoEm = quando;
+    }
+
+    public Pessoa getAdicionadoPor() {
+        return adicionadoPor;
+    }
+
+    public OffsetDateTime getAdicionadoEm() {
+        return adicionadoEm;
     }
 
     public UUID getId() {

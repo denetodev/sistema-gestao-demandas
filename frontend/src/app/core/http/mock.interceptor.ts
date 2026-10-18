@@ -275,6 +275,16 @@ function responderDemandas(req: HttpRequest<unknown>) {
 // Demais rotas — resposta fixa
 // ==========================================================================
 const dados: Record<string, unknown> = {
+  '/notificacoes': {
+    naoLidas: 6,
+    itens: [
+      { id: 'cadastros', tipo: 'CADASTROS_PENDENTES', titulo: 'Cadastros para aprovar', texto: '2 cadastros aguardam a sua decisão.', link: '/pessoas', quantidade: 2, lida: false, em: null },
+      { id: 'emprestimos-aguardando', tipo: 'EMPRESTIMOS_AGUARDANDO', titulo: 'Empréstimos para autorizar', texto: '2 pedidos esperam autorização (1 para fora do prédio).', link: '/equipamentos', quantidade: 2, lida: false, em: null },
+      { id: 'emprestimos-atrasados', tipo: 'EMPRESTIMOS_ATRASADOS', titulo: 'Empréstimos atrasados', texto: '1 equipamento passou da data de devolução.', link: '/equipamentos', quantidade: 1, lida: false, em: null },
+      { id: 'demanda-1', tipo: 'ADICIONADO_EM_DEMANDA', titulo: 'Você entrou numa demanda', texto: 'Ana Beatriz te adicionou em Campanha Plano Safra Varejo.', link: '/demandas/dem-1', quantidade: 1, lida: false, em: new Date(Date.now() - 3600_000).toISOString() },
+      { id: 'demanda-2', tipo: 'ADICIONADO_EM_DEMANDA', titulo: 'Você entrou numa demanda', texto: 'Rafael Lima te adicionou em E-mail Varejo PJ.', link: '/demandas/dem-4', quantidade: 1, lida: true, em: new Date(Date.now() - 86_400_000).toISOString() },
+    ],
+  },
   '/pessoas/me': { vinculado: !!PESSOA_ATUAL.aprovadoEm, pessoa: PESSOA_ATUAL },
   '/diretorias': DIRETORIAS,
   '/nucleos': NUCLEOS,
@@ -408,6 +418,11 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
     dados,
   });
   if (detalhe) return detalhe;
+
+  // sininho: marcar como visto não precisa de resposta
+  if (req.url.endsWith('/notificacoes/vistas')) {
+    return of(new HttpResponse({ status: 204 }));
+  }
 
   // foto de perfil: guarda uma imagem de exemplo na pessoa atual (o mock não lê o arquivo enviado)
   if (req.url.endsWith('/pessoas/me/foto')) {

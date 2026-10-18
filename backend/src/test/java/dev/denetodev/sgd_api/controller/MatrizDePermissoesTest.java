@@ -81,6 +81,7 @@ class MatrizDePermissoesTest {
     @MockitoBean DemandanteService demandanteService;
     @MockitoBean DiretoriaService diretoriaService;
     @MockitoBean NucleoService nucleoService;
+    @MockitoBean NotificacaoService notificacaoService;
     @MockitoBean PessoaFotoService pessoaFotoService;
     @MockitoBean EvidenciaService evidenciaService;
     @MockitoBean ParticipanteService participanteService;
@@ -181,6 +182,9 @@ class MatrizDePermissoesTest {
             c.add(new Caso(D, base + "/" + ID, GESTAO));
         }
 
+        // sininho: os avisos da própria pessoa, para todo vinculado (inclusive Visualizador)
+        c.add(new Caso(G, "/notificacoes", TODOS_VINCULADOS));
+        c.add(new Caso(P, "/notificacoes/vistas", TODOS_VINCULADOS));
         // a própria foto de perfil: todo vinculado, inclusive Visualizador (como o PUT /pessoas/me)
         c.add(new Caso(P, "/pessoas/me/foto", TODOS_VINCULADOS));
         c.add(new Caso(D, "/pessoas/me/foto", TODOS_VINCULADOS));

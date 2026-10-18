@@ -42,6 +42,10 @@ public class Pessoa {
     @Column(name = "status", nullable = false, length = 20)
     private StatusPessoa status = StatusPessoa.ATIVO;
 
+    /** Até quando a pessoa já viu os avisos do sininho. */
+    @Column(name = "notificacoes_vistas_em")
+    private OffsetDateTime notificacoesVistasEm;
+
     @Column(name = "inativado_em")
     private LocalDate inativadoEm;
 
@@ -120,6 +124,9 @@ public class Pessoa {
     }
 
     public LocalDate getInativadoEm() { return inativadoEm; }
+
+    public OffsetDateTime getNotificacoesVistasEm() { return notificacoesVistasEm; }
+    public void setNotificacoesVistasEm(OffsetDateTime vistasEm) { this.notificacoesVistasEm = vistasEm; }
 
     public PapelEquipamentos getPapelEquipamentos() { return papelEquipamentos; }
     public void setPapelEquipamentos(PapelEquipamentos papelEquipamentos) { this.papelEquipamentos = papelEquipamentos; }

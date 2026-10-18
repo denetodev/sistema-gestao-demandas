@@ -84,6 +84,7 @@ public class ParticipanteService {
         // sempre cria uma linha nova — preserva o histórico de entradas/saídas
         // anteriores em vez de reabrir e sobrescrever um vínculo antigo
         PessoaDemanda vinculo = new PessoaDemanda(pessoa, demanda);
+        vinculo.registrarAdicao(usuario, java.time.OffsetDateTime.now());
         if (request.papel() != null) {
             vinculo.setPapel(request.papel());
         }

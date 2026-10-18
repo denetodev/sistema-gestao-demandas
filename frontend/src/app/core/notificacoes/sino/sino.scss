@@ -1,0 +1,136 @@
+:host {
+  display: inline-flex;
+}
+
+.sino {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sgd-menu-texto);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: var(--sgd-menu-hover);
+    color: #fff;
+  }
+}
+
+.sino__selo {
+  position: absolute;
+  top: 3px;
+  right: 2px;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: #ef4444;
+  border: 2px solid var(--sgd-menu-bg);
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: calc(1.15rem - 4px);
+  text-align: center;
+  box-sizing: content-box;
+}
+
+/* ---------- painel (fica num popover, fora do componente) ---------- */
+.painel {
+  width: min(24rem, 86vw);
+  max-height: 26rem;
+  overflow-y: auto;
+  margin: -0.5rem;
+
+  &__titulo {
+    margin: 0;
+    padding: 0.8rem 1rem 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+  }
+
+  &__vazio {
+    display: flex;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.5rem 1rem 1rem;
+    font-size: 0.82rem;
+    color: var(--sgd-muted);
+
+    i {
+      color: #16a34a;
+      font-size: 1.1rem;
+      margin-top: 0.1rem;
+    }
+  }
+
+  &__lista {
+    margin: 0;
+    padding: 0 0 0.4rem;
+    list-style: none;
+  }
+}
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: none;
+  border-top: 1px solid var(--sgd-borda);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--sgd-realce);
+  }
+
+  &--nova {
+    background: color-mix(in srgb, var(--sgd-laranja) 8%, transparent);
+    box-shadow: inset 3px 0 0 var(--sgd-laranja);
+  }
+
+  &__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+
+    strong {
+      font-size: 0.85rem;
+    }
+
+    small {
+      color: var(--sgd-muted);
+    }
+  }
+
+  &__icone {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--sgd-realce);
+    color: var(--sgd-muted);
+
+    &--CADASTROS_PENDENTES { background: #dbeafe; color: #1d4ed8; }
+    &--EMPRESTIMOS_AGUARDANDO { background: #ffedd5; color: #c2410c; }
+    &--EMPRESTIMOS_ATRASADOS { background: #fee2e2; color: #b91c1c; }
+    &--ADICIONADO_EM_DEMANDA { background: #dcfce7; color: #15803d; }
+  }
+}

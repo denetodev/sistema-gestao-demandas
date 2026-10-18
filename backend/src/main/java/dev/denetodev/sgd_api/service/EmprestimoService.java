@@ -135,6 +135,12 @@ public class EmprestimoService {
     public ResumoEmprestimosResponse resumo(Jwt jwt) {
         Pessoa usuario = currentPessoaResolver.resolver(jwt);
         EquipamentoPermissao.exigirAcesso(usuario);
+        return contar();
+    }
+
+    /** Os mesmos contadores, sem conferir acesso: quem chama já decidiu que a pessoa pode ver (sininho). */
+    @Transactional(readOnly = true)
+    public ResumoEmprestimosResponse contar() {
         OffsetDateTime agora = OffsetDateTime.now(clock);
         List<Emprestimo> abertos = emprestimoRepository.findByStatusIn(EM_ANDAMENTO);
         long atrasados = abertos.stream().filter(e -> e.atrasado(agora)).count();
