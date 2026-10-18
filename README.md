@@ -76,6 +76,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V19 | `emprestimo_foto`: fotos opcionais do equipamento na saída e na devolução (arquivo no bucket privado, pasta emprestimos/) |
 | V20 | `emprestimo.retirada_prevista`: reserva por período (equipamento livre ou ocupado no intervalo, não só agora) |
 | V21 | remove `area.acessa_equipamentos` (acesso agora é por papel da pessoa) |
+| V22 | bucket público `avatares` (fotos de perfil, até 2 MB, JPEG ou PNG) |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

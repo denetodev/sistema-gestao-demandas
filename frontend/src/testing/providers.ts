@@ -83,6 +83,8 @@ export function criarAuthFalso(opcoes: OpcoesTeste = {}) {
     cadastrar: () => Promise.resolve({ confirmado: true }),
     logout: () => Promise.resolve(),
     accessToken: 'token-de-teste',
+    enviarFotoDePerfil: () => { throw new Error('use um spy no teste'); },
+    removerFotoDePerfil: () => { throw new Error('use um spy no teste'); },
     atualizarPerfil: () => {
       throw new Error('não usado nos testes');
     },
