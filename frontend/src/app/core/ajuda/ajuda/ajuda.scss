@@ -56,3 +56,36 @@
   color: var(--sgd-muted);
   line-height: 1.45;
 }
+
+/* Primeira visita à tela: faixa laranja, aberta, para ninguém deixar de ver */
+.ajuda--destaque {
+  background: var(--sgd-laranja);
+  border-color: var(--sgd-laranja-forte);
+  border-left-width: 4px;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--sgd-laranja) 35%, transparent);
+
+  .ajuda__titulo,
+  .ajuda__titulo i,
+  .ajuda__item dt {
+    color: #fff;
+  }
+
+  .ajuda__seta {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  .ajuda__item dd {
+    color: rgba(255, 255, 255, 0.94);
+  }
+}
+
+.ajuda__selo {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}

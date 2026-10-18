@@ -73,6 +73,12 @@ describe('AppShell', () => {
     expect(component.itensUsuario().map((i) => i.label).filter(Boolean)).toEqual(['Meu perfil', 'Tema escuro', 'Sair']);
   });
 
+  it('o nome no topo vem seguido da matrícula', () => {
+    expect(component.nomeComMatricula()).toBe('Pessoa de Teste - C1349864');
+    expect((fixture.nativeElement as HTMLElement).querySelector('.app-usuario__nome')?.textContent).toContain('C1349864');
+
+  });
+
   it('a busca do topo leva para as demandas com o texto como filtro', () => {
     const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     component.busca.set('  captação agro ');

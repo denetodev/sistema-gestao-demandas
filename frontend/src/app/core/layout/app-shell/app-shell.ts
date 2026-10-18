@@ -39,6 +39,12 @@ export class AppShell {
   /** O nome que a pessoa escolheu ou, sem ele, o nome completo. */
   nomeExibido = computed(() => this.auth.pessoa()?.nomeExibicao || this.auth.pessoa()?.nome || '');
 
+  /** "Neto - C1349864": o nome e, se a pessoa tem, a matrícula. */
+  nomeComMatricula = computed(() => {
+    const chave = this.auth.pessoa()?.chaveC;
+    return chave ? `${this.nomeExibido()} - ${chave}` : this.nomeExibido();
+  });
+
   perfilRotulo = computed(() => ROTULO_PERFIL[this.auth.pessoa()?.perfil ?? ''] ?? '');
 
   /** Diretoria, núcleo, equipe e cargo da pessoa: o trilho que aparece no rodapé do menu. */

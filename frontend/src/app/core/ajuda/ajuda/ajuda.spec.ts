@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AJUDA, ChaveAjuda } from '../ajuda-conteudo';
-import { Ajuda } from './ajuda';
+import { Ajuda, esquecerAjudasVistas } from './ajuda';
 
 describe('Ajuda', () => {
   let fixture: ComponentFixture<Ajuda>;
@@ -14,22 +14,8 @@ describe('Ajuda', () => {
 
   beforeEach(async () => {
     localStorage.clear();
+    esquecerAjudasVistas();
     await TestBed.configureTestingModule({ imports: [Ajuda] }).compileComponents();
-  });
-
-  it('com abrirNaPrimeiraVisita falso, nasce recolhida, mas respeita a escolha guardada', () => {
-    fixture = TestBed.createComponent(Ajuda);
-    fixture.componentRef.setInput('chave', 'campanhas');
-    fixture.componentRef.setInput('abrirNaPrimeiraVisita', false);
-    fixture.detectChanges();
-    expect(fixture.componentInstance.aberta()).toBeFalse();
-
-    localStorage.setItem('sgd.ajuda.campanhas', 'aberta');
-    const outra = TestBed.createComponent(Ajuda);
-    outra.componentRef.setInput('chave', 'campanhas');
-    outra.componentRef.setInput('abrirNaPrimeiraVisita', false);
-    outra.detectChanges();
-    expect(outra.componentInstance.aberta()).toBeTrue();
   });
 
   it('mostra o título e todas as perguntas e respostas da chave', () => {
@@ -39,21 +25,50 @@ describe('Ajuda', () => {
     expect(el.querySelector('dd')?.textContent).toContain(AJUDA.campanhas.itens[0].resposta);
   });
 
-  it('abre na primeira visita', () => {
+  it('na primeira visita abre e fica destacada em laranja', () => {
     const el = criar('demandas');
+    expect(el.querySelector('details')?.open).toBeTrue();
+    expect(el.querySelector('details')?.classList).toContain('ajuda--destaque');
+    expect(el.querySelector('.ajuda__selo')).not.toBeNull();
+  });
+
+  it('nas visitas seguintes nasce recolhida e sem destaque', () => {
+    criar('demandas'); // a primeira visita
+    const el = criar('demandas'); // entrou na tela de novo
+    expect(el.querySelector('details')?.open).toBeFalse();
+    expect(el.querySelector('details')?.classList).not.toContain('ajuda--destaque');
+  });
+
+  it('abrir a ajuda não é lembrado: ao voltar à tela ela recomeça recolhida', () => {
+    criar('demandas');
+    const aberta = criar('demandas');
+    const detalhes = aberta.querySelector('details')!;
+    detalhes.open = true;
+    detalhes.dispatchEvent(new Event('toggle'));
+    expect(fixture.componentInstance.aberta()).toBeTrue();
+    expect(detalhes.classList).not.toContain('ajuda--destaque'); // aberta à mão não ganha o destaque
+
+    const outra = criar('demandas');
+    expect(outra.querySelector('details')?.open).toBeFalse();
+  });
+
+  it('cada tela tem a sua primeira vez', () => {
+    criar('demandas');
+    const el = criar('campanhas');
     expect(el.querySelector('details')?.open).toBeTrue();
   });
 
-  it('lembra que a pessoa recolheu', () => {
+  it('quem já tinha uma escolha gravada na versão antiga não vê o destaque de novo', () => {
     localStorage.setItem('sgd.ajuda.demandas', 'fechada');
     const el = criar('demandas');
     expect(el.querySelector('details')?.open).toBeFalse();
   });
 
-  it('funciona mesmo se o localStorage lançar erro', () => {
+  it('se o localStorage lançar erro, a primeira vez aparece e a segunda recolhe (memória da sessão)', () => {
     spyOn(Storage.prototype, 'getItem').and.throwError('bloqueado');
-    const el = criar('relatorio');
-    expect(el.querySelector('details')?.open).toBeTrue();
+    spyOn(Storage.prototype, 'setItem').and.throwError('bloqueado');
+    expect(criar('relatorio').querySelector('details')?.open).toBeTrue();
+    expect(criar('relatorio').querySelector('details')?.open).toBeFalse();
   });
 
   it('todas as chaves têm título e ao menos um item preenchido', () => {
