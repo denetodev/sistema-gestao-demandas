@@ -377,6 +377,11 @@ const dados: Record<string, unknown> = {
 };
 
 
+/** Avatar de exemplo (SVG embutido) para testar a foto de perfil no modo mock. */
+const FOTO_DE_EXEMPLO =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0ea5e9"/><circle cx="50" cy="38" r="18" fill="#fff"/><path d="M14 100c4-26 20-38 36-38s32 12 36 38z" fill="#fff"/></svg>');
+
 export const mockInterceptor: HttpInterceptorFn = (req, next) => {
   const detalhe = mockDemanda(req, {
     demandas: TODAS_DEMANDAS,
@@ -385,6 +390,12 @@ export const mockInterceptor: HttpInterceptorFn = (req, next) => {
     dados,
   });
   if (detalhe) return detalhe;
+
+  // foto de perfil: guarda uma imagem de exemplo na pessoa atual (o mock não lê o arquivo enviado)
+  if (req.url.endsWith('/pessoas/me/foto')) {
+    (PESSOA_ATUAL as any).fotoUrl = req.method === 'DELETE' ? null : FOTO_DE_EXEMPLO;
+    return of(new HttpResponse({ status: 200, body: PESSOA_ATUAL }));
+  }
 
   if (req.method !== 'GET') {
     return next(req);

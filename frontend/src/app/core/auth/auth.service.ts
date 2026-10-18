@@ -129,6 +129,17 @@ export class AuthService {
     return this.#http.put<PessoaMe>(`${environment.apiUrl}/pessoas/me`, payload);
   }
 
+  /** Foto de perfil já reduzida pelo navegador (JPEG quadrado); o servidor guarda e devolve a pessoa atualizada. */
+  enviarFotoDePerfil(imagem: Blob) {
+    const corpo = new FormData();
+    corpo.append('arquivo', imagem, 'perfil.jpg');
+    return this.#http.post<PessoaMe>(`${environment.apiUrl}/pessoas/me/foto`, corpo);
+  }
+
+  removerFotoDePerfil() {
+    return this.#http.delete<PessoaMe>(`${environment.apiUrl}/pessoas/me/foto`);
+  }
+
   /** Cria o cadastro de pessoa da conta logada; fica aguardando aprovação de Gestor/Admin. */
   completarCadastro(payload: { nome: string; chaveC: string; nomeExibicao: string | null; areaId: string; cargoId: string | null }) {
     return this.#http.post<PessoaMe>(`${environment.apiUrl}/pessoas/auto-cadastro`, payload);

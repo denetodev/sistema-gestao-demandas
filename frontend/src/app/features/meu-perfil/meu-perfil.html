@@ -1,6 +1,31 @@
 <app-barra-pagina titulo="Meu perfil" />
 
 <div class="pagina-corpo perfil">
+  <section class="cartao foto">
+    <h2>Foto de perfil</h2>
+    <div class="foto__linha">
+      @if (auth.pessoa()?.fotoUrl) {
+        <img class="foto__imagem" [src]="auth.pessoa()!.fotoUrl" alt="Sua foto de perfil" />
+      } @else {
+        <span class="foto__imagem foto__imagem--iniciais" aria-hidden="true">{{ iniciais() }}</span>
+      }
+      <div class="foto__acoes">
+        <input #arquivo type="file" class="foto__input" accept="image/jpeg,image/png,image/webp"
+          (change)="escolherFoto($event)" aria-label="Escolher foto de perfil" />
+        <p-button type="button" [label]="auth.pessoa()?.fotoUrl ? 'Trocar foto' : 'Adicionar foto'" icon="pi pi-camera"
+          [loading]="enviandoFoto()" (onClick)="arquivo.click()" />
+        @if (auth.pessoa()?.fotoUrl) {
+          <p-button type="button" label="Remover" severity="secondary" [outlined]="true" icon="pi pi-trash"
+            [disabled]="enviandoFoto()" (onClick)="removerFoto()" />
+        }
+        <small class="dica">A foto aparece no topo, nas demandas e nas listas. Pode ser de qualquer tamanho: o sistema recorta em quadrado e reduz.</small>
+        @if (erroFoto()) {
+          <small class="erro-campo" role="alert">{{ erroFoto() }}</small>
+        }
+      </div>
+    </div>
+  </section>
+
   <section class="cartao">
     <h2>Dados</h2>
     <form [formGroup]="formDados" (ngSubmit)="salvarDados()" class="form">

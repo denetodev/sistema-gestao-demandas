@@ -124,4 +124,26 @@ class SupabaseStorageTest {
         assertFalse(String.valueOf(ex.getMessage()).contains("sb_secret"));
         assertNull(ex.getCause());
     }
+
+    @Test
+    void fotoDePerfilVaiParaOBucketPublicoEDevolveAUrlPublica() {
+        servidor.expect(requestTo(BASE + "/storage/v1/object/avatares/perfis/abc.png"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Bearer chave-secreta"))
+                .andExpect(header("Content-Type", "image/png"))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        String url = storage.enviarPublico("perfis/abc.png", new byte[]{1, 2}, "image/png");
+
+        assertEquals(BASE + "/storage/v1/object/public/avatares/perfis/abc.png", url);
+        servidor.verify();
+    }
+
+    @Test
+    void reconheceSoUrlsDoNossoBucketDeAvatares() {
+        assertEquals("perfis/abc.png", storage.caminhoPublico(BASE + "/storage/v1/object/public/avatares/perfis/abc.png"));
+        assertNull(storage.caminhoPublico("https://outro.com/foto.png"));
+        assertNull(storage.caminhoPublico(BASE + "/storage/v1/object/public/outro-bucket/x.png"));
+        assertNull(storage.caminhoPublico(null));
+    }
 }
