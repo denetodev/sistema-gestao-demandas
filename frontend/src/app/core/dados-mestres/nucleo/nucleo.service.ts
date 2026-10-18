@@ -27,4 +27,8 @@ export class NucleoService {
   atualizar(id: string, corpo: NucleoPayload) {
     return this.#http.put<Nucleo>(`${environment.apiUrl}/nucleos/${id}`, corpo);
   }
+
+  desativar(id: string) {
+    return this.#http.delete<void>(`${environment.apiUrl}/nucleos/${id}`);
+  }
 }

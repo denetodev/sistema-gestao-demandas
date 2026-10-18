@@ -8,4 +8,10 @@ import java.util.UUID;
 
 public interface AreaRepository extends JpaRepository<Area, UUID> {
     List<Area> findByDiretoriaId(UUID diretoriaId);
+
+    boolean existsByNucleoIdAndAtivoTrue(UUID nucleoId);
+
+    boolean existsByDiretoriaIdAndNomeIgnoreCaseAndAtivoTrue(UUID diretoriaId, String nome);
+
+    boolean existsByDiretoriaIdAndNomeIgnoreCaseAndAtivoTrueAndIdNot(UUID diretoriaId, String nome, UUID id);
 }

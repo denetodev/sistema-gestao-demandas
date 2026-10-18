@@ -16,5 +16,8 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
 
     boolean existsByEmailIgnoreCase(String email);
 
+    /** Alguém nesse status ainda trabalha nessa equipe (impede desativá-la). */
+    boolean existsByAreaIdAndStatus(UUID areaId, StatusPessoa status);
+
     List<Pessoa> findByAprovadoEmIsNullAndStatus(StatusPessoa status);
 }

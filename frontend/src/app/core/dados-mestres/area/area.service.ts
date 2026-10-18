@@ -17,6 +17,14 @@ export class AreaService {
   #http = inject(HttpClient);
   listar = httpResource<Area[]>(() => `${environment.apiUrl}/areas`);
 
+  criar(corpo: { nome: string; diretoriaId: string; nucleoId: string | null }) {
+    return this.#http.post<Area>(`${environment.apiUrl}/areas`, corpo);
+  }
+
+  desativar(id: string) {
+    return this.#http.delete<void>(`${environment.apiUrl}/areas/${id}`);
+  }
+
   atualizar(id: string, corpo: { nome: string; diretoriaId: string; nucleoId: string | null }) {
     return this.#http.put<Area>(`${environment.apiUrl}/areas/${id}`, corpo);
   }
