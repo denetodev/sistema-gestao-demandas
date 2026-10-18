@@ -37,7 +37,12 @@ function tituloPorStatus(status: number): string {
 function detalhePorStatus(erro: HttpErrorResponse): string {
     if (erro.status === 0) return 'Não foi possível falar com o servidor.';
     if (erro.status === 403) return 'Você não tem permissão para esta ação.';
-    if (erro.status === 409) return erro.error?.message ?? 'Este registro está em uso e não pode ser alterado.';
-    if (erro.status === 400) return erro.error?.message ?? 'Verifique os campos preenchidos.';
-    return erro.error?.message ?? 'Tente novamente em instantes.';
+    if (erro.status === 409) return motivoDoServidor(erro) ?? 'Este registro está em uso e não pode ser alterado.';
+    if (erro.status === 400) return motivoDoServidor(erro) ?? 'Verifique os campos preenchidos.';
+    return motivoDoServidor(erro) ?? 'Tente novamente em instantes.';
+}
+/** A API devolve o motivo em `mensagem` (português); `message` fica como reserva para respostas de outras camadas. */
+function motivoDoServidor(erro: HttpErrorResponse): string | undefined {
+    const corpo = erro.error as { mensagem?: string; message?: string } | null;
+    return corpo?.mensagem ?? corpo?.message ?? undefined;
 }
