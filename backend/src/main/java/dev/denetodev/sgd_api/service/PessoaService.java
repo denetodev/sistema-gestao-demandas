@@ -423,7 +423,7 @@ public class PessoaService {
             throw new IllegalArgumentException("Chave C inválida: use C ou F seguido de 7 números");
         }
         pessoaRepository.findByChaveC(chaveC)
-                .filter(outra -> !outra.equals(pessoa))
+                .filter(outra -> !outra.getId().equals(pessoa.getId()))
                 .ifPresent(outra -> {
                     throw new EstadoInvalidoException("Esta chave C já pertence a outra pessoa cadastrada");
                 });

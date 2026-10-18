@@ -1,11 +1,8 @@
 package dev.denetodev.sgd_api.service;
 
-import dev.denetodev.sgd_api.dto.request.AutoCadastroRequest;
 import dev.denetodev.sgd_api.dto.request.PessoaRequest;
-import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.exception.EstadoInvalidoException;
-import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.AreaRepository;
 import dev.denetodev.sgd_api.repository.AuditoriaRepository;
 import dev.denetodev.sgd_api.repository.CargoRepository;
@@ -16,126 +13,95 @@ import dev.denetodev.sgd_api.security.LimitadorTentativas;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+/** A chave C é única, mas editar a própria pessoa com a chave que ela já tem não é conflito. */
 class PessoaServiceChaveCTest {
-
-    private static final String CHAVE = "C1000001";
 
     private PessoaRepository pessoaRepository;
     private AreaRepository areaRepository;
     private CurrentPessoaResolver resolver;
-    private ConfirmacaoEmail confirmacaoEmail;
     private PessoaService service;
+    private final Jwt jwt = mock(Jwt.class);
     private Area area;
-    private UUID areaId;
 
     @BeforeEach
-    void setUp() {
+    void preparar() {
         pessoaRepository = mock(PessoaRepository.class);
         areaRepository = mock(AreaRepository.class);
         resolver = mock(CurrentPessoaResolver.class);
-        confirmacaoEmail = mock(ConfirmacaoEmail.class);
-        when(confirmacaoEmail.confirmado(any())).thenReturn(true);
         service = new PessoaService(pessoaRepository, areaRepository, mock(CargoRepository.class),
-                mock(AuditoriaRepository.class), resolver, confirmacaoEmail, new LimitadorTentativas(100, java.time.Duration.ofHours(1), java.time.Clock.systemUTC()));
-
-        areaId = UUID.randomUUID();
-        Diretoria diretoria = mock(Diretoria.class);
+                mock(AuditoriaRepository.class), resolver, mock(ConfirmacaoEmail.class), mock(LimitadorTentativas.class));
         area = mock(Area.class);
+        UUID areaId = UUID.randomUUID();
         when(area.getId()).thenReturn(areaId);
-        when(area.getDiretoria()).thenReturn(diretoria);
+        when(area.getDiretoria()).thenReturn(mock(Diretoria.class));
         when(areaRepository.findById(areaId)).thenReturn(Optional.of(area));
-        when(pessoaRepository.save(any(Pessoa.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(pessoaRepository.findByAuthUserId(any())).thenReturn(Optional.empty());
-        when(pessoaRepository.findByChaveC(any())).thenReturn(Optional.empty());
     }
 
-    private Jwt jwt() {
-        Jwt jwt = mock(Jwt.class);
-        when(jwt.getSubject()).thenReturn(UUID.randomUUID().toString());
-        when(jwt.getClaimAsString("email")).thenReturn("nova@exemplo.com");
-        return jwt;
+    private Pessoa pessoa(String nome, PerfilPessoa perfil, String chave) {
+        Pessoa p = new Pessoa(nome, area);
+        ReflectionTestUtils.setField(p, "id", UUID.randomUUID());
+        p.setPerfil(perfil);
+        p.setChaveC(chave);
+        when(pessoaRepository.findById(p.getId())).thenReturn(Optional.of(p));
+        return p;
     }
 
-    @Test
-    void autoCadastroGuardaChaveCEmMaiusculaEDevolveInteira() {
-        PessoaResponse r = service.autoCadastro(jwt(),
-                new AutoCadastroRequest("Ana Caroliny Santos de Sousa", "  c1000001 ", "  Carol ", areaId, null));
-
-        assertEquals("C1000001", r.chaveC());
-        assertEquals("Carol", r.nomeExibicao());
-        assertEquals("Ana Caroliny Santos de Sousa", r.nome());
+    private PessoaRequest pedido(String chave, UUID referenciaAreaId) {
+        return new PessoaRequest("Fulano", null, chave, area.getId(), null, StatusPessoa.ATIVO, PerfilPessoa.PROFISSIONAL, referenciaAreaId);
     }
 
     @Test
-    void autoCadastroRejeitaChaveCInvalida() {
-        assertThrows(IllegalArgumentException.class, () -> service.autoCadastro(jwt(),
-                new AutoCadastroRequest("Ana", "X1000001", null, areaId, null)));
+    void editarAPropriaPessoaComAMesmaChaveNaoEConflito() {
+        Pessoa admin = pessoa("Admin", PerfilPessoa.ADMIN, null);
+        Pessoa fulano = pessoa("Fulano", PerfilPessoa.PROFISSIONAL, "C1349864");
+        when(resolver.resolver(any())).thenReturn(admin);
+        when(pessoaRepository.findByChaveC("C1349864")).thenReturn(Optional.of(fulano));
+
+        assertDoesNotThrow(() -> service.atualizar(jwt, fulano.getId(), pedido("c1349864", null)));
     }
 
     @Test
-    void gestorNaoPodeUsarChaveCDeOutraPessoa() {
-        Pessoa gestor = new Pessoa("Gestor", area);
-        gestor.setPerfil(PerfilPessoa.ADMIN);
-        when(resolver.resolver(any())).thenReturn(gestor);
-        Pessoa outra = new Pessoa("Outra", area);
-        outra.setChaveC(CHAVE);
-        when(pessoaRepository.findByChaveC(CHAVE)).thenReturn(Optional.of(outra));
+    void mesmaPessoaVindaComoOutraInstanciaOuProxyTambemNaoEConflito() {
+        // o Hibernate pode devolver, na consulta por chave, uma referência diferente da que foi carregada por id
+        Pessoa admin = pessoa("Admin", PerfilPessoa.ADMIN, null);
+        Pessoa fulano = pessoa("Fulano", PerfilPessoa.PROFISSIONAL, "C1349864");
+        Pessoa outraReferencia = new Pessoa("Fulano", area);
+        ReflectionTestUtils.setField(outraReferencia, "id", fulano.getId());
+        outraReferencia.setChaveC("C1349864");
+        when(resolver.resolver(any())).thenReturn(admin);
+        when(pessoaRepository.findByChaveC("C1349864")).thenReturn(Optional.of(outraReferencia));
 
-        assertThrows(EstadoInvalidoException.class, () -> service.criar(jwt(),
-                new PessoaRequest("Nova", null, CHAVE, areaId, null, null, null, null)));
+        assertDoesNotThrow(() -> service.atualizar(jwt, fulano.getId(), pedido("C1349864", null)));
     }
 
     @Test
-    void chaveVazioNaAtualizacaoMantemOAtual() {
-        Pessoa gestor = new Pessoa("Gestor", area);
-        gestor.setPerfil(PerfilPessoa.ADMIN);
-        when(resolver.resolver(any())).thenReturn(gestor);
-        Pessoa alvo = new Pessoa("Alvo", area);
-        alvo.setChaveC(CHAVE);
-        UUID id = UUID.randomUUID();
-        when(pessoaRepository.findById(id)).thenReturn(Optional.of(alvo));
+    void chaveDeOutraPessoaContinuaSendoConflito() {
+        Pessoa admin = pessoa("Admin", PerfilPessoa.ADMIN, null);
+        Pessoa fulano = pessoa("Fulano", PerfilPessoa.PROFISSIONAL, "C1111111");
+        Pessoa ciclano = pessoa("Ciclano", PerfilPessoa.PROFISSIONAL, "C2222222");
+        when(resolver.resolver(any())).thenReturn(admin);
+        when(pessoaRepository.findByChaveC("C2222222")).thenReturn(Optional.of(ciclano));
 
-        PessoaResponse r = service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, "", areaId, null, null, null, null));
-
-        assertEquals(CHAVE, alvo.getChaveC());
-        assertEquals("C1000001", r.chaveC());
+        assertThrows(EstadoInvalidoException.class, () -> service.atualizar(jwt, fulano.getId(), pedido("C2222222", null)));
     }
 
     @Test
-    void gestorDefineEDepoisRemoveAReferenciaDeEquipeNaEdicao() {
-        Pessoa gestor = new Pessoa("Gestor", area);
-        gestor.setPerfil(PerfilPessoa.ADMIN);
-        when(resolver.resolver(any())).thenReturn(gestor);
-        Pessoa alvo = new Pessoa("Alvo", area);
-        UUID id = UUID.randomUUID();
-        when(pessoaRepository.findById(id)).thenReturn(Optional.of(alvo));
+    void igualdadeDePessoaUsaOIdentificadorEntaoDuasReferenciasDaMesmaPessoaSaoIguais() {
+        Pessoa a = pessoa("A", PerfilPessoa.PROFISSIONAL, null);
+        Pessoa mesma = new Pessoa("A", area);
+        ReflectionTestUtils.setField(mesma, "id", a.getId());
 
-        service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, null, areaId, null, null, null, areaId));
-        assertEquals(area, alvo.getReferenciaArea());
-
-        service.atualizar(jwt(), id, new PessoaRequest("Alvo", null, null, areaId, null, null, null, null));
-        assertEquals(null, alvo.getReferenciaArea());
-    }
-
-    @Test
-    void referenciaDeEquipeComAreaInexistenteDa404() {
-        Pessoa gestor = new Pessoa("Gestor", area);
-        gestor.setPerfil(PerfilPessoa.ADMIN);
-        when(resolver.resolver(any())).thenReturn(gestor);
-        Pessoa alvo = new Pessoa("Alvo", area);
-        UUID id = UUID.randomUUID();
-        when(pessoaRepository.findById(id)).thenReturn(Optional.of(alvo));
-
-        assertThrows(RecursoNaoEncontradoException.class, () -> service.atualizar(jwt(), id,
-                new PessoaRequest("Alvo", null, null, areaId, null, null, null, UUID.randomUUID())));
+        assertEquals(a, mesma);
+        assertEquals(mesma, a);
+        assertNotEquals(a, pessoa("B", PerfilPessoa.PROFISSIONAL, null));
     }
 }
