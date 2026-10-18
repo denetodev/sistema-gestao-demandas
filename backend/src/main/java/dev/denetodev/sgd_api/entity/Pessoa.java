@@ -149,7 +149,8 @@ public class Pessoa {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Pessoa other)) return false;
-        return id != null && id.equals(other.id);
+        // getId() e não o campo: num proxy do Hibernate o campo vem nulo e duas referências à mesma pessoa pareceriam diferentes
+        return id != null && id.equals(other.getId());
     }
 
     @Override
