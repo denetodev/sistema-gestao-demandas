@@ -51,9 +51,11 @@
       }
 
       <span class="app-nav__secao"><span>Cadastros</span></span>
+      @if (auth.temPerfil('ADMIN', 'GESTOR')) {
       <a routerLink="/demandantes" routerLinkActive="ativo" class="app-nav__item" title="Demandantes">
         <i class="pi pi-users"></i><span class="app-nav__rotulo">Demandantes</span>
       </a>
+      }
       <a routerLink="/projetos" routerLinkActive="ativo" class="app-nav__item" title="Projetos">
         <i class="pi pi-folder"></i><span class="app-nav__rotulo">Projetos</span>
       </a>
