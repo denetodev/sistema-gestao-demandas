@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { equipamentosGuard, naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
+import { equipamentosGuard, gestaoOuReferenciaGuard, naoVisualizadorGuard, perfilGuard } from './core/auth/perfil.guard';
 
 export const routes: Routes = [
   {
@@ -72,7 +72,7 @@ export const routes: Routes = [
       },
       {
         path: 'demandantes',
-        canActivate: [perfilGuard('ADMIN', 'GESTOR')],
+        canActivate: [gestaoOuReferenciaGuard],
         loadComponent: () =>
           import('./core/dados-mestres/demandante/demandante-lista/demandante-lista').then(
             (m) => m.DemandanteLista,

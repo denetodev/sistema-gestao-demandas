@@ -99,10 +99,10 @@ describe('AppShell', () => {
 });
 
 describe('AppShell (menu por perfil)', () => {
-  async function menuDe(perfil: 'PROFISSIONAL' | 'GESTOR' | 'ADMIN' | 'VISUALIZADOR') {
+  async function menuDe(perfil: 'PROFISSIONAL' | 'GESTOR' | 'ADMIN' | 'VISUALIZADOR', referenciaAreaId: string | null = null) {
     localStorage.clear();
     TestBed.resetTestingModule();
-    await TestBed.configureTestingModule({ imports: [AppShell], providers: provideTesteApp({ perfil }) }).compileComponents();
+    await TestBed.configureTestingModule({ imports: [AppShell], providers: provideTesteApp({ perfil, referenciaAreaId }) }).compileComponents();
     const fixture = TestBed.createComponent(AppShell);
     fixture.detectChanges();
     return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.app-nav__item'))
@@ -116,6 +116,13 @@ describe('AppShell (menu por perfil)', () => {
     }
     expect(itens).toContain('Projetos');
     expect(itens).toContain('Campanhas');
+  });
+
+  it('Referência de equipe vê Demandantes, mas não Pessoas nem Cargos', async () => {
+    const itens = await menuDe('PROFISSIONAL', 'a1');
+    expect(itens).toContain('Demandantes');
+    expect(itens).not.toContain('Pessoas');
+    expect(itens).not.toContain('Cargos');
   });
 
   it('Visualizador também não vê as telas de gestão', async () => {

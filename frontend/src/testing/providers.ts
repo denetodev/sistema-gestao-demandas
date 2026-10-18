@@ -79,6 +79,10 @@ export function criarAuthFalso(opcoes: OpcoesTeste = {}) {
       const p = pessoa()!;
       return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
     },
+    podeGerenciarDemandantes: () => {
+      const p = pessoa()!;
+      return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
+    },
     podeMexerNoItem: (pessoaIdDoItem: string | null) => podeMexerNoItem(pessoa(), pessoaIdDoItem),
     login: () => Promise.resolve(),
     cadastrar: () => Promise.resolve({ confirmado: true }),

@@ -22,7 +22,7 @@ public class SecurityConfig {
             HttpMethod.POST, HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE };
 
     private static final String[] CADASTROS_BASE = {
-            "/diretorias/**", "/nucleos/**", "/areas/**", "/cargos/**", "/tipos-atividade/**", "/demandantes/**" };
+            "/diretorias/**", "/nucleos/**", "/areas/**", "/cargos/**", "/tipos-atividade/**" };
 
     @Bean
     public SecurityFilterChain filterChain(
@@ -59,9 +59,9 @@ public class SecurityConfig {
                     for (HttpMethod metodo : ESCRITA) {
                         auth.requestMatchers(metodo, CADASTROS_BASE).hasAnyRole("ADMIN", "GESTOR");
                     }
-                    // projeto e campanha: criar e editar passa pela barreira para Admin, Gestor e Profissional, e o serviço só
+                    // projeto, campanha e demandante: criar e editar passa pela barreira para Admin, Gestor e Profissional, e o serviço só
                     // libera o Profissional que é Referência de equipe; excluir ou encerrar é só da gestão
-                    auth.requestMatchers(HttpMethod.DELETE, "/campanhas/**", "/projetos/**").hasAnyRole("ADMIN", "GESTOR");
+                    auth.requestMatchers(HttpMethod.DELETE, "/campanhas/**", "/projetos/**", "/demandantes/**").hasAnyRole("ADMIN", "GESTOR");
 
                     // demais escritas (demandas, atividades, peças, evidências, relatório, tipos de peça,
                     // campanhas): Visualizador é somente leitura. Regras finas por item ficam nos serviços.
