@@ -19,5 +19,8 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
     /** Alguém nesse status ainda trabalha nessa equipe (impede desativá-la). */
     boolean existsByAreaIdAndStatus(UUID areaId, StatusPessoa status);
 
+    /** Alguém nesse status ainda ocupa esse cargo (impede desativá-lo). */
+    boolean existsByCargoIdAndStatus(UUID cargoId, StatusPessoa status);
+
     List<Pessoa> findByAprovadoEmIsNullAndStatus(StatusPessoa status);
 }
