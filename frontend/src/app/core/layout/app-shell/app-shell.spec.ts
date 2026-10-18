@@ -91,3 +91,38 @@ describe('AppShell', () => {
     expect(navegar).toHaveBeenCalledWith(['/demandas'], { queryParams: {} });
   });
 });
+
+describe('AppShell (menu por perfil)', () => {
+  async function menuDe(perfil: 'PROFISSIONAL' | 'GESTOR' | 'ADMIN' | 'VISUALIZADOR') {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({ imports: [AppShell], providers: provideTesteApp({ perfil }) }).compileComponents();
+    const fixture = TestBed.createComponent(AppShell);
+    fixture.detectChanges();
+    return Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('.app-nav__item'))
+      .map((a) => a.getAttribute('title'));
+  }
+
+  it('Profissional não vê Demandantes, Pessoas, Núcleos e equipes nem Cargos, mas vê Projetos e Campanhas', async () => {
+    const itens = await menuDe('PROFISSIONAL');
+    for (const fora of ['Demandantes', 'Pessoas', 'Núcleos e equipes', 'Cargos']) {
+      expect(itens).not.toContain(fora);
+    }
+    expect(itens).toContain('Projetos');
+    expect(itens).toContain('Campanhas');
+  });
+
+  it('Visualizador também não vê as telas de gestão', async () => {
+    const itens = await menuDe('VISUALIZADOR');
+    expect(itens).not.toContain('Demandantes');
+    expect(itens).not.toContain('Pessoas');
+  });
+
+  it('Gestor e Admin veem Demandantes e Pessoas', async () => {
+    for (const perfil of ['GESTOR', 'ADMIN'] as const) {
+      const itens = await menuDe(perfil);
+      expect(itens).toContain('Demandantes');
+      expect(itens).toContain('Pessoas');
+    }
+  });
+});
