@@ -37,3 +37,30 @@
   font-weight: 700;
 }
 
+
+/* Time da demanda: rostos sobrepostos, como no grupo de avatares do PrimeNG */
+.col-time {
+  min-width: 9rem;
+}
+
+.time {
+  cursor: default;
+}
+
+:host ::ng-deep .time .p-avatar {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: 2px solid var(--sgd-cartao);
+}
+
+:host ::ng-deep .avatar-iniciais.p-avatar {
+  background: color-mix(in srgb, var(--sgd-laranja) 22%, var(--sgd-cartao));
+  color: var(--sgd-laranja-forte);
+}
+
+:host ::ng-deep .avatar-mais.p-avatar {
+  background: var(--sgd-realce);
+  color: var(--sgd-muted);
+}

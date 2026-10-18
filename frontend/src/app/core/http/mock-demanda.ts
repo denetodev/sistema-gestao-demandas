@@ -350,7 +350,7 @@ function registrarHistorico(ctx: MockCtx, d: any, para: string, motivo: string |
 function criarDemanda(ctx: MockCtx, b: any) {
   const d: any = {
     id: novoId('dem-novo'), status: 'NAO_INICIADA', dataCriacao: hoje(), dataEntregaReal: null,
-    valorCalculado: null, createdAt: '', updatedAt: '', podeAlterar: true,
+    valorCalculado: null, createdAt: '', updatedAt: '', podeAlterar: true, participantes: [],
   };
   aplicarPayloadDemanda(ctx, d, b);
   ctx.demandas.unshift(d);

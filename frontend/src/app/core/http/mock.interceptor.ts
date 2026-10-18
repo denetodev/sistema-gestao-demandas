@@ -145,6 +145,23 @@ function data(diasAtras: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** Pessoas de exemplo para o grupo de fotos da lista (algumas com foto, as outras só com iniciais). */
+const AVATAR_AZUL =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0ea5e9"/><circle cx="50" cy="38" r="18" fill="#fff"/><path d="M14 100c4-26 20-38 36-38s32 12 36 38z" fill="#fff"/></svg>');
+const AVATAR_VERDE =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#16a34a"/><circle cx="50" cy="38" r="18" fill="#fff"/><path d="M14 100c4-26 20-38 36-38s32 12 36 38z" fill="#fff"/></svg>');
+const TIME_DE_EXEMPLO: [string, string | null][] = [
+  ['Deusdete Neto', AVATAR_AZUL],
+  ['Lucas Corsino', null],
+  ['Thaís Trindade', AVATAR_VERDE],
+  ['Cícero Londerly', null],
+  ['Ana Beatriz', null],
+  ['Rafael Lima', AVATAR_AZUL],
+  ['Camila Duarte', null],
+];
+
 function gerarDemandas(qtd: number) {
   return Array.from({ length: qtd }, (_, i) => {
     const status = STATUS[(i * 3) % STATUS.length];
@@ -180,6 +197,7 @@ function gerarDemandas(qtd: number) {
       valor,
       valorCalculado: valor === null ? null : Math.round(valor * 1.15),
       podeAlterar: true,
+      participantes: TIME_DE_EXEMPLO.slice(0, 1 + (i % 6)).map(([nome, fotoUrl], k) => ({ pessoaId: `p-ex-${k}`, nome, fotoUrl })),
       observacoes: null,
       createdAt: '',
       updatedAt: '',
