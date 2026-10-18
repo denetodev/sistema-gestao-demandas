@@ -100,3 +100,20 @@ describe('CampanhaLista', () => {
     });
   });
 });
+
+describe('CampanhaLista (quem vê o botão Nova campanha)', () => {
+  async function botoes(opcoes: Parameters<typeof provideTesteApp>[0]) {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({ imports: [CampanhaLista], providers: provideTesteApp(opcoes) }).compileComponents();
+    const fixture = TestBed.createComponent(CampanhaLista);
+    fixture.detectChanges();
+    return (fixture.nativeElement as HTMLElement).textContent ?? '';
+  }
+
+  it('Profissional comum não vê Nova campanha; Referência de equipe, Gestor e Admin veem', async () => {
+    expect(await botoes({ perfil: 'PROFISSIONAL' })).not.toContain('Nova campanha');
+    expect(await botoes({ perfil: 'PROFISSIONAL', referenciaAreaId: 'a1' })).toContain('Nova campanha');
+    expect(await botoes({ perfil: 'GESTOR' })).toContain('Nova campanha');
+    expect(await botoes({ perfil: 'ADMIN' })).toContain('Nova campanha');
+  });
+});

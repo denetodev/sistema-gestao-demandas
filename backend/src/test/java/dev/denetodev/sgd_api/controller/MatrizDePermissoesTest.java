@@ -159,15 +159,19 @@ class MatrizDePermissoesTest {
                 new Caso(P, "/tipos-peca", QUEM_ESCREVE),
                 new Caso(U, "/tipos-peca/" + ID, QUEM_ESCREVE),
                 new Caso(D, "/tipos-peca/" + ID, QUEM_ESCREVE),
-                // campanha: todo profissional cria e edita; só a gestão exclui
+                // campanha e projeto: a barreira HTTP libera quem escreve; o serviço só deixa o Profissional que é
+                // Referência de equipe (PermissaoServiceProjetosECampanhasTest). Só a gestão exclui ou encerra
                 new Caso(P, "/campanhas", QUEM_ESCREVE),
                 new Caso(U, "/campanhas/" + ID, QUEM_ESCREVE),
-                new Caso(D, "/campanhas/" + ID, GESTAO))) {
+                new Caso(D, "/campanhas/" + ID, GESTAO),
+                new Caso(P, "/projetos", QUEM_ESCREVE),
+                new Caso(U, "/projetos/" + ID, QUEM_ESCREVE),
+                new Caso(D, "/projetos/" + ID, GESTAO))) {
             c.add(base);
         }
 
         // cadastros base: só Gestor e Admin escrevem
-        for (String base : List.of("/diretorias", "/nucleos", "/areas", "/cargos", "/tipos-atividade", "/demandantes", "/projetos")) {
+        for (String base : List.of("/diretorias", "/nucleos", "/areas", "/cargos", "/tipos-atividade", "/demandantes")) {
             c.add(new Caso(P, base, GESTAO));
             c.add(new Caso(U, base + "/" + ID, GESTAO));
             c.add(new Caso(D, base + "/" + ID, GESTAO));

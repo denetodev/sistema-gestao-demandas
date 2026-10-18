@@ -114,6 +114,23 @@ public class PermissaoService {
         return usuario.getReferenciaArea() != null ? usuario.getReferenciaArea() : usuario.getArea();
     }
 
+    /**
+     * Quem cria e edita projeto e campanha: Admin, Gestor e a Referência de equipe (Profissional com referencia_area).
+     * Profissional comum e Visualizador não.
+     */
+    public boolean podeGerenciarProjetosECampanhas(Pessoa usuario) {
+        if (ehAdminOuGestor(usuario)) {
+            return true;
+        }
+        return usuario.getPerfil() == PerfilPessoa.PROFISSIONAL && usuario.getReferenciaArea() != null;
+    }
+
+    public void exigirGerenciarProjetosECampanhas(Pessoa usuario) {
+        if (!podeGerenciarProjetosECampanhas(usuario)) {
+            throw new AccessDeniedException("Só Gestor, Admin ou Referência de equipe criam e editam projetos e campanhas");
+        }
+    }
+
     private boolean ehAdminOuGestor(Pessoa usuario) {
         return usuario.getPerfil() == PerfilPessoa.ADMIN || usuario.getPerfil() == PerfilPessoa.GESTOR;
     }

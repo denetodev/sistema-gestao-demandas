@@ -36,4 +36,20 @@ describe('AuthService (voltar à aba não recarrega a pessoa)', () => {
 
     http.expectNone((r) => r.url.endsWith('/pessoas/me'));
   });
+
+  it('só Admin, Gestor e Referência de equipe gerenciam projetos e campanhas', () => {
+    const auth = TestBed.inject(AuthService);
+    http.expectOne((r) => r.url.endsWith('/pessoas/me')).flush({ vinculado: true, pessoa: { perfil: 'PROFISSIONAL', referenciaAreaId: null } });
+    TestBed.tick();
+    expect(auth.podeGerenciarProjetosECampanhas()).toBeFalse();
+
+    auth.me.set({ vinculado: true, pessoa: { perfil: 'PROFISSIONAL', referenciaAreaId: 'a1' } } as never);
+    expect(auth.podeGerenciarProjetosECampanhas()).toBeTrue();
+
+    auth.me.set({ vinculado: true, pessoa: { perfil: 'VISUALIZADOR', referenciaAreaId: 'a1' } } as never);
+    expect(auth.podeGerenciarProjetosECampanhas()).toBeFalse();
+
+    auth.me.set({ vinculado: true, pessoa: { perfil: 'GESTOR', referenciaAreaId: null } } as never);
+    expect(auth.podeGerenciarProjetosECampanhas()).toBeTrue();
+  });
 });

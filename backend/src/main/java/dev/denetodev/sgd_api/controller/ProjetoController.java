@@ -4,6 +4,8 @@ import dev.denetodev.sgd_api.dto.request.ProjetoRequest;
 import dev.denetodev.sgd_api.dto.response.ProjetoResponse;
 import dev.denetodev.sgd_api.service.ProjetoService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,14 +35,14 @@ public class ProjetoController {
     }
 
     @PostMapping
-    public ResponseEntity<ProjetoResponse> criar(@Valid @RequestBody ProjetoRequest request) {
-        ProjetoResponse criado = projetoService.criar(request);
+    public ResponseEntity<ProjetoResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody ProjetoRequest request) {
+        ProjetoResponse criado = projetoService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/projetos/" + criado.id())).body(criado);
     }
 
     @PutMapping("/{id}")
-    public ProjetoResponse atualizar(@PathVariable UUID id, @Valid @RequestBody ProjetoRequest request) {
-        return projetoService.atualizar(id, request);
+    public ProjetoResponse atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody ProjetoRequest request) {
+        return projetoService.atualizar(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")

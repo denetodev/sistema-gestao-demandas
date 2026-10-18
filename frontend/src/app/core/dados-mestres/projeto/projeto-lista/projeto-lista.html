@@ -1,6 +1,6 @@
 <app-barra-pagina titulo="Projetos" subtitulo="Os objetivos maiores que reúnem campanhas e demandas.">
   <ng-container fim>
-    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+    @if (auth.podeGerenciarProjetosECampanhas()) {
       <p-button icon="pi pi-plus" label="Novo projeto" (onClick)="abrirNovo()" />
     }
   </ng-container>
@@ -48,7 +48,7 @@
             <td>{{ projeto.diretoriaNome ?? '—' }}</td>
             <td><p-tag [value]="rotuloStatus(projeto.status)" [severity]="severityStatus(projeto.status)" /></td>
             <td>
-              @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+              @if (auth.podeGerenciarProjetosECampanhas()) {
                 <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(projeto)" />
               }
             </td>

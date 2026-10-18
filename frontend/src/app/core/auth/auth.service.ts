@@ -61,6 +61,16 @@ export class AuthService {
     return !!ref && !!areaId && ref === areaId;
   }
 
+  /**
+   * Criar e editar projeto e campanha: Admin, Gestor e Referência de equipe. Só esconde botão;
+   * o backend confere de novo.
+   */
+  podeGerenciarProjetosECampanhas(): boolean {
+    const p = this.pessoa();
+    if (!p) return false;
+    return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
+  }
+
   /** Todo perfil vinculado exceto VISUALIZADOR. */
   podeEditar(): boolean {
     const perfil = this.pessoa()?.perfil;

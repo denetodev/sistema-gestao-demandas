@@ -11,6 +11,9 @@ import dev.denetodev.sgd_api.repository.DemandanteRepository;
 import dev.denetodev.sgd_api.repository.DiretoriaRepository;
 import dev.denetodev.sgd_api.repository.ProjetoRepository;
 import dev.denetodev.sgd_api.service.support.Resolvers;
+import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.PermissaoService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +27,14 @@ public class ProjetoService {
     private final ProjetoRepository projetoRepository;
     private final DemandanteRepository demandanteRepository;
     private final DiretoriaRepository diretoriaRepository;
+    private final CurrentPessoaResolver currentPessoaResolver;
+    private final PermissaoService permissaoService;
 
-    public ProjetoService(ProjetoRepository projetoRepository, DemandanteRepository demandanteRepository, DiretoriaRepository diretoriaRepository) {
+    public ProjetoService(ProjetoRepository projetoRepository, DemandanteRepository demandanteRepository,
+                          DiretoriaRepository diretoriaRepository, CurrentPessoaResolver currentPessoaResolver,
+                          PermissaoService permissaoService) {
+        this.currentPessoaResolver = currentPessoaResolver;
+        this.permissaoService = permissaoService;
         this.projetoRepository = projetoRepository;
         this.demandanteRepository = demandanteRepository;
         this.diretoriaRepository = diretoriaRepository;
@@ -41,7 +50,8 @@ public class ProjetoService {
         return paraResponse(buscarEntidade(id));
     }
 
-    public ProjetoResponse criar(ProjetoRequest request) {
+    public ProjetoResponse criar(Jwt jwt, ProjetoRequest request) {
+        permissaoService.exigirGerenciarProjetosECampanhas(currentPessoaResolver.resolver(jwt));
         Projeto projeto = new Projeto(request.nome());
         projeto.setDemandante(Resolvers.resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
         projeto.setDiretoria(Resolvers.resolverOuNulo(request.diretoriaId(), diretoriaRepository, "Diretoria"));
@@ -52,7 +62,8 @@ public class ProjetoService {
         return paraResponse(projetoRepository.save(projeto));
     }
 
-    public ProjetoResponse atualizar(UUID id, ProjetoRequest request) {
+    public ProjetoResponse atualizar(Jwt jwt, UUID id, ProjetoRequest request) {
+        permissaoService.exigirGerenciarProjetosECampanhas(currentPessoaResolver.resolver(jwt));
         Projeto projeto = buscarEntidade(id);
         projeto.setNome(request.nome());
         projeto.setDemandante(Resolvers.resolverOuNulo(request.demandanteId(), demandanteRepository, "Demandante"));
