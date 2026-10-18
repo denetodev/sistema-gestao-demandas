@@ -4,6 +4,8 @@ import dev.denetodev.sgd_api.dto.request.DemandanteRequest;
 import dev.denetodev.sgd_api.dto.response.DemandanteResponse;
 import dev.denetodev.sgd_api.service.DemandanteService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,14 +35,14 @@ public class DemandanteController {
     }
 
     @PostMapping
-    public ResponseEntity<DemandanteResponse> criar(@Valid @RequestBody DemandanteRequest request) {
-        DemandanteResponse criado = demandanteService.criar(request);
+    public ResponseEntity<DemandanteResponse> criar(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody DemandanteRequest request) {
+        DemandanteResponse criado = demandanteService.criar(jwt, request);
         return ResponseEntity.status(HttpStatus.CREATED).location(URI.create("/demandantes/" + criado.id())).body(criado);
     }
 
     @PutMapping("/{id}")
-    public DemandanteResponse atualizar(@PathVariable UUID id, @Valid @RequestBody DemandanteRequest request) {
-        return demandanteService.atualizar(id, request);
+    public DemandanteResponse atualizar(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id, @Valid @RequestBody DemandanteRequest request) {
+        return demandanteService.atualizar(jwt, id, request);
     }
 
     @DeleteMapping("/{id}")

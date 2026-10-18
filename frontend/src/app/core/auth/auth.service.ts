@@ -71,6 +71,11 @@ export class AuthService {
     return p.perfil === 'ADMIN' || p.perfil === 'GESTOR' || (p.perfil === 'PROFISSIONAL' && !!p.referenciaAreaId);
   }
 
+  /** Demandantes seguem a mesma regra de projetos e campanhas. */
+  podeGerenciarDemandantes(): boolean {
+    return this.podeGerenciarProjetosECampanhas();
+  }
+
   /** Todo perfil vinculado exceto VISUALIZADOR. */
   podeEditar(): boolean {
     const perfil = this.pessoa()?.perfil;

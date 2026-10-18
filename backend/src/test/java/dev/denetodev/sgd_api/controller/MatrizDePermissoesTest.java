@@ -166,12 +166,15 @@ class MatrizDePermissoesTest {
                 new Caso(D, "/campanhas/" + ID, GESTAO),
                 new Caso(P, "/projetos", QUEM_ESCREVE),
                 new Caso(U, "/projetos/" + ID, QUEM_ESCREVE),
-                new Caso(D, "/projetos/" + ID, GESTAO))) {
+                new Caso(D, "/projetos/" + ID, GESTAO),
+                new Caso(P, "/demandantes", QUEM_ESCREVE),
+                new Caso(U, "/demandantes/" + ID, QUEM_ESCREVE),
+                new Caso(D, "/demandantes/" + ID, GESTAO))) {
             c.add(base);
         }
 
         // cadastros base: só Gestor e Admin escrevem
-        for (String base : List.of("/diretorias", "/nucleos", "/areas", "/cargos", "/tipos-atividade", "/demandantes")) {
+        for (String base : List.of("/diretorias", "/nucleos", "/areas", "/cargos", "/tipos-atividade")) {
             c.add(new Caso(P, base, GESTAO));
             c.add(new Caso(U, base + "/" + ID, GESTAO));
             c.add(new Caso(D, base + "/" + ID, GESTAO));

@@ -1,6 +1,6 @@
 <app-barra-pagina titulo="Demandantes" subtitulo="Quem pede o trabalho: pessoas, áreas, unidades ou gente de fora.">
   <ng-container fim>
-    @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+    @if (auth.podeGerenciarDemandantes()) {
       <p-button icon="pi pi-plus" label="Novo demandante" (onClick)="abrirNovo()" />
     }
   </ng-container>
@@ -54,7 +54,7 @@
               />
             </td>
             <td>
-              @if (auth.temPerfil('ADMIN', 'GESTOR')) {
+              @if (auth.podeGerenciarDemandantes()) {
                 <p-button [text]="true" icon="pi pi-pencil" (onClick)="abrirEdicao(demandante)" />
               }
             </td>

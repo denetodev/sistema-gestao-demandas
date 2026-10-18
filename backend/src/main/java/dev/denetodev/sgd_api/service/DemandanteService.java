@@ -8,6 +8,9 @@ import dev.denetodev.sgd_api.exception.RecursoNaoEncontradoException;
 import dev.denetodev.sgd_api.repository.DemandanteRepository;
 import dev.denetodev.sgd_api.repository.DiretoriaRepository;
 import dev.denetodev.sgd_api.service.support.Resolvers;
+import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
+import dev.denetodev.sgd_api.service.support.PermissaoService;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +23,13 @@ public class DemandanteService {
 
     private final DemandanteRepository demandanteRepository;
     private final DiretoriaRepository diretoriaRepository;
+    private final CurrentPessoaResolver currentPessoaResolver;
+    private final PermissaoService permissaoService;
 
-    public DemandanteService(DemandanteRepository demandanteRepository, DiretoriaRepository diretoriaRepository) {
+    public DemandanteService(DemandanteRepository demandanteRepository, DiretoriaRepository diretoriaRepository,
+                             CurrentPessoaResolver currentPessoaResolver, PermissaoService permissaoService) {
+        this.currentPessoaResolver = currentPessoaResolver;
+        this.permissaoService = permissaoService;
         this.demandanteRepository = demandanteRepository;
         this.diretoriaRepository = diretoriaRepository;
     }
@@ -36,14 +44,16 @@ public class DemandanteService {
         return paraResponse(buscarEntidade(id));
     }
 
-    public DemandanteResponse criar(DemandanteRequest request) {
+    public DemandanteResponse criar(Jwt jwt, DemandanteRequest request) {
+        permissaoService.exigirGerenciarDemandantes(currentPessoaResolver.resolver(jwt));
         Demandante demandante = new Demandante(request.nome(), request.tipo());
         demandante.setObservacao(request.observacao());
         demandante.setDiretoria(Resolvers.resolverOuNulo(request.diretoriaId(), diretoriaRepository, "Diretoria"));
         return paraResponse(demandanteRepository.save(demandante));
     }
 
-    public DemandanteResponse atualizar(UUID id, DemandanteRequest request) {
+    public DemandanteResponse atualizar(Jwt jwt, UUID id, DemandanteRequest request) {
+        permissaoService.exigirGerenciarDemandantes(currentPessoaResolver.resolver(jwt));
         Demandante demandante = buscarEntidade(id);
         demandante.setNome(request.nome());
         demandante.setTipo(request.tipo());

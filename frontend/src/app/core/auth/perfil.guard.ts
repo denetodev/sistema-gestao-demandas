@@ -30,6 +30,15 @@ export const equipamentosGuard: CanActivateFn = async (_route, state) => {
   return auth.acessaEquipamentos() ? true : acessoNegado(router, state.url);
 };
 
+/** Demandantes, projetos e campanhas: Admin, Gestor e Referência de equipe. */
+export const gestaoOuReferenciaGuard: CanActivateFn = async (_route, state) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  await auth.ready;
+  await auth.aguardarPessoa();
+  return auth.podeGerenciarDemandantes() ? true : acessoNegado(router, state.url);
+};
+
 export const naoVisualizadorGuard: CanActivateFn = async (_route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
