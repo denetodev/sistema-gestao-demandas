@@ -83,29 +83,45 @@
   </section>
 
     <p-dialog [(visible)]="dialogAberto" [header]="editandoId() ? 'Editar campanha' : 'Nova campanha'" [modal]="true"
-        [style]="{ width: '400px' }">
+        [style]="{ width: '30rem', maxWidth: '94vw' }">
         <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
             <label for="nome">Nome</label>
-            <input pInputText id="nome" formControlName="nome" />
+            <input pInputText id="nome" formControlName="nome" maxlength="180" placeholder="Ex.: Plano Safra Varejo" />
+            @if (mostrarErro('nome')) {
+            <small class="erro-campo">Informe o nome da campanha.</small>
+            }
 
-            <label for="codigo">Código</label>
-            <input pInputText id="codigo" formControlName="codigo" placeholder="Ex.: BC2609CR" />
+            <label for="codigo">Código <span class="opcional">(opcional)</span></label>
+            <input pInputText id="codigo" formControlName="codigo" maxlength="40" placeholder="Ex.: BC2609CR" class="campo-codigo" />
+            <small class="dica">O identificador que a sua área já usa. Fica em maiúsculas e não precisa ser único.</small>
 
-            <label for="projeto">Projeto</label>
+            <label for="projeto">Projeto <span class="opcional">(opcional)</span></label>
             <p-select inputId="projeto" formControlName="projetoId" [options]="projetos.value() ?? []"
-                optionLabel="nome" optionValue="id" placeholder="Nenhum" [showClear]="true" />
+                optionLabel="nome" optionValue="id" placeholder="Nenhum" [showClear]="true" [filter]="true"
+                filterBy="nome" appendTo="body" />
 
-            <label for="inicio">Data de início</label>
-            <p-datepicker inputId="inicio" formControlName="dataInicio" dateFormat="dd/mm/yy" [showIcon]="true" />
-
-            <label for="fim">Data de fim</label>
-            <p-datepicker inputId="fim" formControlName="dataFim" dateFormat="dd/mm/yy" [showIcon]="true" />
+            <div class="dialog-form__duas-colunas">
+                <div>
+                    <label for="inicio">Início <span class="opcional">(opcional)</span></label>
+                    <p-datepicker inputId="inicio" formControlName="dataInicio" dateFormat="dd/mm/yy"
+                        [showIcon]="true" [showButtonBar]="true" appendTo="body" />
+                </div>
+                <div>
+                    <label for="fim">Fim <span class="opcional">(opcional)</span></label>
+                    <p-datepicker inputId="fim" formControlName="dataFim" dateFormat="dd/mm/yy" [showIcon]="true"
+                        [showButtonBar]="true" [minDate]="form.controls.dataInicio.value" appendTo="body" />
+                </div>
+            </div>
+            @if (form.hasError('fimAntesDoInicio')) {
+            <small class="erro-campo">A data de fim não pode ser antes da data de início.</small>
+            }
 
             @if (erro()) {
             <p-message severity="error">{{ erro() }}</p-message>
             }
 
-            <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid">Salvar</p-button>
+            <p-button type="submit" [loading]="salvando()" [disabled]="form.invalid"
+                [label]="editandoId() ? 'Salvar alterações' : 'Criar campanha'" />
         </form>
     </p-dialog>
 </div>

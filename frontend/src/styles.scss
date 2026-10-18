@@ -538,3 +538,65 @@ button,
 .menu-usuario {
   min-width: 15rem;
 }
+
+/* ---------- Formulário dentro de janela (p-dialog) ---------- */
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dialog-form label {
+  margin-top: 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.dialog-form label:first-child {
+  margin-top: 0;
+}
+
+.dialog-form .opcional {
+  font-weight: 400;
+  color: var(--sgd-muted);
+}
+
+.dialog-form .dica {
+  font-size: 0.75rem;
+  color: var(--sgd-muted);
+}
+
+.dialog-form .erro-campo {
+  font-size: 0.75rem;
+  color: #d92d20;
+}
+
+.dialog-form .p-select,
+.dialog-form .p-datepicker,
+.dialog-form .p-inputtext,
+.dialog-form .p-textarea {
+  width: 100%;
+}
+
+.dialog-form > .p-button[type='submit'],
+.dialog-form > p-button {
+  align-self: flex-end;
+  margin-top: 0.9rem;
+}
+
+.dialog-form__duas-colunas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.dialog-form__duas-colunas > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.dialog-form__duas-colunas label {
+  margin-top: 0;
+}

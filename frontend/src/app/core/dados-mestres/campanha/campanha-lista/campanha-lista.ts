@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -77,13 +77,22 @@ export class CampanhaLista {
   salvando = signal(false);
   erro = signal<string | null>(null);
 
-  form = this.#fb.nonNullable.group({
-    nome: ['', Validators.required],
-    projetoId: this.#fb.control<string | null>(null),
-    codigo: [''],
-    dataInicio: this.#fb.control<Date | null>(null),
-    dataFim: this.#fb.control<Date | null>(null),
-  });
+  form = this.#fb.nonNullable.group(
+    {
+      nome: ['', [Validators.required, Validators.maxLength(180), semSoEspacos]],
+      projetoId: this.#fb.control<string | null>(null),
+      codigo: ['', Validators.maxLength(40)],
+      dataInicio: this.#fb.control<Date | null>(null),
+      dataFim: this.#fb.control<Date | null>(null),
+    },
+    { validators: fimDepoisDoInicio },
+  );
+
+  /** O erro de uma caixa só aparece depois que a pessoa mexeu nela (ou tentou salvar). */
+  mostrarErro(campo: 'nome' | 'codigo'): boolean {
+    const c = this.form.controls[campo];
+    return c.invalid && (c.touched || c.dirty);
+  }
   auth = inject(AuthService);
 
   abrirNovo() {
@@ -112,9 +121,9 @@ export class CampanhaLista {
     this.erro.set(null);
     const v = this.form.getRawValue();
     const payload = {
-      nome: v.nome,
+      nome: v.nome.trim(),
       projetoId: v.projetoId,
-      codigo: v.codigo || null,
+      codigo: v.codigo.trim().toUpperCase() || null,
       dataInicio: formatarData(v.dataInicio),
       dataFim: formatarData(v.dataFim),
     };
@@ -123,8 +132,9 @@ export class CampanhaLista {
       await firstValueFrom(id ? this.#service.atualizar(id, payload) : this.#service.criar(payload));
       this.dialogAberto.set(false);
       this.campanhas.reload();
-    } catch {
-      this.erro.set('Não foi possível salvar a campanha.');
+    } catch (e) {
+      const mensagem = (e as { error?: { mensagem?: string } })?.error?.mensagem;
+      this.erro.set(mensagem ?? 'Não foi possível salvar a campanha. Tente de novo.');
     } finally {
       this.salvando.set(false);
     }
@@ -150,4 +160,15 @@ export class CampanhaLista {
       // o toast do interceptor já informou o motivo (409 = em uso)
     }
   }
+}
+/** Nome só com espaços conta como vazio. */
+function semSoEspacos(c: AbstractControl): ValidationErrors | null {
+  return typeof c.value === 'string' && c.value.length > 0 && c.value.trim() === '' ? { required: true } : null;
+}
+
+/** A data de fim não pode vir antes da de início. */
+function fimDepoisDoInicio(g: AbstractControl): ValidationErrors | null {
+  const inicio = g.get('dataInicio')?.value as Date | null;
+  const fim = g.get('dataFim')?.value as Date | null;
+  return inicio && fim && fim < inicio ? { fimAntesDoInicio: true } : null;
 }
