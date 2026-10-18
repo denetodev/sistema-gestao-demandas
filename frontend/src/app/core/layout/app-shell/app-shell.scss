@@ -468,12 +468,9 @@ img.app-avatar {
 
 /* ---------- Menu recolhido: só os ícones ---------- */
 .sidebar-recolhida {
+  // fora do fluxo: com margin-left:auto ele roubava o espaço livre e empurrava o logo para a esquerda
   .app-marca__recolher {
-    max-width: 0;
-    width: 0;
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
+    display: none;
   }
 
   .app-marca__texto,
@@ -586,10 +583,7 @@ img.app-avatar {
   }
 
   .sidebar-recolhida .app-marca__recolher {
-    width: 32px;
-    max-width: none;
-    opacity: 1;
-    pointer-events: auto;
+    display: inline-flex;
   }
 
   .sidebar-recolhida .app-marca {

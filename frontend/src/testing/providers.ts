@@ -26,6 +26,7 @@ export function pessoaDeTeste(opcoes: OpcoesTeste = {}): PessoaMe {
     id: 'p-teste',
     nome: 'Pessoa de Teste',
     nomeExibicao: null,
+    chaveC: 'C1349864',
     email: 'teste@exemplo.com',
     diretoriaId: 'd1',
     diretoriaNome: 'COE/CRM',

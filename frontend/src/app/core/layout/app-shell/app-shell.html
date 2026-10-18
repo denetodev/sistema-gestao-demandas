@@ -123,7 +123,7 @@
     <div class="app-topbar__fim">
       <button type="button" class="app-usuario-botao" (click)="menuUsuario.toggle($event)" aria-haspopup="menu">
         <span class="app-usuario">
-          <span class="app-usuario__nome">{{ nomeExibido() }}</span>
+          <span class="app-usuario__nome">{{ nomeComMatricula() }}</span>
           <span class="app-usuario__perfil">{{ perfilRotulo() }}</span>
         </span>
         @if (auth.pessoa()?.fotoUrl) {

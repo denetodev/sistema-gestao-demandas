@@ -16,6 +16,8 @@ export interface PessoaMe {
   areaNome: string | null;
   cargoId: string | null;
   cargoNome: string | null;
+  /** Matrícula (C ou F mais 7 números); o Admin pode não ter. */
+  chaveC?: string | null;
   referenciaAreaId: string | null;
   referenciaAreaNome: string | null;
   status: string;
