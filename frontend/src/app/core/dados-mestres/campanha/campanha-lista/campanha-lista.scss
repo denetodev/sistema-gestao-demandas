@@ -1,0 +1,5 @@
+
+/* o código fica em maiúsculas enquanto se digita, sem deformar o texto de exemplo */
+.campo-codigo:not(:placeholder-shown) {
+  text-transform: uppercase;
+}
