@@ -199,6 +199,20 @@ describe('EmprestimoLista (novo empréstimo e termo)', () => {
     expect(component.podeProrrogar({ status: 'RETIRADO' } as never)).toBeFalse();
   });
 
+  it('foto que nao sobe mostra o motivo na janela, em vez de falhar calado', async () => {
+    await criar({ perfil: 'ADMIN' });
+    const arquivo = new File([new Uint8Array([1, 2, 3])], 'foto.png', { type: 'image/png' });
+    const input = { files: [arquivo], value: 'x' } as unknown as HTMLInputElement;
+
+    const promessa = component.escolherFoto({ id: 'em1' } as never, 'SAIDA', { target: input } as unknown as Event);
+    http.expectOne((r) => r.method === 'POST' && r.url.endsWith('/emprestimos/em1/fotos'))
+      .flush({ mensagem: 'Não foi possível guardar o arquivo no Storage' }, { status: 503, statusText: 'Service Unavailable' });
+    await promessa;
+
+    expect(component.erroFoto()).toBe('Não foi possível guardar o arquivo no Storage');
+    expect(component.enviandoFoto()).toBeFalse();
+  });
+
   it('prorrogar manda a nova data e o motivo', async () => {
     await criar({ perfil: 'ADMIN' });
     component.abrirProrrogacao({ id: 'em1', previstaDevolucao: new Date().toISOString() } as never);

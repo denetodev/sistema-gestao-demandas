@@ -95,4 +95,33 @@ class SupabaseStorageTest {
         assertTrue(e.getMessage().contains("SUPABASE_URL"));
         assertDoesNotThrow(() -> semConfig.remover("x.png"));
     }
+
+    @Test
+    void chaveColadaComQuebraDeLinhaNoMeioEhLimpaAntesDeIrNoCabecalho() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer servidor2 = MockRestServiceServer.bindTo(builder).build();
+        SupabaseStorage comQuebra = new SupabaseStorage(BASE, "sb_secret_ABC\nDEF 123\r\n", builder.build());
+        servidor2.expect(requestTo(BASE + "/storage/v1/object/evidencias/emprestimos/x.png"))
+                .andExpect(header("Authorization", "Bearer sb_secret_ABCDEF123"))
+                .andExpect(header("apikey", "sb_secret_ABCDEF123"))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        comQuebra.enviar("emprestimos/x.png", new byte[]{1}, "image/png");
+
+        servidor2.verify();
+    }
+
+    @Test
+    void erroDeCabecalhoNaoVazaAChaveNaMensagem() {
+        RestClient cliente = RestClient.builder().requestInterceptor((req, corpo, exec) -> {
+            throw new IllegalArgumentException("invalid header value: \"sb_secret_SEGREDO\"");
+        }).build();
+        SupabaseStorage s = new SupabaseStorage(BASE, "sb_secret_SEGREDO", cliente);
+
+        ArmazenamentoIndisponivelException ex = assertThrows(ArmazenamentoIndisponivelException.class,
+                () -> s.enviar("emprestimos/x.png", new byte[]{1}, "image/png"));
+
+        assertFalse(String.valueOf(ex.getMessage()).contains("sb_secret"));
+        assertNull(ex.getCause());
+    }
 }
