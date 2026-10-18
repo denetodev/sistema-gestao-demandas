@@ -28,6 +28,7 @@ export type ChaveAjuda =
   | 'tipos-peca'
   | 'pessoas'
   | 'estrutura'
+  | 'cargos'
   | 'relatorio'
   | 'emprestimos'
   | 'inventario'
@@ -118,6 +119,27 @@ export const AJUDA: Record<ChaveAjuda, Ajuda> = {
         pergunta: 'Onde vejo quem mudou o status e quando?',
         resposta:
           'No histórico da demanda. Cada mudança de status registra quem fez, quando e o motivo informado.',
+      },
+    ],
+  },
+
+  cargos: {
+    titulo: 'Para que servem os cargos?',
+    itens: [
+      {
+        pergunta: 'O que é um cargo?',
+        resposta:
+          'A função da pessoa no time, como Designer, Operador ou Videomaker. Aparece no cadastro da pessoa e no rodapé do menu.',
+      },
+      {
+        pergunta: 'O cargo depende da equipe ou do núcleo?',
+        resposta:
+          'Não. O cargo é uma lista única e solta: qualquer pessoa pode ter qualquer cargo, em qualquer equipe.',
+      },
+      {
+        pergunta: 'Posso desativar um cargo?',
+        resposta:
+          'Só quando nenhuma pessoa ativa o ocupa. Para cargos em uso, mude o cargo das pessoas antes, em Pessoas. Criar um cargo com o nome de um desativado traz ele de volta.',
       },
     ],
   },

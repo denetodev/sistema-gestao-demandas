@@ -1,0 +1,81 @@
+<app-barra-pagina titulo="Cargos" subtitulo="As funções do time, como Designer, Operador e Videomaker.">
+  <ng-container fim>
+    <p-button icon="pi pi-plus" label="Novo cargo" (onClick)="novo()" />
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  <app-ajuda chave="cargos" />
+
+  <section class="cartao cartao--tabela">
+    <div class="filtros">
+      <div class="filtros__linha">
+        <app-campo-busca class="filtros__busca" placeholder="Buscar por nome ou descrição..." descricao="Buscar cargos"
+          [valor]="busca()" (valorChange)="busca.set($event)" />
+      </div>
+    </div>
+
+    <div class="tabela-rolagem">
+      <p-table [value]="filtradas()" [loading]="cargos.isLoading()" dataKey="cargo.id">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Cargo</th>
+            <th>Descrição</th>
+            <th class="col-numero">Pessoas</th>
+            <th class="col-acoes"></th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-l>
+          <tr>
+            <td><strong>{{ l.cargo.nome }}</strong></td>
+            <td class="descricao">{{ l.cargo.descricao || '—' }}</td>
+            <td class="col-numero">{{ l.pessoas }}</td>
+            <td class="col-acoes">
+              <p-button icon="pi pi-pencil" [text]="true" severity="secondary" (onClick)="editar(l.cargo)"
+                [ariaLabel]="'Editar cargo ' + l.cargo.nome" />
+              <p-button icon="pi pi-trash" [text]="true" severity="danger" (onClick)="desativar(l)"
+                [ariaLabel]="'Desativar cargo ' + l.cargo.nome" />
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4">
+              <div class="vazio">
+                @if (busca()) {
+                  <strong>Nenhum cargo com essa busca</strong>
+                  Tente outro texto.
+                } @else {
+                  <strong>Nenhum cargo cadastrado</strong>
+                  Crie o primeiro para escolher nas pessoas.
+                  <p-button class="vazio__acao" label="Novo cargo" icon="pi pi-plus" (onClick)="novo()" />
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+</div>
+
+<p-dialog [visible]="aberta()" (visibleChange)="!$event && fechar()" [header]="editandoId() ? 'Editar cargo' : 'Novo cargo'"
+  [modal]="true" [style]="{ width: '28rem', maxWidth: '94vw' }" [draggable]="false">
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="dialog-form">
+    <label for="cargo-nome">Nome do cargo</label>
+    <input pInputText id="cargo-nome" formControlName="nome" maxlength="120" placeholder="Ex.: Analista de mídia" />
+    @if (mostrarErroNome()) {
+      <small class="erro-campo">Informe o nome do cargo.</small>
+    }
+
+    <label for="cargo-descricao">Descrição <span class="opcional">(opcional)</span></label>
+    <textarea pTextarea id="cargo-descricao" formControlName="descricao" rows="3" maxlength="500"
+      placeholder="O que essa função faz no time"></textarea>
+
+    @if (erro()) {
+      <p-message severity="error">{{ erro() }}</p-message>
+    }
+    <p-button type="submit" [label]="editandoId() ? 'Salvar alterações' : 'Criar cargo'" [loading]="salvando()"
+      [disabled]="form.invalid" />
+  </form>
+</p-dialog>

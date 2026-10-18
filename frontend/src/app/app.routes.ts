@@ -79,6 +79,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'cargos',
+        canActivate: [perfilGuard('ADMIN', 'GESTOR')],
+        loadComponent: () => import('./core/dados-mestres/cargo/cargo-lista/cargo-lista').then((m) => m.CargoLista),
+      },
+      {
         path: 'estrutura',
         canActivate: [perfilGuard('ADMIN', 'GESTOR')],
         loadComponent: () =>
