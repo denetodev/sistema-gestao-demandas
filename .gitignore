@@ -21,3 +21,5 @@ npm-debug.log*
 # Importação da planilha: contém dados reais de pessoas e demandas, não vai para o git
 database/importacao/saida/
 database/importacao/saida-ugr/
+database/importacao/saida-inventario/
+database/importacao/saida-delta/

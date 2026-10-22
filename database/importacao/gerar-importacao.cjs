@@ -3,6 +3,7 @@
  * Gera o SQL de importação da planilha "DEMANDAS HOUSE CRM" (aba 2026) para o Supabase.
  *
  *   node database/importacao/gerar-importacao.cjs "C:/caminho/DEMANDAS HOUSE CRM 2026-10.xlsx"
+ *   node database/importacao/gerar-importacao.cjs "C:/caminho/planilha.xlsx" --delta estado-do-banco.json   (só o que mudou; saída em saida-delta/)
  *
  * Saída (pasta database/importacao/saida/, ignorada pelo git porque tem dados reais de pessoas):
  *   00-limpar-dados-de-teste.sql   uso único: apaga os dados de teste (preserva contas com login)
@@ -27,6 +28,11 @@ const { execFileSync } = require('child_process');
 const ARQUIVO = process.argv[2];
 if (!ARQUIVO || !fs.existsSync(ARQUIVO)) {
   console.error('Uso: node gerar-importacao.cjs <planilha.xlsx>');
+  process.exit(1);
+}
+const DELTA = process.argv.includes('--delta') ? process.argv[process.argv.indexOf('--delta') + 1] : null;
+if (process.argv.includes('--delta') && (!DELTA || !fs.existsSync(DELTA))) {
+  console.error('Uso: --delta <estado-do-banco.json> (ver README, "Atualizar a partir de uma planilha nova")');
   process.exit(1);
 }
 const ABA = '2026';
@@ -149,6 +155,11 @@ const linhas = lerAba(ARQUIVO, ABA)
       horaOut: hora(r.K),
     };
   });
+
+// linha ainda em preenchimento (sem status, tag, projeto ou valor): fica de fora e vai para o relatório
+const incompleta = (l) => !STATUS[l.status] || !AREA_POR_TAG[l.tag] || !l.projeto || Number.isNaN(l.valor);
+const incompletas = linhas.filter(incompleta);
+for (const l of incompletas) linhas.splice(linhas.indexOf(l), 1);
 
 for (const l of linhas) {
   if (l.cliente && DEMANDANTES[l.cliente]) l.cliente = DEMANDANTES[l.cliente].nome;
@@ -338,6 +349,51 @@ for (const d of demandantes.keys()) {
   primeiros.set(k, [...(primeiros.get(k) ?? []), d]);
 }
 const possiveisDuplicados = [...primeiros.values()].filter((v) => v.length > 1);
+
+// ---------------------------------------------------------------- modo incremental (--delta): só o que mudou
+// O estado do banco vem de um JSON: { "codigos": "COD|STATUS|valor|nLinhas;COD|...", "semCodigo": ["hash8", ...] }
+// (ver "Atualizar a partir de uma planilha nova" no README). Só entram no SQL as demandas novas e as que ganharam
+// linhas ou mudaram de valor/status; o resto fica como está, sem apagar nada.
+const deltaInfo = { novas: [], alteradas: [] };
+if (DELTA) {
+  const estado = JSON.parse(fs.readFileSync(DELTA, 'utf8'));
+  const crypto2 = require('crypto');
+  const noBanco = new Map(); // codigo -> [{status, valor, n}]
+  for (const s of estado.codigos.split(';').filter(Boolean)) {
+    const [codigo, status, valor, n] = s.split('|');
+    if (!noBanco.has(codigo)) noBanco.set(codigo, []);
+    noBanco.get(codigo).push({ status, valor: Number(valor), n: Number(n) });
+  }
+  const semCodigoNoBanco = new Set(estado.semCodigo);
+  const hash8 = (g) => crypto2.createHash('md5').update(`${g.titulo.slice(0, 220)}|${g.criacao}`, 'utf8').digest('hex').slice(0, 8);
+
+  const afetados = new Set();
+  for (const g of grupos) {
+    if (!g.codigo) {
+      if (!semCodigoNoBanco.has(hash8(g))) {
+        afetados.add(g.id);
+        deltaInfo.novas.push(g);
+      }
+      continue;
+    }
+    const doCodigo = noBanco.get(g.codigo) ?? [];
+    const cancelada = g.status === 'CANCELADA';
+    // mesma regra do SQL: casa pelo código e por ser cancelada ou não; se o banco só tem a cancelada e a planilha agora a tem ativa, é a mesma demanda
+    const par = doCodigo.find((d) => (d.status === 'CANCELADA') === cancelada)
+      ?? (!cancelada && doCodigo.length === 1 && doCodigo[0].status === 'CANCELADA' ? doCodigo[0] : null);
+    if (!par) {
+      afetados.add(g.id);
+      deltaInfo.novas.push(g);
+    } else if (par.n !== g.linhas.length || Math.abs(par.valor - g.valor) > 0.005 || par.status !== g.status) {
+      afetados.add(g.id);
+      deltaInfo.alteradas.push({ g, par });
+    }
+  }
+  const grupoRestante = grupos.filter((g) => afetados.has(g.id));
+  grupos.splice(0, grupos.length, ...grupoRestante);
+  const linhasRestantes = linhas.filter((l) => afetados.has(l.grp));
+  linhas.splice(0, linhas.length, ...linhasRestantes);
+}
 
 // ---------------------------------------------------------------- SQL: limpeza (uso único)
 const corpoLimpeza = `-- 00-limpar-dados-de-teste.sql  (USO ÚNICO; gerado por gerar-importacao.cjs)
@@ -534,6 +590,133 @@ const CONFERENCIA = `select (select count(*) from demanda where source_system = 
        (select round(sum(p.quantidade * p.valor_unitario), 2) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}' and d.status <> 'CANCELADA') as soma_sem_canceladas,
        (select count(*) from demandante) as demandantes, (select count(*) from tipo_peca) as tipos_peca,
        (select count(*) from pessoa) as pessoas, (select count(*) from pessoa where auth_user_id is not null) as pessoas_com_login;`;
+// ---------------------------------------------------------------- SQL incremental (--delta)
+// Não apaga nada. Casa cada demanda da planilha com a do banco pelo CÓDIGO (e por ser cancelada ou não); sem código,
+// pelo título e pela data. Demanda nova entra inteira; demanda existente só ganha o que falta (linhas novas) e tem
+// valor, status e datas atualizados. Rodar duas vezes não duplica nada.
+const corpoDelta = `-- 02-importar-delta.sql  (INCREMENTAL e idempotente; gerado por gerar-importacao.cjs --delta)
+-- Aba "${ABA}": ${grupos.length} demandas afetadas (${deltaInfo.novas.length} novas, ${deltaInfo.alteradas.length} existentes com linhas novas ou valor/status diferente).
+-- Não apaga nada do que já está no banco. Pré-requisito: tabelas imp_hc_* carregadas pelos 01-carga-*.sql.
+
+-- diretorias, pessoas, demandantes e tipos de peça que ainda não existem (mesmas regras da importação completa)
+insert into diretoria (nome)
+select distinct d.diretoria from imp_hc_demandante d
+ where d.diretoria <> '${DIRETORIA}' and not exists (select 1 from diretoria x where x.nome = d.diretoria);
+
+insert into pessoa (nome, nome_exibicao, area_id, cargo_id, status, perfil, aprovado_em)
+select i.nome, i.exibicao, a.id, c.id, 'ATIVO', 'PROFISSIONAL', now()
+  from imp_hc_pessoa i
+  join area a on a.nome = i.area and a.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
+  join cargo c on c.nome = i.cargo
+ where not exists (select 1 from pessoa p where p.nome = i.nome);
+
+insert into demandante (nome, tipo, diretoria_id, observacao, ativo)
+select d.nome, 'PESSOA', (select id from diretoria where nome = d.diretoria), d.observacao, true
+  from imp_hc_demandante d
+ where not exists (select 1 from demandante x where x.nome = d.nome);
+
+insert into tipo_peca (nome, area_id, valor_referencia, ativo)
+select t.nome, a.id, t.preco, t.ativo
+  from imp_hc_tipo t join area a on a.nome = t.area and a.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
+ where not exists (select 1 from tipo_peca x where x.area_id = a.id and x.nome = t.nome);
+
+insert into tipo_atividade (nome, ativo)
+select '${TIPO_ATIVIDADE}', true where not exists (select 1 from tipo_atividade where nome = '${TIPO_ATIVIDADE}');
+
+-- as áreas casam por nome E pela diretoria do CRM: existe "Design" também na UGR, com tipos de peça de mesmo nome
+-- quem é quem: existente (casa por código/título) ou nova (ganha um id agora)
+create temp table imp_hc_alvo on commit drop as
+select g.grp,
+       coalesce(x.existente_id, gen_random_uuid()) as demanda_id,
+       x.existente_id is null as nova
+  from imp_hc_grupo g
+  left join lateral (
+    select coalesce(
+      (select d.id from demanda d
+        where d.source_system = '${SS}' and g.codigo is not null and d.codigo = g.codigo
+          and (d.status = 'CANCELADA') = (g.status = 'CANCELADA') limit 1),
+      (select d.id from demanda d
+        where d.source_system = '${SS}' and g.codigo is not null and g.status <> 'CANCELADA'
+          and d.codigo = g.codigo and d.status = 'CANCELADA'
+          and not exists (select 1 from demanda o where o.source_system = '${SS}' and o.codigo = g.codigo and o.id <> d.id) limit 1),
+      (select d.id from demanda d join imp_hc_linha l0 on l0.src_row = g.ref_row
+        where d.source_system = '${SS}' and g.codigo is null and d.codigo is null
+          and d.titulo = left(l0.descricao, 220) and d.data_criacao = g.criacao::date limit 1)
+    ) as existente_id
+  ) x on true;
+
+-- demandas novas
+insert into demanda (id, titulo, codigo, diretoria_id, demandante_id, prioridade, status, data_criacao, data_prazo,
+                     data_entrega_real, valor, observacoes, source_system, source_sheet, source_row, imported_at)
+select a.demanda_id, left(l.descricao, 220), g.codigo, (select id from diretoria where nome = '${DIRETORIA}'),
+       (select id from demandante x where x.nome = g.cliente limit 1), 'NORMAL', g.status,
+       g.criacao::date, g.prazo::date, case when g.status = 'CONCLUIDA' then g.entrega::date end, g.valor,
+       'Importada da planilha (aba ${ABA}, linha(s) ' || g.linhas || '). Equipe: ' || g.equipe || '.'
+         || coalesce(' Outros demandantes citados nas linhas: ' || g.outros_clientes || '.', ''),
+       '${SS}', '${ABA}', g.ref_row, now()
+  from imp_hc_grupo g
+  join imp_hc_alvo a on a.grp = g.grp and a.nova
+  join imp_hc_linha l on l.src_row = g.ref_row;
+
+-- demandas existentes: valor, status e datas passam a refletir a planilha (só onde algo mudou)
+update demanda d
+   set valor = g.valor,
+       status = g.status,
+       data_prazo = g.prazo::date,
+       data_entrega_real = case when g.status = 'CONCLUIDA' then g.entrega::date end
+  from imp_hc_grupo g
+  join imp_hc_alvo a on a.grp = g.grp and not a.nova
+ where d.id = a.demanda_id
+   and (d.valor is distinct from g.valor or d.status is distinct from g.status);
+
+-- participantes que ainda não estão na demanda (o principal só existe na demanda nova)
+insert into pessoa_demanda (pessoa_id, demanda_id, papel, data_entrada)
+select p.id, a.demanda_id,
+       case when pt.principal and a.nova then 'RESPONSAVEL_PRINCIPAL' else 'PARTICIPANTE' end, pt.entrada::date
+  from imp_hc_part pt
+  join imp_hc_alvo a on a.grp = pt.grp
+  join imp_hc_resp m on m.chave = pt.resp
+  join pessoa p on p.nome = m.nome
+ where not exists (select 1 from pessoa_demanda x where x.pessoa_id = p.id and x.demanda_id = a.demanda_id);
+
+-- peças das linhas que ainda não estão na demanda (identidade: tipo, descrição, dia e quantidade)
+insert into peca (demanda_id, tipo_peca_id, nome, descricao, quantidade, valor_unitario, pessoa_id, data_entrega)
+select a.demanda_id, tp.id, left(t.nome, 180), left(l.descricao, 500), i.qtd, i.unit,
+       (select p.id from pessoa p join imp_hc_resp m on m.nome = p.nome where m.chave = split_part(l.responsaveis, '|', 1)),
+       l.dia::date
+  from imp_hc_peca i
+  join imp_hc_linha l on l.src_row = i.src_row
+  join imp_hc_alvo a on a.grp = l.grp
+  join imp_hc_tipo t on t.id = i.tipo
+  join area ar on ar.nome = t.area and ar.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
+  join tipo_peca tp on tp.area_id = ar.id and tp.nome = t.nome
+ where not exists (select 1 from peca x where x.demanda_id = a.demanda_id and x.tipo_peca_id = tp.id
+                      and x.descricao = left(l.descricao, 500) and x.data_entrega = l.dia::date and x.quantidade = i.qtd);
+
+-- atividades "${TIPO_ATIVIDADE}" das linhas que ainda não estão na demanda (identidade: pessoa, descrição e dia)
+insert into atividade (demanda_id, tipo_atividade_id, pessoa_id, descricao, data_realizacao)
+select a.demanda_id, (select id from tipo_atividade where nome = '${TIPO_ATIVIDADE}'), p.id, left(l.descricao, 500), l.dia::date
+  from imp_hc_linha l
+  join imp_hc_alvo a on a.grp = l.grp
+  cross join lateral unnest(string_to_array(l.responsaveis, '|')) as r(chave)
+  join imp_hc_resp m on m.chave = r.chave
+  join pessoa p on p.nome = m.nome
+ where not exists (select 1 from atividade x where x.demanda_id = a.demanda_id and x.pessoa_id = p.id
+                      and x.descricao = left(l.descricao, 500) and x.data_realizacao = l.dia::date);
+`;
+const CONFERENCIA_DELTA = `select (select count(*) from demanda where source_system = '${SS}') as demandas_house,
+       (select count(*) from demanda where source_system = '${SS}' and imported_at > now() - interval '1 hour') as importadas_na_ultima_hora,
+       (select count(*) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}') as pecas,
+       (select count(*) from atividade a join demanda d on d.id = a.demanda_id where d.source_system = '${SS}') as atividades,
+       (select count(*) from pessoa_demanda pd join demanda d on d.id = pd.demanda_id where d.source_system = '${SS}') as participantes,
+       (select round(sum(valor), 2) from demanda where source_system = '${SS}' and status <> 'CANCELADA') as soma_valor_sem_canceladas,
+       (select round(sum(p.quantidade * p.valor_unitario), 2) from peca p join demanda d on d.id = p.demanda_id where d.source_system = '${SS}' and d.status <> 'CANCELADA') as soma_pecas_sem_canceladas;`;
+// campanhas: no modo incremental o vínculo vale só para as demandas afetadas (não mexe nas outras demandas sem campanha)
+const CAMPANHAS_DELTA = CAMPANHAS.replace('where dm.campanha_id is null', 'where dm.campanha_id is null and dm.id in (select demanda_id from imp_hc_alvo)');
+if (CAMPANHAS_DELTA === CAMPANHAS) throw new Error('vincular-campanhas.sql mudou: ajuste o filtro do modo incremental');
+const importacaoDelta = `begin;\n${corpoDelta}\n${CAMPANHAS_DELTA}\ndrop table imp_hc_linha, imp_hc_peca, imp_hc_part, imp_hc_grupo, imp_hc_tipo, imp_hc_demandante, imp_hc_pessoa, imp_hc_resp;\n\n-- conferência: compare com relatorio-delta.md antes do COMMIT\n${CONFERENCIA_DELTA}\n\ncommit;\n`;
+const ensaioDelta = `begin;\n${corpoDelta}\n${CAMPANHAS_DELTA}\n${CONFERENCIA_DELTA}\n\nrollback;\n`;
+
 const importacao = `begin;\n${corpoImportacao}\n${CAMPANHAS}\ndrop table imp_hc_linha, imp_hc_peca, imp_hc_part, imp_hc_grupo, imp_hc_tipo, imp_hc_demandante, imp_hc_pessoa, imp_hc_resp;\n\n-- conferência: compare com relatorio-conferencia.md antes do COMMIT\n${CONFERENCIA}\n\ncommit;\n\n-- Novos integrantes do CRM sem área/cargo definidos (pessoa.area_id é obrigatório). Quando souber a área:\n${PESSOAS_PENDENTES.map((p) => `-- insert into pessoa (nome, nome_exibicao, area_id, status, perfil, aprovado_em) select ${sql(p.nome)}, ${sql(p.exibicao)}, id, 'ATIVO', 'PROFISSIONAL', now() from area where nome = '<ÁREA>';`).join('\n')}\n`;
 // ensaio: limpeza + importação completas numa transação que termina em ROLLBACK
 const ensaio = `begin;\n${corpoLimpeza}\n${corpoImportacao}\n${CAMPANHAS}\n${CONFERENCIA}\n\nrollback;\n`;
@@ -602,6 +785,7 @@ ${[...demandantes.entries()].sort((a, b) => a[0].localeCompare(b[0], 'pt-BR')).m
 - **Linhas que não reconciliam** (soma dos tipos x Valor): ${naoBatem.length}${naoBatem.length ? '\n' + naoBatem.map((x) => `  - ${x}`).join('\n') : ''}
 - **Tipos sem preço deduzível**: ${semPreco.length ? semPreco.map((k) => nomesPorChave.get(k)).join('; ') : 'nenhum'}
 - **Conflitos de preço**: ${conflitos.length ? conflitos.join('; ') : 'nenhum'}
+- **Linhas incompletas ignoradas** (sem status, tag, projeto ou valor): ${incompletas.length}${incompletas.length ? '\n' + incompletas.map((l) => `  - Linha ${l.n}: "${l.descricao}" (${l.dia})`).join('\n') : ''}
 - **Anomalias de dados**: ${anomalias.length}${anomalias.length ? '\n' + anomalias.map((x) => `  - ${x}`).join('\n') : ''}
 - **Mesmo código com clientes diferentes** (vale o cliente mais frequente): ${conflitosCliente.length}${conflitosCliente.length ? '\n' + conflitosCliente.slice(0, 15).map((x) => `  - ${x}`).join('\n') : ''}${conflitosCliente.length > 15 ? `\n  - … e mais ${conflitosCliente.length - 15}` : ''}
 - **Mesmo código com status diferentes** (vale o mais "aberto": em andamento, em aprovação, concluída): ${gruposMistos.length}${gruposMistos.length ? '\n' + gruposMistos.slice(0, 15).map((x) => `  - ${x}`).join('\n') : ''}${gruposMistos.length > 15 ? `\n  - … e mais ${gruposMistos.length - 15}` : ''}
@@ -643,15 +827,44 @@ select
   (select md5(string_agg(grp || ':' || resp || ':' || case when principal then 't' else 'f' end || ':' || entrada, ',' order by grp, entrada, principal desc, resp collate "C")) from imp_hc_part) = '${ck.part}' as part_md5;
 `;
 
-const saida = path.join(__dirname, 'saida');
-fs.rmSync(saida, { recursive: true, force: true });
+const saida = path.join(__dirname, DELTA ? 'saida-delta' : 'saida');
+// no Windows a pasta pode estar aberta no editor (EBUSY): nesse caso só sobrescreve os arquivos
+try {
+  fs.rmSync(saida, { recursive: true, force: true });
+} catch {
+  for (const antigo of fs.existsSync(saida) ? fs.readdirSync(saida) : []) fs.rmSync(path.join(saida, antigo), { force: true });
+}
 fs.mkdirSync(saida, { recursive: true });
-fs.writeFileSync(path.join(saida, '00-limpar-dados-de-teste.sql'), limpeza);
+if (!DELTA) fs.writeFileSync(path.join(saida, '00-limpar-dados-de-teste.sql'), limpeza);
 arquivosCarga.forEach((c, i) => fs.writeFileSync(path.join(saida, `01-carga-${String(i + 1).padStart(2, '0')}.sql`), c));
 fs.writeFileSync(path.join(saida, '01-conferir-carga.sql'), conferirCarga);
-fs.writeFileSync(path.join(saida, '02-importar.sql'), importacao);
-fs.writeFileSync(path.join(saida, '03-ensaio-completo-com-rollback.sql'), ensaio);
-fs.writeFileSync(path.join(saida, 'relatorio-conferencia.md'), relatorio);
+if (DELTA) {
+  fs.writeFileSync(path.join(saida, '02-importar-delta.sql'), importacaoDelta);
+  fs.writeFileSync(path.join(saida, '03-ensaio-delta-com-rollback.sql'), ensaioDelta);
+  const dinheiro = (n) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const relDelta = [
+    `# Importação incremental: planilha DEMANDAS HOUSE CRM, aba ${ABA}`, '',
+    `Gerado por \`gerar-importacao.cjs --delta\` a partir de \`${path.basename(ARQUIVO)}\`. Não apaga nada do que já está no banco.`, '',
+    '## Resumo',
+    `- Demandas **novas**: ${deltaInfo.novas.length}`,
+    `- Demandas **existentes com linhas novas ou valor/status diferente**: ${deltaInfo.alteradas.length}`,
+    `- Linhas da planilha dessas demandas: ${linhas.length}; peças: ${linhas.reduce((s, l) => s + l.pecas.length, 0)}; atividades: ${linhas.reduce((s, l) => s + l.responsaveis.length, 0)}`,
+    `- Linhas **incompletas ignoradas** (sem status, tag, projeto ou valor: provavelmente ainda em preenchimento): ${incompletas.length}`,
+    ...incompletas.map((l) => `  - Linha ${l.n}: "${l.descricao}" (${l.dia}, ${l.responsaveis.join(', ') || 'sem responsável'}, QTD ${l.qtd})`),
+    '', '## Demandas novas', '| Código | Status | Valor | Demandante | Criada em | Equipe |', '|---|---|---|---|---|---|',
+    ...deltaInfo.novas.map((g) => `| ${g.codigo ?? '(sem código) ' + g.titulo.slice(0, 50)} | ${g.status} | R$ ${dinheiro(g.valor)} | ${g.cliente ?? ''} | ${g.criacao} | ${g.equipe} |`),
+    '', '## Demandas existentes que mudam', '| Código | Banco | Planilha |', '|---|---|---|',
+    ...deltaInfo.alteradas.map(({ g, par }) => `| ${g.codigo} | ${par.status}, R$ ${dinheiro(par.valor)}, ${par.n} linha(s) | ${g.status}, R$ ${dinheiro(g.valor)}, ${g.linhas.length} linha(s) |`),
+    '', '## Totais esperados depois do COMMIT (para conferir com a última consulta do 02)',
+    `- Valor total das demandas afetadas: R$ ${dinheiro(grupos.reduce((s, g) => s + g.valor, 0))}`,
+    `- Soma das peças dessas demandas: R$ ${dinheiro(linhas.reduce((s, l) => s + l.totalPecas, 0))}`, '',
+  ].join('\n');
+  fs.writeFileSync(path.join(saida, 'relatorio-delta.md'), relDelta);
+} else {
+  fs.writeFileSync(path.join(saida, '02-importar.sql'), importacao);
+  fs.writeFileSync(path.join(saida, '03-ensaio-completo-com-rollback.sql'), ensaio);
+  fs.writeFileSync(path.join(saida, 'relatorio-conferencia.md'), relatorio);
+}
 console.log(`Linhas ${linhas.length} -> demandas ${grupos.length} | peças ${linhas.reduce((s, l) => s + l.pecas.length, 0)} | tipos ${tipos.size} | demandantes ${demandantes.size}`);
 console.log(`Soma planilha ${fmt(totalValor)} x peças ${fmt(totalPecas)} | cargas ${arquivosCarga.length} (${arquivosCarga.map((c) => (c.length / 1024).toFixed(0) + ' KB').join(', ')}) | 02: ${(importacao.length / 1024).toFixed(0)} KB`);
 console.log(`Conflitos de cliente ${conflitosCliente.length} | status mistos ${gruposMistos.length} | anomalias ${anomalias.length}`);
