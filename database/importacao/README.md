@@ -53,6 +53,37 @@ Diferenças em relação à HOUSE:
 - **Diretoria:** a demanda é da diretoria UGR; a coluna *Diretoria* da planilha é a diretoria solicitante e vai nas observações. O *Cliente* vira Demandante (por nome; a diretoria é a que mais aparece).
 - **Equipe:** os 8 atuais já cadastrados + Raul (Designer, UGR). Quem saiu (Guilherme Otone, Isadora, Wagner…) entra como **INATIVO**, com o nome como está na planilha, para manter o histórico.
 
+## Atualizar a partir de uma planilha nova (modo incremental)
+A planilha House CRM continua sendo atualizada pela equipe. Reimportar tudo apagaria o que já está no banco, então existe o modo
+`--delta`, que **não apaga nada**: carrega só as demandas novas e as que ganharam linhas, valor ou status.
+
+1. Peça ao banco o estado atual (duas consultas somente leitura, no SQL Editor ou pelo MCP) e salve num JSON:
+   ```sql
+   -- codigos: demandas importadas da House com código BC
+   select string_agg(codigo || '|' || status || '|' || coalesce(round(valor,2)::text,'') || '|' ||
+          coalesce(array_length(string_to_array(replace((regexp_match(observacoes, 'linha\(s\) ([0-9, ]+)\)'))[1], ' ', ''), ','), 1), 0)::text, ';' order by codigo)
+     from demanda where source_system = 'planilha-house-crm' and codigo is not null;
+   -- semCodigo: identidade das demandas sem código (título + data de criação)
+   select string_agg(substr(md5(titulo || '|' || data_criacao::text), 1, 8), ',')
+     from demanda where source_system = 'planilha-house-crm' and codigo is null;
+   ```
+   Formato do arquivo: `{ "codigos": "<resultado 1>", "semCodigo": ["<hash>", "<hash>"] }` (o segundo resultado vira uma lista).
+2. `node database/importacao/gerar-importacao.cjs "C:/caminho/planilha.xlsx" --delta estado-do-banco.json` gera `saida-delta/` (ignorada pelo git):
+   `relatorio-delta.md` (o que é novo e o que muda), `01-carga-NN.sql` (só as demandas afetadas), `01-conferir-carga.sql`,
+   `02-importar-delta.sql` e `03-ensaio-delta-com-rollback.sql`.
+3. Ordem: cargas, `01-conferir-carga.sql` (tudo `true`), ensaio com rollback, `02-importar-delta.sql`.
+
+Como casa com o que já existe: pelo **código BC** (e por ser cancelada ou não); sem código, pelo título e pela data. Demanda existente só ganha as
+linhas que faltam (identidade da peça: tipo, descrição, dia e quantidade; da atividade: pessoa, descrição e dia) e tem valor, status e datas atualizados.
+Rodar duas vezes não duplica. As áreas casam por nome **e pela diretoria do CRM**, porque existe "Design" também na UGR. O vínculo de campanhas vale só
+para as demandas afetadas. **Linhas incompletas** (sem status, tag, projeto ou valor, em geral ainda em preenchimento) ficam de fora e aparecem no relatório.
+
+## Inventário do estúdio
+`gerar-inventario.cjs` lê a planilha "Lista de inventário Estúdio BB" (abas do estúdio BB e da Aristocrata) e gera `saida-inventario/`:
+`00-apagar-dados-de-teste.sql` (uso único: apaga empréstimos, equipamentos e categorias de teste, preserva termo e papéis), `01-inventario.sql` e
+`relatorio-conferencia.md`. Cada unidade física vira um equipamento ("(1/5)" a "(5/5)"), exceto cabos, baterias, carregadores e fontes, que são lote.
+Nº DE BEM vira patrimônio. Unidades defeituosas citadas na observação entram inativas (a planilha não diz qual é; ajuste na tela).
+
 ## Campanhas (depois da importação)
 As planilhas não trazem campanha. `vincular-campanhas.sql` cria as campanhas a partir do assunto que se repete nos títulos
 (por exemplo "BBCast Agro", "Desenrola Brasil", "BBBE Livelo") e vincula as demandas importadas. É idempotente e só
