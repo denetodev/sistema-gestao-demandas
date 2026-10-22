@@ -18,6 +18,12 @@ import { classeBloco, rotuloBloco } from '../equipamento-apresentacao';
 import { dias, inicioDoDia, posicaoAgora, posicionar, somarDias } from '../agenda-layout';
 import type { Agenda, BlocoAgenda, LinhaAgenda } from '../equipamento.model';
 
+interface UsoPessoa {
+  /** Empréstimo; a quantidade é a soma de tudo o que ele leva. */
+  bloco: BlocoAgenda;
+  equipamentos: { nome: string; patrimonio: string | null; quantidade: number }[];
+}
+
 /**
  * Agenda dos equipamentos (Gantt): uma linha por equipamento, uma barra por período de uso. Mostra com quem está
  * agora, as reservas dos próximos dias e o que foi devolvido há pouco. Clicar numa barra ou no nome abre os detalhes.
@@ -84,6 +90,63 @@ export class AgendaEquipamentos {
     }
     return [...mapa.values()];
   });
+
+  opcoesVisao: OpcaoPilula[] = [
+    { valor: 'equipamentos', rotulo: 'Por equipamento' },
+    { valor: 'pessoas', rotulo: 'Por pessoa' },
+  ];
+  visao = signal<'equipamentos' | 'pessoas'>('equipamentos');
+
+  mudarVisao(valor: string) {
+    this.visao.set(valor === 'pessoas' ? 'pessoas' : 'equipamentos');
+  }
+
+  /**
+   * Visão por pessoa: uma linha por retirante e uma barra por empréstimo, com a lista de tudo o que ele leva
+   * naquele período (um empréstimo em lote aparece uma vez só, não uma por equipamento).
+   */
+  pessoas = computed(() => {
+    const porEmprestimo = new Map<string, UsoPessoa>();
+    for (const linha of this.agenda.value()?.equipamentos ?? []) {
+      if (this.categoriaId() && linha.categoriaId !== this.categoriaId()) continue;
+      for (const b of linha.blocos) {
+        let uso = porEmprestimo.get(b.emprestimoId);
+        if (!uso) {
+          uso = { bloco: { ...b, quantidade: 0 }, equipamentos: [] };
+          porEmprestimo.set(b.emprestimoId, uso);
+        }
+        uso.bloco.quantidade += b.quantidade;
+        uso.equipamentos.push({ nome: linha.nome, patrimonio: linha.patrimonio, quantidade: b.quantidade });
+      }
+    }
+    const porPessoa = new Map<string, UsoPessoa[]>();
+    for (const uso of porEmprestimo.values()) {
+      if (!contemTexto([uso.bloco.retiranteNome, ...uso.equipamentos.map((e) => e.nome)], this.busca())) continue;
+      const lista = porPessoa.get(uso.bloco.retiranteNome) ?? [];
+      lista.push(uso);
+      porPessoa.set(uso.bloco.retiranteNome, lista);
+    }
+    return [...porPessoa]
+      .sort(([a], [b]) => a.localeCompare(b, 'pt-BR'))
+      .map(([nome, usos]) => {
+        const { itens, faixas } = posicionar(usos.map((u) => u.bloco), this.inicio(), this.fim(), this.agoraData());
+        const mapa = new Map(usos.map((u) => [u.bloco.emprestimoId, u]));
+        return {
+          nome,
+          faixas,
+          itens: itens.map((i) => ({ ...i, uso: mapa.get(i.bloco.emprestimoId)! })),
+          equipamentosAgora: usos.filter((u) => !u.bloco.devolvido && u.bloco.status === 'RETIRADO').reduce((s, u) => s + u.equipamentos.length, 0),
+        };
+      });
+  });
+
+  usoAberto = signal<UsoPessoa | null>(null);
+
+  /** Texto do hover: período e a lista do que a pessoa está levando. */
+  tituloUso(u: UsoPessoa): string {
+    const lista = u.equipamentos.map((e) => `• ${e.nome}${e.patrimonio ? ' (' + e.patrimonio + ')' : ''}${e.quantidade > 1 ? ' ×' + e.quantidade : ''}`).join('\n');
+    return `${this.tituloBloco(u.bloco)}\n${lista}`;
+  }
 
   filtrosAtivos = computed(() => !!(this.busca() || this.categoriaId()));
 
