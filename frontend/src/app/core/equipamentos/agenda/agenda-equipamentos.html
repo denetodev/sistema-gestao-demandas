@@ -16,6 +16,7 @@
         <p-button icon="pi pi-chevron-right" [text]="true" severity="secondary" ariaLabel="Próximo período" (onClick)="mover(1)" />
         <strong class="periodo-titulo">{{ inicio() | date: 'dd/MM' }} a {{ ultimoDia() | date: 'dd/MM/yyyy' }}</strong>
       </div>
+      <app-pilulas [opcoes]="opcoesVisao" [valor]="visao()" (valorChange)="mudarVisao($event)" descricao="Modo de visualização" />
       <app-pilulas [opcoes]="opcoesDias" [valor]="'' + quantidadeDias()" (valorChange)="mudarDias($event)" descricao="Tamanho da janela" />
       <app-campo-busca class="controles__busca" placeholder="Buscar equipamento..." descricao="Buscar equipamento na agenda"
         [valor]="busca()" (valorChange)="busca.set($event)" />
@@ -51,6 +52,35 @@
             </div>
           </div>
 
+          @if (visao() === 'pessoas') {
+            @for (p of pessoas(); track p.nome) {
+              <div class="gantt__linha">
+                <div class="gantt__nome gantt__nome--estatico">
+                  <strong>{{ p.nome }}</strong>
+                  <small>{{ p.equipamentosAgora ? p.equipamentosAgora + ' equipamento(s) agora' : 'Nada retirado agora' }}</small>
+                </div>
+                <div class="gantt__pista" [style.height.px]="p.faixas * 30 + 10">
+                  @for (i of p.itens; track i.bloco.emprestimoId) {
+                    <button type="button" class="barra barra--{{ classeBloco(i.bloco) }}" [style.left.%]="i.esquerda" [style.width.%]="i.largura"
+                      [style.top.px]="5 + i.faixa * 30" [title]="tituloUso(i.uso)" (click)="usoAberto.set(i.uso)">
+                      @if (i.bloco.externo) { <i class="pi pi-external-link" aria-hidden="true"></i> }
+                      <span>{{ i.uso.equipamentos.length === 1 ? i.uso.equipamentos[0].nome : i.uso.equipamentos.length + ' equipamentos' }}</span>
+                    </button>
+                    @if (i.atrasoLargura > 0) {
+                      <button type="button" class="barra barra--atraso" [style.left.%]="i.atrasoEsquerda" [style.width.%]="i.atrasoLargura"
+                        [style.top.px]="5 + i.faixa * 30" [title]="'Atrasado: ' + tituloUso(i.uso)" (click)="usoAberto.set(i.uso)">
+                        <span>atrasado</span>
+                      </button>
+                    }
+                  }
+                </div>
+              </div>
+            } @empty {
+              <div class="vazio">
+                <strong>{{ filtrosAtivos() ? 'Ninguém com esses filtros' : 'Nenhum empréstimo neste período' }}</strong>
+              </div>
+            }
+          } @else {
           @for (g of grupos(); track g.categoria) {
             <div class="gantt__grupo">{{ g.categoria }}</div>
             @for (l of g.linhas; track l.linha.equipamentoId) {
@@ -86,6 +116,7 @@
               }
             </div>
           }
+          }
 
           @if (marcadorAgora() !== null) {
             <div class="gantt__sobreposicao" aria-hidden="true">
@@ -112,6 +143,29 @@
         <dt>{{ a.bloco.devolvido ? 'Devolvido em' : 'Devolução prevista' }}</dt><dd>{{ a.bloco.fim | date: 'dd/MM/yyyy HH:mm' }}</dd>
         @if (a.bloco.localUso) { <dt>Onde</dt><dd>{{ a.bloco.localUso }}</dd> }
       </dl>
+      <a routerLink="/equipamentos"><p-button label="Abrir a lista de empréstimos" icon="pi pi-list" severity="secondary" [outlined]="true" size="small" /></a>
+    </div>
+  }
+</p-dialog>
+
+<p-dialog [visible]="!!usoAberto()" (visibleChange)="!$event && usoAberto.set(null)" [header]="usoAberto()?.bloco?.retiranteNome ?? ''" [modal]="true" [style]="{ width: '480px' }">
+  @if (usoAberto(); as u) {
+    <div class="detalhe">
+      <div class="etiquetas">
+        <p-tag [value]="rotuloBloco(u.bloco)" [severity]="u.bloco.atrasado ? 'danger' : u.bloco.devolvido ? 'secondary' : u.bloco.status === 'RETIRADO' ? 'success' : u.bloco.status === 'AUTORIZADO' ? 'info' : 'warn'" />
+        @if (u.bloco.externo) { <p-tag value="EXTERNO" severity="contrast" icon="pi pi-external-link" /> }
+      </div>
+      <dl>
+        <dt>{{ u.bloco.devolvido ? 'Período' : 'Retirada' }}</dt><dd>{{ u.bloco.inicio | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        <dt>{{ u.bloco.devolvido ? 'Devolvido em' : 'Devolução prevista' }}</dt><dd>{{ u.bloco.fim | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        @if (u.bloco.localUso) { <dt>Onde</dt><dd>{{ u.bloco.localUso }}</dd> }
+      </dl>
+      <h4>Equipamentos em posse ({{ u.equipamentos.length }})</h4>
+      <ul class="lista-posse">
+        @for (e of u.equipamentos; track $index) {
+          <li><strong>{{ e.nome }}</strong>{{ e.quantidade > 1 ? ' ×' + e.quantidade : '' }}<small>{{ e.patrimonio ?? '' }}</small></li>
+        }
+      </ul>
       <a routerLink="/equipamentos"><p-button label="Abrir a lista de empréstimos" icon="pi pi-list" severity="secondary" [outlined]="true" size="small" /></a>
     </div>
   }

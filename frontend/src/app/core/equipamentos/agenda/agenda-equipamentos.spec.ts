@@ -121,4 +121,21 @@ describe('AgendaEquipamentos (Gantt)', () => {
     expect(Math.round((ate.getTime() - de.getTime()) / 86400000)).toBe(30);
     req.flush({ de: '', ate: '', agora: new Date().toISOString(), equipamentos: [] });
   });
+  it('visão por pessoa: um empréstimo com vários equipamentos vira uma barra só, com a lista do que a pessoa leva', async () => {
+    await criar({ perfil: 'ADMIN' }, [
+      linha({ blocos: [bloco({ emprestimoId: 'e1', retiranteNome: 'Ana' })] }),
+      linha({ equipamentoId: 'q2', nome: 'Tripé', patrimonio: null, blocos: [bloco({ emprestimoId: 'e1', retiranteNome: 'Ana' })] }),
+      linha({ equipamentoId: 'q3', nome: 'Lente 50mm', blocos: [bloco({ emprestimoId: 'e2', retiranteNome: 'Bruno' })] }),
+    ]);
+    component.mudarVisao('pessoas');
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelectorAll('.gantt__linha').length).toBe(2);
+    expect(el.querySelectorAll('.gantt__linha')[0].textContent).toContain('Ana');
+    const barraAna = el.querySelectorAll('.gantt__linha')[0].querySelectorAll('.barra');
+    expect(barraAna.length).toBe(1);
+    expect(barraAna[0].textContent).toContain('2 equipamentos');
+    expect(barraAna[0].getAttribute('title')).toContain('Tripé');
+    expect(barraAna[0].getAttribute('title')).toContain('Câmera A7');
+  });
 });
