@@ -64,3 +64,21 @@
   background: var(--sgd-realce);
   color: var(--sgd-muted);
 }
+
+.filtros__visao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.filtros__agrupar {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sgd-muted);
+}
+
+.linha-clicavel {
+  cursor: pointer;
+}

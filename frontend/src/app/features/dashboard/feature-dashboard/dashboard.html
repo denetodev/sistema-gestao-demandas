@@ -52,18 +52,18 @@
         <h2 class="bloco__titulo">Demandas por situação</h2>
         <div class="atalhos">
           @if (ehVisualizador()) {
-            <p-button label="Ver demandas da diretoria" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+            <p-button label="Ver demandas da diretoria" size="small" icon="pi pi-arrow-right" iconPos="right"
               (onClick)="irParaDemandas('DIRETORIA')" />
           } @else {
-            <p-button label="Minhas demandas" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+            <p-button label="Minhas demandas" size="small" icon="pi pi-arrow-right" iconPos="right"
               (onClick)="irParaDemandas('MINHAS')" />
           }
           @if (ehReferencia()) {
-            <p-button label="Minha equipe" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+            <p-button label="Minha equipe" size="small" icon="pi pi-arrow-right" iconPos="right"
               (onClick)="irParaDemandas('EQUIPE')" />
           }
           @if (ehGestorOuAdmin()) {
-            <p-button label="Aprovar cadastros" size="small" [text]="true" icon="pi pi-arrow-right" iconPos="right"
+            <p-button label="Aprovar cadastros" size="small" icon="pi pi-arrow-right" iconPos="right"
               (onClick)="irParaPessoas()" />
           }
         </div>

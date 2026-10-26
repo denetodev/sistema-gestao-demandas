@@ -1,6 +1,7 @@
 package dev.denetodev.sgd_api.repository;
 
 import dev.denetodev.sgd_api.entity.PessoaDemanda;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,7 @@ public interface PessoaDemandaRepository extends JpaRepository<PessoaDemanda, UU
 
     long countByPessoa_Id(UUID pessoaId);
 
+    @EntityGraph(attributePaths = {"pessoa", "pessoa.area", "pessoa.area.nucleo", "pessoa.area.diretoria"})
     List<PessoaDemanda> findByDemandaIdIn(Collection<UUID> demandaIds);
 
     /** As últimas vezes em que a pessoa foi colocada no time (e ainda está nele), da mais nova para a mais antiga. */

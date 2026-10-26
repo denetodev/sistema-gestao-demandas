@@ -29,9 +29,14 @@
   color: var(--p-text-muted-color);
 }
 
+// os botões ficam numa linha só dentro da célula: a célula nunca vira flex, senão a linha da tabela quebra
 .col-acoes {
+  white-space: nowrap;
+}
+
+.acoes {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.35rem;
   align-items: center;
 }
@@ -184,4 +189,9 @@
 .sub--erro {
   color: #d92d20;
   font-weight: 600;
+}
+
+.col-acoes .sub {
+  max-width: 18rem;
+  white-space: normal;
 }

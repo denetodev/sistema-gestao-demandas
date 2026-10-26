@@ -8,6 +8,12 @@ export type Prioridade = 'BAIXA' | 'NORMAL' | 'ALTA' | 'URGENTE';
 export type EscopoDemanda = 'MINHAS' | 'EQUIPE' | 'NUCLEO' | 'DIRETORIA' | 'TODAS';
 
 export interface ParticipanteResumo {
+  /** Equipe e núcleo da pessoa, para agrupar o quadro; ausentes nas respostas antigas e no mock. */
+  areaId?: string | null;
+  areaNome?: string | null;
+  diretoriaNome?: string | null;
+  nucleoId?: string | null;
+  nucleoNome?: string | null;
   pessoaId: string;
   nome: string;
   fotoUrl: string | null;

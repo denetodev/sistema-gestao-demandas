@@ -9,10 +9,10 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.45rem 0.95rem;
-  border: 1px solid var(--sgd-borda);
+  border: 1px solid color-mix(in srgb, var(--sgd-laranja) 35%, transparent);
   border-radius: 999px;
-  background: var(--sgd-cartao);
-  color: var(--sgd-texto);
+  background: var(--sgd-laranja-suave);
+  color: var(--sgd-laranja-forte);
   font-family: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -21,8 +21,8 @@
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    background: var(--sgd-realce);
-    border-color: var(--sgd-muted);
+    background: color-mix(in srgb, var(--sgd-laranja) 22%, var(--sgd-cartao));
+    border-color: var(--sgd-laranja);
   }
 
   &--ativa,
