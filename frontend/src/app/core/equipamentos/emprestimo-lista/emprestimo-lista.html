@@ -75,6 +75,7 @@
             </td>
             <td>{{ e.localUso ?? (e.externo ? 'Fora do prédio' : 'No prédio') }}</td>
             <td class="col-acoes">
+              <div class="acoes">
               <p-button [text]="true" size="small" severity="secondary" icon="pi pi-eye" ariaLabel="Ver detalhes e fotos" (onClick)="abrirDetalhe(e)" />
               @if (podeEditar(e)) {
                 <p-button [text]="true" size="small" severity="secondary" icon="pi pi-pencil" ariaLabel="Corrigir empréstimo" (onClick)="abrirEdicao(e)" />
@@ -95,6 +96,7 @@
               @if (podeCancelar(e)) {
                 <p-button [text]="true" size="small" severity="secondary" icon="pi pi-ban" ariaLabel="Cancelar empréstimo" (onClick)="cancelar(e)" />
               }
+              </div>
               @if (e.status === 'RECUSADO' && e.motivoRecusa) {
                 <small class="sub">Motivo: {{ e.motivoRecusa }}</small>
               }
