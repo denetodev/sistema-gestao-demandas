@@ -55,7 +55,7 @@
     <label for="qtd">Quantidade</label>
     <p-inputnumber inputId="qtd" formControlName="quantidade" [min]="1" />
     <label for="por">Produzida por</label>
-    <p-select inputId="por" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nome"
+    <p-select inputId="por" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nomeExibido"
               optionValue="id" [filter]="true" [showClear]="true" appendTo="body" />
     <label for="dt">Data de entrega</label>
     <p-datepicker inputId="dt" formControlName="dataEntrega" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />

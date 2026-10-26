@@ -33,7 +33,7 @@
     <p-select inputId="tipoAtv" formControlName="tipoAtividadeId" [options]="tiposAtivos()" optionLabel="nome"
               optionValue="id" placeholder="Selecione" appendTo="body" />
     <label for="pessoaAtv">Pessoa</label>
-    <p-select inputId="pessoaAtv" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nome"
+    <p-select inputId="pessoaAtv" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nomeExibido"
               optionValue="id" [filter]="true" [showClear]="true" appendTo="body" />
     <label for="dtAtv">Data de realização</label>
     <p-datepicker inputId="dtAtv" formControlName="dataRealizacao" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />

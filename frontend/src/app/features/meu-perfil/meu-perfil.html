@@ -1,79 +1,129 @@
-<app-barra-pagina titulo="Meu perfil" />
+<app-barra-pagina titulo="Meu perfil" subtitulo="Seus dados, sua foto e a segurança da sua conta." />
 
 <div class="pagina-corpo perfil">
-  <section class="cartao foto">
-    <h2>Foto de perfil</h2>
-    <div class="foto__linha">
+  <section class="cartao capa">
+    <div class="capa__foto">
       @if (auth.pessoa()?.fotoUrl) {
         <img class="foto__imagem" [src]="auth.pessoa()!.fotoUrl" alt="Sua foto de perfil" />
       } @else {
         <span class="foto__imagem foto__imagem--iniciais" aria-hidden="true">{{ iniciais() }}</span>
       }
-      <div class="foto__acoes">
-        <input #arquivo type="file" class="foto__input" accept="image/jpeg,image/png,image/webp"
-          (change)="escolherFoto($event)" aria-label="Escolher foto de perfil" />
-        <p-button type="button" [label]="auth.pessoa()?.fotoUrl ? 'Trocar foto' : 'Adicionar foto'" icon="pi pi-camera"
+      <input #arquivo type="file" class="foto__input" accept="image/jpeg,image/png,image/webp"
+        (change)="escolherFoto($event)" aria-label="Escolher foto de perfil" />
+      <button type="button" class="capa__camera" (click)="arquivo.click()" [disabled]="enviandoFoto()"
+        [attr.aria-label]="auth.pessoa()?.fotoUrl ? 'Trocar foto' : 'Adicionar foto'">
+        <i class="pi" [class.pi-camera]="!enviandoFoto()" [class.pi-spin]="enviandoFoto()" [class.pi-spinner]="enviandoFoto()"></i>
+      </button>
+    </div>
+
+    <div class="capa__texto">
+      <h2>{{ auth.pessoa()?.nomeExibicao || auth.pessoa()?.nome }}</h2>
+      @if (auth.pessoa()?.nomeExibicao) {
+        <p class="capa__completo">{{ auth.pessoa()?.nome }}</p>
+      }
+      <ul class="etiquetas" aria-label="Seu lugar na estrutura">
+        <li class="etiqueta etiqueta--perfil">{{ auth.pessoa()?.perfil }}</li>
+        @if (auth.pessoa()?.areaNome) { <li class="etiqueta">{{ auth.pessoa()?.areaNome }}</li> }
+        @if (auth.pessoa()?.cargoNome) { <li class="etiqueta">{{ auth.pessoa()?.cargoNome }}</li> }
+      </ul>
+      <div class="capa__acoes">
+        <p-button type="button" [label]="auth.pessoa()?.fotoUrl ? 'Trocar foto' : 'Adicionar foto'" icon="pi pi-camera" size="small"
           [loading]="enviandoFoto()" (onClick)="arquivo.click()" />
         @if (auth.pessoa()?.fotoUrl) {
-          <p-button type="button" label="Remover" severity="secondary" [outlined]="true" icon="pi pi-trash"
+          <p-button type="button" label="Remover" severity="secondary" [outlined]="true" icon="pi pi-trash" size="small"
             [disabled]="enviandoFoto()" (onClick)="removerFoto()" />
         }
-        <small class="dica">A foto aparece no topo, nas demandas e nas listas. Pode ser de qualquer tamanho: o sistema recorta em quadrado e reduz.</small>
-        @if (erroFoto()) {
-          <small class="erro-campo" role="alert">{{ erroFoto() }}</small>
-        }
       </div>
+      <small class="dica">A foto aparece no topo, nas demandas e nas listas. Pode ser de qualquer tamanho: o sistema recorta em quadrado e reduz.</small>
+      @if (erroFoto()) {
+        <small class="erro-campo" role="alert">{{ erroFoto() }}</small>
+      }
     </div>
   </section>
 
-  <section class="cartao">
-    <h2>Dados</h2>
-    <form [formGroup]="formDados" (ngSubmit)="salvarDados()" class="form">
-      <label for="nome">Nome completo</label>
-      <input pInputText id="nome" [value]="auth.pessoa()?.nome ?? ''" disabled />
+  <div class="colunas">
+    <section class="cartao">
+      <header class="secao">
+        <i class="pi pi-user" aria-hidden="true"></i>
+        <div>
+          <h2>Seus dados</h2>
+          <p>Como você aparece para os colegas.</p>
+        </div>
+      </header>
+      <form [formGroup]="formDados" (ngSubmit)="salvarDados()" class="form">
+        <div class="campo">
+          <label for="nomeExibicao">Como você quer ser chamado(a)</label>
+          <input pInputText id="nomeExibicao" formControlName="nomeExibicao" [placeholder]="auth.pessoa()?.nome ?? ''" />
+          <small class="dica">
+            Os colegas veem
+            <strong class="previa">{{ formDados.controls.nomeExibicao.value.trim() || auth.pessoa()?.nome }}</strong>
+            no time das demandas, nas atividades, nas listas e nos empréstimos.
+          </small>
+        </div>
 
-      <label for="nomeExibicao">Como você quer ser chamado(a)</label>
-      <input pInputText id="nomeExibicao" formControlName="nomeExibicao" [placeholder]="auth.pessoa()?.nome ?? ''" />
-      <small class="dica">Aparece no menu e nas telas. O nome completo só muda pelo Gestor ou Admin.</small>
+        <div class="campo">
+          <label for="nome">Nome completo</label>
+          <input pInputText id="nome" [value]="auth.pessoa()?.nome ?? ''" disabled />
+          <small class="dica">O nome completo só muda pelo Gestor ou Admin.</small>
+        </div>
 
-      <label for="email">E-mail</label>
-      <input pInputText id="email" [value]="auth.emailSessao()" disabled />
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input pInputText id="email" [value]="auth.emailSessao()" disabled />
+        </div>
 
-      <dl class="hierarquia">
-        <div><dt>Diretoria</dt><dd>{{ auth.pessoa()?.diretoriaNome ?? '—' }}</dd></div>
-        <div><dt>Núcleo</dt><dd>{{ auth.pessoa()?.nucleoNome ?? '—' }}</dd></div>
-        <div><dt>Equipe</dt><dd>{{ auth.pessoa()?.areaNome ?? '—' }}</dd></div>
-        <div><dt>Cargo</dt><dd>{{ auth.pessoa()?.cargoNome ?? '—' }}</dd></div>
-        <div><dt>Perfil</dt><dd>{{ auth.pessoa()?.perfil }}</dd></div>
-      </dl>
+        <div class="acoes-form">
+          <p-button type="submit" label="Salvar" [loading]="salvandoDados()" [disabled]="formDados.invalid" icon="pi pi-check" />
+        </div>
+      </form>
+    </section>
 
-      <p-button type="submit" [loading]="salvandoDados()" [disabled]="formDados.invalid"
-        >Salvar</p-button
-      >
-    </form>
-  </section>
+    <div class="coluna-direita">
+      <section class="cartao">
+        <header class="secao">
+          <i class="pi pi-sitemap" aria-hidden="true"></i>
+          <div>
+            <h2>Onde você está</h2>
+            <p>A estrutura é definida pelo Gestor ou Admin.</p>
+          </div>
+        </header>
+        <dl class="hierarquia">
+          <div><dt>Diretoria</dt><dd>{{ auth.pessoa()?.diretoriaNome ?? '—' }}</dd></div>
+          <div><dt>Núcleo</dt><dd>{{ auth.pessoa()?.nucleoNome ?? '—' }}</dd></div>
+          <div><dt>Equipe</dt><dd>{{ auth.pessoa()?.areaNome ?? '—' }}</dd></div>
+          <div><dt>Cargo</dt><dd>{{ auth.pessoa()?.cargoNome ?? '—' }}</dd></div>
+          <div><dt>Perfil</dt><dd>{{ auth.pessoa()?.perfil }}</dd></div>
+        </dl>
+      </section>
 
-  <section class="cartao">
-    <h2>Senha</h2>
-    <form [formGroup]="formSenha" (ngSubmit)="salvarSenha()" class="form">
-      <label for="senha">Nova senha</label>
-      <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" />
+      <section class="cartao">
+        <header class="secao">
+          <i class="pi pi-lock" aria-hidden="true"></i>
+          <div>
+            <h2>Senha</h2>
+            <p>Escolha uma senha que só você conheça.</p>
+          </div>
+        </header>
+        <form [formGroup]="formSenha" (ngSubmit)="salvarSenha()" class="form">
+          <div class="campo">
+            <label for="senha">Nova senha</label>
+            <p-password formControlName="senha" inputId="senha" [feedback]="false" [toggleMask]="true" />
+          </div>
 
-      <label for="confirmacao">Confirmar senha</label>
-      <p-password
-        formControlName="confirmacao"
-        inputId="confirmacao"
-        [feedback]="false"
-        [toggleMask]="true"
-      />
+          <div class="campo">
+            <label for="confirmacao">Confirmar senha</label>
+            <p-password formControlName="confirmacao" inputId="confirmacao" [feedback]="false" [toggleMask]="true" />
+          </div>
 
-      @if (erroSenha()) {
-        <p-message severity="error">{{ erroSenha() }}</p-message>
-      }
+          @if (erroSenha()) {
+            <p-message severity="error">{{ erroSenha() }}</p-message>
+          }
 
-      <p-button type="submit" [loading]="salvandoSenha()" [disabled]="formSenha.invalid"
-        >Alterar senha</p-button
-      >
-    </form>
-  </section>
+          <div class="acoes-form">
+            <p-button type="submit" label="Alterar senha" [loading]="salvandoSenha()" [disabled]="formSenha.invalid" icon="pi pi-key" />
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
 </div>

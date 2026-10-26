@@ -162,7 +162,7 @@ public class RelatorioMensalService {
                 .filter(p -> estavaAtivaNoMes(p, mes)
                         && p.getAprovadoEm() != null
                         && p.getPerfil() == PerfilPessoa.PROFISSIONAL)
-                .sorted(Comparator.comparing(Pessoa::getNome, String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparing(Pessoa::getNomeExibido, String.CASE_INSENSITIVE_ORDER))
                 .toList();
         if (profissionais.isEmpty()) {
             return List.of();
@@ -179,7 +179,7 @@ public class RelatorioMensalService {
         return profissionais.stream().map(p -> {
             RelatorioMensal r = porPessoa.get(p.getId());
             return new RelatorioResumoResponse(
-                    p.getId(), p.getNome(), p.getArea() != null ? p.getArea().getNome() : null,
+                    p.getId(), p.getNomeExibido(), p.getArea() != null ? p.getArea().getNome() : null,
                     r == null ? "NAO_INICIADO" : r.getStatus().name(),
                     atividades.getOrDefault(p.getId(), 0L),
                     r != null ? r.getAprovadoEm() : null);

@@ -221,7 +221,7 @@ public class DemandaService {
                 .findByTabelaAndRegistroIdAndCampoOrderByCreatedAtDesc("demanda", id, "status");
         Map<UUID, String> nomes = new HashMap<>();
         pessoaRepository.findAllById(registros.stream().map(Auditoria::getAlteradoPor).filter(Objects::nonNull).distinct().toList())
-                .forEach(p -> nomes.put(p.getId(), p.getNome()));
+                .forEach(p -> nomes.put(p.getId(), p.getNomeExibido()));
 
         return registros.stream()
                 .map(r -> new HistoricoStatusResponse(
@@ -250,7 +250,7 @@ public class DemandaService {
                 .filter(v -> v.getDataSaida() == null)
                 .sorted(Comparator
                         .comparing((PessoaDemanda v) -> v.getPapel() != PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL)
-                        .thenComparing(v -> v.getPessoa().getNome(), String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(v -> v.getPessoa().getNomeExibido(), String.CASE_INSENSITIVE_ORDER))
                 .map(v -> resumir(v.getPessoa()))
                 .toList();
     }
@@ -258,7 +258,7 @@ public class DemandaService {
     private static ParticipanteResumo resumir(Pessoa p) {
         Area area = p.getArea();
         Nucleo nucleo = area == null ? null : area.getNucleo();
-        return new ParticipanteResumo(p.getId(), p.getNome(), p.getFotoUrl(),
+        return new ParticipanteResumo(p.getId(), p.getNomeExibido(), p.getFotoUrl(),
                 area == null ? null : area.getId(), area == null ? null : area.getNome(),
                 area == null || area.getDiretoria() == null ? null : area.getDiretoria().getNome(),
                 nucleo == null ? null : nucleo.getId(), nucleo == null ? null : nucleo.getNome());

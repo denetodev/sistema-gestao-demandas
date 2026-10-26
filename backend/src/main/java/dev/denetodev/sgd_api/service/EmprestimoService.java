@@ -179,7 +179,7 @@ public class EmprestimoService {
         Pessoa retirantePessoa = request.retirantePessoaId() == null ? null : pessoaRepository.findById(request.retirantePessoaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Pessoa não encontrada: " + request.retirantePessoaId()));
         String nome = retirantePessoa != null && (request.retiranteNome() == null || request.retiranteNome().isBlank())
-                ? retirantePessoa.getNome() : request.retiranteNome().trim();
+                ? retirantePessoa.getNomeExibido() : request.retiranteNome().trim();
 
         Emprestimo emprestimo = new Emprestimo(nome, request.previstaDevolucao(), ator, termo.getVersao());
         emprestimo.setRetiradaPrevista(retirada);
@@ -255,7 +255,7 @@ public class EmprestimoService {
             throw new EstadoInvalidoException(e.getNome() + ": só há " + livre + " unidade(s) disponível(is) nesse período");
         }
         String quem = doEquipamento.stream().filter(i -> i.getEmprestimo().getId().equals(conflito.emprestimoId()))
-                .map(i -> i.getEmprestimo().getRetiranteNome()).findFirst().orElse("outro empréstimo");
+                .map(i -> i.getEmprestimo().getRetiranteNomeExibido()).findFirst().orElse("outro empréstimo");
         String janela = conflito.fim().equals(Instant.MAX)
                 ? "desde " + formatar(conflito.inicio()) + " e ainda não foi devolvido"
                 : "de " + formatar(conflito.inicio()) + " a " + formatar(conflito.fim());
@@ -473,7 +473,7 @@ public class EmprestimoService {
             int comOutras = outros.stream().mapToInt(EmprestimoItem::getQuantidade).sum();
             if (!outros.isEmpty() && eq.getQuantidadeTotal() - comOutras < item.getQuantidade()) {
                 Emprestimo dono = outros.get(0).getEmprestimo();
-                throw new EstadoInvalidoException(eq.getNome() + " ainda está com " + dono.getRetiranteNome()
+                throw new EstadoInvalidoException(eq.getNome() + " ainda está com " + dono.getRetiranteNomeExibido()
                         + " (devolução prevista " + formatar(dono.getPrevistaDevolucao().toInstant()) + "). Registre a devolução antes de entregar");
             }
         }
@@ -543,17 +543,17 @@ public class EmprestimoService {
         }
         return new EmprestimoResponse(
                 e.getId(), e.getStatus(), e.atrasado(agora), e.isExterno(), e.getLocalUso(),
-                e.getRetiranteNome(), e.getRetiranteChaveC(), e.getRetiranteContato(),
+                e.getRetiranteNomeExibido(), e.getRetiranteChaveC(), e.getRetiranteContato(),
                 e.getRetirantePessoa() == null ? null : e.getRetirantePessoa().getId(),
                 e.getFinalidade(), e.getRetiradaPrevista(), e.getPrevistaDevolucao(),
                 e.getDemanda() == null ? null : e.getDemanda().getId(),
                 e.getDemanda() == null ? null : e.getDemanda().getTitulo(),
                 e.getAtividade() == null ? null : e.getAtividade().getId(),
-                e.getRegistradoPor().getId(), e.getRegistradoPor().getNome(),
+                e.getRegistradoPor().getId(), e.getRegistradoPor().getNomeExibido(),
                 e.getTermoVersao(), e.getTermoAceitoEm(),
-                e.getAutorizadoPor() == null ? null : e.getAutorizadoPor().getNome(), e.getAutorizadoEm(), e.getMotivoRecusa(),
-                e.getRetiradoPor() == null ? null : e.getRetiradoPor().getNome(), e.getRetiradoEm(),
-                e.getDevolvidoPor() == null ? null : e.getDevolvidoPor().getNome(), e.getDevolvidoEm(), e.getObservacoesDevolucao(),
+                e.getAutorizadoPor() == null ? null : e.getAutorizadoPor().getNomeExibido(), e.getAutorizadoEm(), e.getMotivoRecusa(),
+                e.getRetiradoPor() == null ? null : e.getRetiradoPor().getNomeExibido(), e.getRetiradoEm(),
+                e.getDevolvidoPor() == null ? null : e.getDevolvidoPor().getNomeExibido(), e.getDevolvidoEm(), e.getObservacoesDevolucao(),
                 itens, e.getCreatedAt());
     }
 }

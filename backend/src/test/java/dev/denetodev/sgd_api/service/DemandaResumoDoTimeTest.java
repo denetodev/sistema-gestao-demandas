@@ -25,6 +25,7 @@ class DemandaResumoDoTimeTest {
         Pessoa pessoa = mock(Pessoa.class);
         when(pessoa.getId()).thenReturn(UUID.randomUUID());
         when(pessoa.getNome()).thenReturn(nome);
+        when(pessoa.getNomeExibido()).thenReturn(nome);
         when(pessoa.getFotoUrl()).thenReturn(foto);
         PessoaDemanda v = mock(PessoaDemanda.class);
         when(v.getPessoa()).thenReturn(pessoa);

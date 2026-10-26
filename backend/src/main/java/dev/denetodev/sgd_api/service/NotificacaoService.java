@@ -93,7 +93,7 @@ public class NotificacaoService {
             }
             boolean lida = vistas != null && !v.getAdicionadoEm().isAfter(vistas);
             itens.add(new Item("demanda-" + v.getId(), Tipo.ADICIONADO_EM_DEMANDA, "Você entrou numa demanda",
-                    quem.getNome() + " te adicionou em " + v.getDemanda().getTitulo() + ".",
+                    quem.getNomeExibido() + " te adicionou em " + v.getDemanda().getTitulo() + ".",
                     "/demandas/" + v.getDemanda().getId(), 1, lida, v.getAdicionadoEm()));
         }
 

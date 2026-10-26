@@ -167,8 +167,7 @@ public class CampanhaResumoService {
     }
 
     private static String nomeDe(Pessoa p) {
-        String exibicao = p.getNomeExibicao();
-        return exibicao != null && !exibicao.isBlank() ? exibicao : p.getNome();
+        return p.getNomeExibido();
     }
 
     private Dados carregar(List<Demanda> demandas) {

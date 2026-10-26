@@ -242,7 +242,7 @@ public class EquipamentoService {
             return;
         }
         blocos.computeIfAbsent(item.getEquipamento().getId(), k -> new ArrayList<>()).add(new AgendaResponse.Bloco(
-                e.getId(), e.getRetiranteNome(), e.getStatus(), devolvido, atrasado, e.isExterno(), e.getLocalUso(),
+                e.getId(), e.getRetiranteNomeExibido(), e.getStatus(), devolvido, atrasado, e.isExterno(), e.getLocalUso(),
                 item.getQuantidade(), inicio, fim));
     }
 
@@ -320,7 +320,7 @@ public class EquipamentoService {
             List<EquipamentoResponse.UsoAtual> emUso = doItem.stream()
                     .sorted(Comparator.comparing(i -> i.getEmprestimo().inicioOcupacao()))
                     .map(i -> new EquipamentoResponse.UsoAtual(
-                            i.getEmprestimo().getId(), i.getEmprestimo().getRetiranteNome(), i.getQuantidade(),
+                            i.getEmprestimo().getId(), i.getEmprestimo().getRetiranteNomeExibido(), i.getQuantidade(),
                             i.getEmprestimo().getRetiradaPrevista(), i.getEmprestimo().getPrevistaDevolucao(),
                             i.getEmprestimo().getStatus(), i.getEmprestimo().atrasado(agora),
                             i.getEmprestimo().isExterno(), i.getEmprestimo().getLocalUso()))

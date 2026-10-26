@@ -177,6 +177,7 @@ class DashboardServiceTest {
         Pessoa p = mock(Pessoa.class);
         when(p.getId()).thenReturn(UUID.randomUUID());
         when(p.getNome()).thenReturn(nome);
+        when(p.getNomeExibido()).thenReturn(nome);
         when(p.getArea()).thenReturn(area);
         when(p.getPerfil()).thenReturn(perfil);
         when(p.getReferenciaArea()).thenReturn(referencia);

@@ -70,7 +70,7 @@ export class Dashboard {
     const areaId = this.auth.pessoa()?.referenciaAreaId;
     const colegas = (this.#service.pessoas.value() ?? [])
       .filter((p) => p.areaId === areaId && p.status === 'ATIVO' && p.aprovadoEm && p.perfil === 'PROFISSIONAL')
-      .map((p) => ({ id: p.id as string | null, nome: p.nome }));
+      .map((p) => ({ id: p.id as string | null, nome: p.nomeExibido }));
     return [{ id: null, nome: `Equipe ${this.auth.pessoa()?.referenciaAreaNome ?? ''} (agregado)` }, ...colegas];
   });
 
