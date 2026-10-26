@@ -1,6 +1,9 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.response.ParticipanteResumo;
+import dev.denetodev.sgd_api.entity.Area;
+import dev.denetodev.sgd_api.entity.Diretoria;
+import dev.denetodev.sgd_api.entity.Nucleo;
 import dev.denetodev.sgd_api.entity.PapelPessoaDemanda;
 import dev.denetodev.sgd_api.entity.Pessoa;
 import dev.denetodev.sgd_api.entity.PessoaDemanda;
@@ -43,6 +46,38 @@ class DemandaResumoDoTimeTest {
         assertEquals(List.of("Bia", "Ana", "Zeca"), resumo.stream().map(ParticipanteResumo::nome).toList());
         assertEquals("https://x/ana.jpg", resumo.get(1).fotoUrl());
         assertNull(resumo.get(0).fotoUrl());
+    }
+
+    @Test
+    void trazAEquipeEONucleoDeCadaPessoaParaAgruparOQuadro() {
+        Nucleo nucleo = mock(Nucleo.class);
+        UUID nucleoId = UUID.randomUUID();
+        when(nucleo.getId()).thenReturn(nucleoId);
+        when(nucleo.getNome()).thenReturn("House-CRM");
+        Area area = mock(Area.class);
+        UUID areaId = UUID.randomUUID();
+        when(area.getId()).thenReturn(areaId);
+        when(area.getNome()).thenReturn("Design");
+        when(area.getNucleo()).thenReturn(nucleo);
+        Diretoria diretoria = mock(Diretoria.class);
+        when(diretoria.getNome()).thenReturn("COE/CRM");
+        when(area.getDiretoria()).thenReturn(diretoria);
+        PessoaDemanda comEquipe = vinculo("Ana", null, PapelPessoaDemanda.PARTICIPANTE, null);
+        when(comEquipe.getPessoa().getArea()).thenReturn(area);
+        PessoaDemanda semEquipeLigada = vinculo("Bia", null, PapelPessoaDemanda.PARTICIPANTE, null);
+        Area soEquipe = mock(Area.class);
+        when(soEquipe.getNome()).thenReturn("HTML");
+        when(semEquipeLigada.getPessoa().getArea()).thenReturn(soEquipe);
+
+        List<ParticipanteResumo> resumo = DemandaService.resumirTime(List.of(comEquipe, semEquipeLigada));
+
+        assertEquals(areaId, resumo.get(0).areaId());
+        assertEquals("Design", resumo.get(0).areaNome());
+        assertEquals(nucleoId, resumo.get(0).nucleoId());
+        assertEquals("House-CRM", resumo.get(0).nucleoNome());
+        assertEquals("COE/CRM", resumo.get(0).diretoriaNome());
+        assertEquals("HTML", resumo.get(1).areaNome());
+        assertNull(resumo.get(1).nucleoId());
     }
 
     @Test

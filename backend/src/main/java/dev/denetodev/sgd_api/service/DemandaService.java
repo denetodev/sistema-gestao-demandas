@@ -251,8 +251,17 @@ public class DemandaService {
                 .sorted(Comparator
                         .comparing((PessoaDemanda v) -> v.getPapel() != PapelPessoaDemanda.RESPONSAVEL_PRINCIPAL)
                         .thenComparing(v -> v.getPessoa().getNome(), String.CASE_INSENSITIVE_ORDER))
-                .map(v -> new ParticipanteResumo(v.getPessoa().getId(), v.getPessoa().getNome(), v.getPessoa().getFotoUrl()))
+                .map(v -> resumir(v.getPessoa()))
                 .toList();
+    }
+
+    private static ParticipanteResumo resumir(Pessoa p) {
+        Area area = p.getArea();
+        Nucleo nucleo = area == null ? null : area.getNucleo();
+        return new ParticipanteResumo(p.getId(), p.getNome(), p.getFotoUrl(),
+                area == null ? null : area.getId(), area == null ? null : area.getNome(),
+                area == null || area.getDiretoria() == null ? null : area.getDiretoria().getNome(),
+                nucleo == null ? null : nucleo.getId(), nucleo == null ? null : nucleo.getNome());
     }
 
     private DemandaResponse paraResponse(Demanda demanda, boolean podeAlterar, List<PessoaDemanda> time) {
