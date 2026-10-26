@@ -5,6 +5,7 @@ import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { TableLazyLoadEvent, TableModule } from 'primeng/table';
 import { Tag } from 'primeng/tag';
+import { Paginator, PaginatorState } from 'primeng/paginator';
 import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Avatar } from 'primeng/avatar';
@@ -17,12 +18,11 @@ import {
   Demanda,
   DemandaFiltro,
   EscopoDemanda,
-  Prioridade,
   ROTULO_PRIORIDADE,
   StatusDemanda,
 } from '../../data-access/demanda.model';
 import { ROTULO_STATUS } from '../../data-access/demanda-itens.model';
-import { separarCodigo } from '../../data-access/demanda-apresentacao';
+import { demandaAtrasada, iniciaisDe, separarCodigo, severityPrioridade, severityStatus } from '../../data-access/demanda-apresentacao';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { NucleoService } from '../../../../core/dados-mestres/nucleo/nucleo.service';
 import { AreaService } from '../../../../core/dados-mestres/area/area.service';
@@ -31,6 +31,8 @@ import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
 import { Ajuda } from '../../../../core/ajuda/ajuda/ajuda';
 import { CampoBusca } from '../../../../core/ui/campo-busca/campo-busca';
 import { OpcaoPilula, Pilulas } from '../../../../core/ui/pilulas/pilulas';
+import { DemandaQuadro } from '../demanda-quadro/demanda-quadro';
+import { AgruparPor } from '../demanda-quadro/agrupar-quadro';
 import { DemandaForm } from '../../feature-form/demanda-form/demanda-form';
 
 const STATUS_VALIDOS = Object.keys(ROTULO_STATUS) as StatusDemanda[];
@@ -39,7 +41,7 @@ const STATUS_VALIDOS = Object.keys(ROTULO_STATUS) as StatusDemanda[];
   selector: 'app-demanda-lista',
   imports: [
     Ajuda, FormsModule, TableModule, Tag, Select, Tooltip, Avatar, AvatarGroup, DatePipe, CurrencyPipe, Button, BarraPagina,
-    DemandaForm, RouterLink, Pilulas, CampoBusca,
+    DemandaForm, RouterLink, Pilulas, CampoBusca, DemandaQuadro, Paginator,
   ],
   templateUrl: './demanda-lista.html',
   styleUrl: './demanda-lista.scss',
@@ -62,6 +64,27 @@ export class DemandaLista {
 
   rotuloStatus: Record<string, string> = ROTULO_STATUS;
   rotuloPrioridade: Record<string, string> = ROTULO_PRIORIDADE;
+
+  opcoesVisao: OpcaoPilula[] = [
+    { valor: 'lista', rotulo: 'Lista' },
+    { valor: 'quadro', rotulo: 'Quadro' },
+  ];
+  opcoesAgrupar: OpcaoPilula[] = [
+    { valor: 'SITUACAO', rotulo: 'Situação' },
+    { valor: 'NUCLEO', rotulo: 'Núcleo' },
+    { valor: 'EQUIPE', rotulo: 'Equipe' },
+    { valor: 'PESSOA', rotulo: 'Pessoa' },
+  ];
+  /** O quadro mostra de uma vez o máximo que a API entrega por página. */
+  readonly #tamanhoQuadro = 100;
+  readonly #tamanhoLista = 10;
+  visao = signal<'lista' | 'quadro'>('lista');
+  agrupar = signal<AgruparPor>('SITUACAO');
+
+  iniciaisDe = iniciaisDe;
+  atrasada = demandaAtrasada;
+  severityStatus = severityStatus;
+  severityPrioridade = severityPrioridade;
 
   ehGestao = computed(() => this.auth.temPerfil('ADMIN', 'GESTOR'));
 
@@ -106,11 +129,6 @@ export class DemandaLista {
     return Math.max(0, (d.participantes ?? []).length - this.maxRostos);
   }
 
-  iniciaisDe(nome: string): string {
-    const partes = nome.trim().split(/\s+/);
-    return ((partes[0]?.[0] ?? '?') + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase();
-  }
-
   /** Todos os nomes, para o texto que aparece ao passar o mouse. */
   nomesDoTime(d: Demanda): string {
     return (d.participantes ?? []).map((p) => p.nome).join('\n');
@@ -134,6 +152,10 @@ export class DemandaLista {
     const permitidos = this.opcoesEscopo().map((o) => o.valor);
     const doUrl = p.get('escopo');
     const status = p.get('status') as StatusDemanda | null;
+    const visao = p.get('visao') === 'quadro' ? 'quadro' : 'lista';
+    const agrupar = this.opcoesAgrupar.find((o) => o.valor === p.get('agrupar'))?.valor ?? 'SITUACAO';
+    this.visao.set(visao);
+    this.agrupar.set(agrupar as AgruparPor);
     const novo = {
       escopo: (doUrl && permitidos.includes(doUrl) ? doUrl : this.#escopoPadrao()) as EscopoDemanda,
       busca: p.get('busca') ?? '',
@@ -144,12 +166,41 @@ export class DemandaLista {
     };
     const atual = this.filtro();
     const igual = (Object.keys(novo) as (keyof typeof novo)[]).every((k) => atual[k] === novo[k]);
-    if (!igual) this.filtro.update((f) => ({ ...f, ...novo, page: 0 }));
+    const tamanho = visao === 'quadro' ? this.#tamanhoQuadro : atual.size === this.#tamanhoQuadro ? this.#tamanhoLista : atual.size;
+    if (!igual || tamanho !== atual.size) this.filtro.update((f) => ({ ...f, ...novo, size: tamanho, page: igual && tamanho === atual.size ? f.page : 0 }));
+  }
+
+  mudarVisao(valor: string) {
+    this.#navegar(this.filtro(), { visao: valor === 'quadro' ? 'quadro' : 'lista' });
+  }
+
+  mudarAgrupar(valor: string) {
+    this.#navegar(this.filtro(), { agrupar: valor as AgruparPor });
+  }
+
+  abrirDemanda(d: Demanda) {
+    this.#router.navigate(['/demandas', d.id]);
+  }
+
+  /** A linha inteira abre a demanda, menos o que já tem ação própria (link, botões de editar e cancelar). */
+  aoClicarLinha(evento: Event, d: Demanda) {
+    if ((evento.target as HTMLElement).closest('a, button, .p-button')) return;
+    this.abrirDemanda(d);
+  }
+
+  aoMudarPaginaQuadro(e: PaginatorState) {
+    const page = e.page ?? 0;
+    this.filtro.update((f) => (f.page === page ? f : { ...f, page }));
   }
 
   /** Muda um ou mais filtros: vai para a URL, que por sua vez atualiza a lista. */
   mudar(parcial: Partial<Pick<DemandaFiltro, 'escopo' | 'busca' | 'status' | 'diretoriaId' | 'nucleoId' | 'areaId'>>) {
-    const f = { ...this.filtro(), ...parcial };
+    this.#navegar({ ...this.filtro(), ...parcial }, {});
+  }
+
+  #navegar(f: DemandaFiltro, visual: { visao?: 'lista' | 'quadro'; agrupar?: AgruparPor }) {
+    const visao = visual.visao ?? this.visao();
+    const agrupar = visual.agrupar ?? this.agrupar();
     this.#router.navigate([], {
       relativeTo: this.#route,
       replaceUrl: true,
@@ -160,6 +211,8 @@ export class DemandaLista {
         diretoria: f.diretoriaId || null,
         nucleo: f.nucleoId || null,
         equipe: f.areaId || null,
+        visao: visao === 'quadro' ? 'quadro' : null,
+        agrupar: visao === 'quadro' && agrupar !== 'SITUACAO' ? agrupar : null,
       },
     });
   }
@@ -170,40 +223,6 @@ export class DemandaLista {
 
   apresentar(d: Demanda) {
     return separarCodigo(d.titulo, d.codigo);
-  }
-
-  /** Prazo vencido numa demanda que ainda está em aberto. */
-  atrasada(d: Demanda): boolean {
-    if (!d.dataPrazo || d.status === 'CONCLUIDA' || d.status === 'CANCELADA') return false;
-    return new Date(d.dataPrazo + 'T23:59:59') < new Date();
-  }
-
-  severityStatus(status: StatusDemanda) {
-    switch (status) {
-      case 'CONCLUIDA':
-        return 'success';
-      case 'EM_ANDAMENTO':
-        return 'info';
-      case 'EM_APROVACAO':
-        return 'warn';
-      case 'CANCELADA':
-        return 'danger';
-      default:
-        return 'secondary'; // NAO_INICIADA
-    }
-  }
-
-  severityPrioridade(prioridade: Prioridade) {
-    switch (prioridade) {
-      case 'URGENTE':
-        return 'danger';
-      case 'ALTA':
-        return 'warn';
-      case 'NORMAL':
-        return 'info';
-      default:
-        return 'secondary'; // BAIXA
-    }
   }
 
   abrirNovo() {

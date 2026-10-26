@@ -14,6 +14,14 @@
       <app-pilulas descricao="O que mostrar na lista" [opcoes]="opcoesEscopo()" [valor]="filtro().escopo"
         (valorChange)="mudar({ escopo: $any($event) })" />
 
+      <div class="filtros__visao">
+        <app-pilulas descricao="Como ver as demandas" [opcoes]="opcoesVisao" [valor]="visao()" (valorChange)="mudarVisao($event)" />
+        @if (visao() === 'quadro') {
+          <span class="filtros__agrupar">Agrupar por</span>
+          <app-pilulas descricao="Como agrupar o quadro" [opcoes]="opcoesAgrupar" [valor]="agrupar()" (valorChange)="mudarAgrupar($event)" />
+        }
+      </div>
+
       <div class="filtros__linha">
         <app-campo-busca class="filtros__busca" placeholder="Buscar por título ou código..." descricao="Buscar demandas"
           [valor]="filtro().busca" (valorChange)="mudar({ busca: $event })" />
@@ -41,6 +49,13 @@
       </div>
     </div>
 
+    @if (visao() === 'quadro') {
+      <app-demanda-quadro [demandas]="demandas.value()?.content ?? []" [agruparPor]="agrupar()" [carregando]="demandas.isLoading()"
+        (abrir)="abrirDemanda($event)" />
+      <p-paginator [rows]="filtro().size" [first]="filtro().page * filtro().size" [totalRecords]="demandas.value()?.totalElements ?? 0"
+        [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} demandas"
+        [alwaysShow]="false" (onPageChange)="aoMudarPaginaQuadro($event)" />
+    } @else {
     <div class="tabela-rolagem">
       <p-table
         [value]="demandas.value()?.content ?? []"
@@ -74,7 +89,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-demanda>
           @let t = apresentar(demanda);
-          <tr>
+          <tr class="linha-clicavel" (click)="aoClicarLinha($event, demanda)">
             <td class="col-titulo">
               <a [routerLink]="['/demandas', demanda.id]" class="titulo-link">
                 @if (t.codigo) {
@@ -149,6 +164,7 @@
         </ng-template>
       </p-table>
     </div>
+    }
   </section>
 </div>
 

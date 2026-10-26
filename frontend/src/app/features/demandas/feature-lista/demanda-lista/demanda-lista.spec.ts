@@ -51,4 +51,23 @@ describe('DemandaLista', () => {
       expect(fixture.componentInstance.restantes({} as never)).toBe(0);
     });
   });
+
+  describe('linha clicável', () => {
+    const alvo = (html: string) => {
+      const el = document.createElement('div');
+      el.innerHTML = html;
+      return el.firstElementChild as HTMLElement;
+    };
+
+    it('clicar na linha abre a demanda, mas clicar num botão ou link da linha não', () => {
+      const abrir = spyOn(fixture.componentInstance, 'abrirDemanda');
+      const demanda = { id: 'd1' } as never;
+      fixture.componentInstance.aoClicarLinha({ target: alvo('<span>texto</span>') } as unknown as Event, demanda);
+      expect(abrir).toHaveBeenCalledTimes(1);
+      const botao = alvo('<button><i></i></button>');
+      fixture.componentInstance.aoClicarLinha({ target: botao.firstElementChild } as unknown as Event, demanda);
+      fixture.componentInstance.aoClicarLinha({ target: alvo('<a href="#">x</a>') } as unknown as Event, demanda);
+      expect(abrir).toHaveBeenCalledTimes(1);
+    });
+  });
 });

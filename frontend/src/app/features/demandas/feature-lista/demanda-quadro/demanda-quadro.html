@@ -1,0 +1,58 @@
+<div class="quadro" [class.quadro--carregando]="carregando()">
+  @for (c of colunas(); track c.chave) {
+    <section class="coluna" [attr.aria-label]="c.rotulo + ', ' + c.cards.length + ' demandas'">
+      <header class="coluna__topo">
+        @if (agruparPor() === 'PESSOA' && c.chave !== '__sem__') {
+          @if (c.fotoUrl) {
+            <p-avatar [image]="c.fotoUrl" shape="circle" size="normal" />
+          } @else {
+            <p-avatar [label]="iniciaisDe(c.rotulo)" shape="circle" size="normal" class="avatar-iniciais" />
+          }
+        }
+        <h3>{{ c.rotulo }}@if (c.detalhe) { <small>{{ c.detalhe }}</small> }</h3>
+        <span class="coluna__total">{{ c.cards.length }}</span>
+      </header>
+
+      <div class="coluna__cards">
+        @for (d of c.cards; track d.id) {
+          @let t = apresentar(d);
+          <article class="card" tabindex="0" role="link" (click)="abrir.emit(d)" (keydown.enter)="tecla($event, d)"
+            (keydown.space)="tecla($event, d)" [class.card--atrasada]="atrasada(d)">
+            @if (t.codigo) { <span class="codigo-chip">{{ t.codigo }}</span> }
+            <strong class="card__titulo">{{ t.titulo }}</strong>
+            @if (d.campanhaNome) { <span class="card__sub"><i class="pi pi-megaphone"></i> {{ d.campanhaNome }}</span> }
+            <div class="card__etiquetas">
+              @if (agruparPor() !== 'SITUACAO') {
+                <p-tag [value]="rotuloStatus[d.status]" [severity]="severityStatus(d.status)" />
+              }
+              <p-tag [value]="rotuloPrioridade[d.prioridade]" [severity]="severityPrioridade(d.prioridade)" />
+            </div>
+            <div class="card__rodape">
+              <span class="card__prazo" [class.atrasada]="atrasada(d)">
+                @if (d.dataPrazo) {
+                  <i class="pi pi-calendar"></i> {{ d.dataPrazo | date: 'dd/MM' }}{{ atrasada(d) ? ' · atrasada' : '' }}
+                } @else {
+                  {{ d.valorCalculado | currency: 'BRL' : 'symbol' : '1.0-0' : 'pt-BR' }}
+                }
+              </span>
+              <span class="card__time">
+                @for (p of rostos(d); track p.pessoaId) {
+                  @if (p.fotoUrl) {
+                    <p-avatar [image]="p.fotoUrl" shape="circle" size="normal" [attr.aria-label]="p.nome" [title]="p.nome" />
+                  } @else {
+                    <p-avatar [label]="iniciaisDe(p.nome)" shape="circle" size="normal" class="avatar-iniciais" [title]="p.nome" />
+                  }
+                }
+                @if (restantes(d) > 0) { <p-avatar [label]="'+' + restantes(d)" shape="circle" size="normal" class="avatar-mais" /> }
+              </span>
+            </div>
+          </article>
+        } @empty {
+          <p class="coluna__vazia">Nenhuma demanda</p>
+        }
+      </div>
+    </section>
+  } @empty {
+    <p class="quadro__vazio">Nenhuma demanda para mostrar.</p>
+  }
+</div>
