@@ -453,7 +453,7 @@ public class PessoaService {
         Pessoa aprovadoPor = pessoa.getAprovadoPor();
         Area referenciaArea = pessoa.getReferenciaArea();
         return new PessoaResponse(
-                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), pessoa.getChaveC(), pessoa.getEmail(), pessoa.getFotoUrl(),
+                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), pessoa.getNomeExibido(), pessoa.getChaveC(), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
                 pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getId() : null,
                 pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getNome() : null,
@@ -465,7 +465,7 @@ public class PessoaService {
                 referenciaArea != null ? referenciaArea.getNome() : null,
                 pessoa.getAuthUserId(),
                 aprovadoPor != null ? aprovadoPor.getId() : null,
-                aprovadoPor != null ? aprovadoPor.getNome() : null,
+                aprovadoPor != null ? aprovadoPor.getNomeExibido() : null,
                 pessoa.getAprovadoEm(),
                 pessoa.getCreatedAt(), pessoa.getUpdatedAt(),
                 pessoa.getVinculoSugerido() != null,

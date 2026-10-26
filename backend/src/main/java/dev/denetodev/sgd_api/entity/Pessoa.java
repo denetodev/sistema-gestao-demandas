@@ -96,6 +96,11 @@ public class Pessoa {
     public String getNome() { return nome; }
     public void setNome(String nome) { this.nome = nome; }
     public String getNomeExibicao() { return nomeExibicao; }
+
+    /** Como a pessoa quer ser chamada; sem isso, o nome completo. É o que os outros veem na tela. */
+    public String getNomeExibido() {
+        return nomeExibicao != null && !nomeExibicao.isBlank() ? nomeExibicao.trim() : nome;
+    }
     public void setNomeExibicao(String nomeExibicao) { this.nomeExibicao = nomeExibicao; }
 
     public String getChaveC() { return chaveC; }

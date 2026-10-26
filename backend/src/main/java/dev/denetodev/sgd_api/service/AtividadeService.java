@@ -155,7 +155,7 @@ public class AtividadeService {
                 demanda != null ? demanda.getTitulo() : null,
                 a.getTipoAtividade().getId(), a.getTipoAtividade().getNome(),
                 pessoa != null ? pessoa.getId() : null,
-                pessoa != null ? pessoa.getNome() : null,
+                pessoa != null ? pessoa.getNomeExibido() : null,
                 a.getDescricao(), a.getDataRealizacao(),
                 a.getCreatedAt(), a.getUpdatedAt()
         );

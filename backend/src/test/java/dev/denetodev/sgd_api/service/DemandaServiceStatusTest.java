@@ -108,6 +108,7 @@ class DemandaServiceStatusTest {
     void historicoTraduzOsRegistrosComONomeDeQuemMudou() {
         Pessoa ana = pessoa(PerfilPessoa.PROFISSIONAL);
         when(ana.getNome()).thenReturn("Ana");
+        when(ana.getNomeExibido()).thenReturn("Ana");
         Auditoria registro = mock(Auditoria.class);
         when(registro.getCreatedAt()).thenReturn(OffsetDateTime.parse("2026-10-05T12:00:00Z"));
         when(registro.getValorAnterior()).thenReturn("NAO_INICIADA");

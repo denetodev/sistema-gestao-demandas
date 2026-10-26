@@ -144,7 +144,7 @@ public class PecaService {
                 p.getNome(), p.getDescricao(),
                 p.getQuantidade(), p.getValorUnitario(), p.getValorTotal(),
                 pessoa != null ? pessoa.getId() : null,
-                pessoa != null ? pessoa.getNome() : null,
+                pessoa != null ? pessoa.getNomeExibido() : null,
                 p.getDataEntrega(),
                 p.getCreatedAt(), p.getUpdatedAt()
         );

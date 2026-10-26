@@ -221,9 +221,9 @@ public class DashboardService {
                 : List.of();
         List<LinhaPessoa> linhasPessoa = porPessoa
                 ? alvo.stream()
-                        .sorted(Comparator.comparing(Pessoa::getNome, String.CASE_INSENSITIVE_ORDER))
+                        .sorted(Comparator.comparing(Pessoa::getNomeExibido, String.CASE_INSENSITIVE_ORDER))
                         .map(p -> new LinhaPessoa(
-                                p.getId(), p.getNome(), nomeArea(p), nomeDiretoriaDe(p),
+                                p.getId(), p.getNomeExibido(), nomeArea(p), nomeDiretoriaDe(p),
                                 ativas(demandasPorPessoa.get(p.getId())).count(),
                                 atividadesMesPorPessoa.getOrDefault(p.getId(), 0L),
                                 valorMesPorPessoa.getOrDefault(p.getId(), BigDecimal.ZERO)))

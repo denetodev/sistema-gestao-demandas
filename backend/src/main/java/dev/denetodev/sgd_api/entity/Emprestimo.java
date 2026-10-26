@@ -138,6 +138,11 @@ public class Emprestimo {
     public String getRetiranteContato() { return retiranteContato; }
     public void setRetiranteContato(String v) { this.retiranteContato = v; }
     public Pessoa getRetirantePessoa() { return retirantePessoa; }
+
+    /** Quem retirou, como aparece na tela: o nome de exibição da pessoa cadastrada ou, se foi digitado, o nome do registro. */
+    public String getRetiranteNomeExibido() {
+        return retirantePessoa != null ? retirantePessoa.getNomeExibido() : retiranteNome;
+    }
     public void setRetirantePessoa(Pessoa v) { this.retirantePessoa = v; }
     public String getFinalidade() { return finalidade; }
     public void setFinalidade(String v) { this.finalidade = v; }

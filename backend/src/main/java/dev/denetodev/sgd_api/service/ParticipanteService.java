@@ -176,7 +176,7 @@ public class ParticipanteService {
         return new ParticipanteResponse(
                 vinculo.getId(),
                 vinculo.getPessoa().getId(),
-                vinculo.getPessoa().getNome(),
+                vinculo.getPessoa().getNomeExibido(),
                 vinculo.getPessoa().getArea() != null ? vinculo.getPessoa().getArea().getNome() : null,
                 vinculo.getPessoa().getArea() != null && vinculo.getPessoa().getArea().getNucleo() != null
                         ? vinculo.getPessoa().getArea().getNucleo().getNome() : null,

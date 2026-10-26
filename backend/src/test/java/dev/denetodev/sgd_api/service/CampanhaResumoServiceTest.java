@@ -58,6 +58,7 @@ class CampanhaResumoServiceTest {
         when(p.getId()).thenReturn(UUID.randomUUID());
         when(p.getNome()).thenReturn(nome);
         when(p.getNomeExibicao()).thenReturn(null);
+        when(p.getNomeExibido()).thenReturn(nome);
         return p;
     }
 
