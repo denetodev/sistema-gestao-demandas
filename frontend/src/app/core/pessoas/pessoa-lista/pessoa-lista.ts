@@ -109,7 +109,7 @@ export class PessoaLista {
 
   filtrados = computed(() =>
     [...(this.pessoas.value() ?? [])]
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+      .sort((a, b) => a.nomeExibido.localeCompare(b.nomeExibido, 'pt-BR'))
       .filter((p) => {
         const aguardando = p.aprovadoEm === null && p.status !== 'REJEITADO';
         const situacao = this.situacaoFiltro();

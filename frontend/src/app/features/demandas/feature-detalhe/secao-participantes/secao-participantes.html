@@ -39,7 +39,7 @@
 <p-dialog [(visible)]="dialogAberto" header="Adicionar participante" [modal]="true" [style]="{ width: '420px' }">
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
     <label for="pessoa">Pessoa</label>
-    <p-select inputId="pessoa" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nome"
+    <p-select inputId="pessoa" formControlName="pessoaId" [options]="opcoesPessoa()" optionLabel="nomeExibido"
               optionValue="id" [filter]="true" placeholder="Selecione" appendTo="body" />
     <label for="papel">Papel</label>
     <p-select inputId="papel" formControlName="papel" [options]="opcoesPapel" optionLabel="label"

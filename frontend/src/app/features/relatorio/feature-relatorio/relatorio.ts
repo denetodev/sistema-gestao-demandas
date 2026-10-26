@@ -55,7 +55,7 @@ export class RelatorioMensal {
     const profissionais = (this.#service.pessoas.value() ?? [])
       .filter((p) => p.status === 'ATIVO' && p.aprovadoEm && p.perfil === 'PROFISSIONAL' && p.id !== eu?.id)
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-      .map((p) => ({ id: p.id as string | null, nome: p.nome }));
+      .map((p) => ({ id: p.id as string | null, nome: p.nomeExibido }));
     return [{ id: null as string | null, nome: `${eu?.nome ?? 'Eu'} (meu relatório)` }, ...profissionais];
   });
 

@@ -410,6 +410,9 @@ const FOTO_DE_EXEMPLO =
   'data:image/svg+xml;utf8,' +
   encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0ea5e9"/><circle cx="50" cy="38" r="18" fill="#fff"/><path d="M14 100c4-26 20-38 36-38s32 12 36 38z" fill="#fff"/></svg>');
 
+// o backend manda o nome de exibição pronto (o que a pessoa escolheu ou, sem escolha, o nome completo)
+for (const p of dados['/pessoas'] as any[]) p.nomeExibido = p.nomeExibicao || p.nome;
+
 export const mockInterceptor: HttpInterceptorFn = (req, next) => {
   const detalhe = mockDemanda(req, {
     demandas: TODAS_DEMANDAS,

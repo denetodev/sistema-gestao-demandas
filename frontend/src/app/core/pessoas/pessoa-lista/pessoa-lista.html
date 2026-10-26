@@ -45,7 +45,7 @@
             </ng-template>
             <ng-template pTemplate="body" let-pessoa>
                 <tr>
-                    <td>{{ pessoa.nome }}</td>
+                    <td>{{ pessoa.nomeExibido }}@if (pessoa.nomeExibido !== pessoa.nome) { <span class="sub">{{ pessoa.nome }}</span> }</td>
                     <td>{{ pessoa.email ?? '—' }}</td>
                     <td>{{ pessoa.areaNome ?? '—' }}
                     @if (pessoa.diretoriaNome) { <span class="sub">{{ pessoa.diretoriaNome }}</span> }
