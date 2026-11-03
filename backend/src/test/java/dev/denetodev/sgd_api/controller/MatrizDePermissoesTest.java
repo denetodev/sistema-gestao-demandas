@@ -82,6 +82,8 @@ class MatrizDePermissoesTest {
     @MockitoBean DiretoriaService diretoriaService;
     @MockitoBean NucleoService nucleoService;
     @MockitoBean NotificacaoService notificacaoService;
+    @MockitoBean PlannerSugestaoService plannerSugestaoService;
+    @MockitoBean PlannerSyncService plannerSyncService;
     @MockitoBean PessoaFotoService pessoaFotoService;
     @MockitoBean EvidenciaService evidenciaService;
     @MockitoBean ParticipanteService participanteService;
@@ -185,6 +187,13 @@ class MatrizDePermissoesTest {
         // sininho: os avisos da própria pessoa, para todo vinculado (inclusive Visualizador)
         c.add(new Caso(G, "/notificacoes", TODOS_VINCULADOS));
         c.add(new Caso(P, "/notificacoes/vistas", TODOS_VINCULADOS));
+        // Planner: ver as próprias sugestões é de todo vinculado; decidir, só de quem escreve (o serviço confere que a
+        // sugestão é da própria pessoa); buscar agora e definir a etiqueta de alguém, só a gestão
+        c.add(new Caso(G, "/planner/sugestoes", TODOS_VINCULADOS));
+        c.add(new Caso(P, "/planner/sugestoes/" + ID + "/aceitar", QUEM_ESCREVE));
+        c.add(new Caso(P, "/planner/sugestoes/" + ID + "/recusar", QUEM_ESCREVE));
+        c.add(new Caso(P, "/planner/sincronizar", GESTAO));
+        c.add(new Caso(U, "/planner/pessoas/" + ID + "/etiqueta", GESTAO));
         // a própria foto de perfil: todo vinculado, inclusive Visualizador (como o PUT /pessoas/me)
         c.add(new Caso(P, "/pessoas/me/foto", TODOS_VINCULADOS));
         c.add(new Caso(D, "/pessoas/me/foto", TODOS_VINCULADOS));

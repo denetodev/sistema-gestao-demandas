@@ -6,7 +6,9 @@ import dev.denetodev.sgd_api.dto.response.NotificacaoResponse.Tipo;
 import dev.denetodev.sgd_api.dto.response.ResumoEmprestimosResponse;
 import dev.denetodev.sgd_api.entity.*;
 import dev.denetodev.sgd_api.repository.PessoaDemandaRepository;
+import dev.denetodev.sgd_api.entity.PlannerSugestao;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
+import dev.denetodev.sgd_api.repository.PlannerSugestaoRepository;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,7 @@ class NotificacaoServiceTest {
     private PessoaRepository pessoaRepository;
     private PessoaDemandaRepository pessoaDemandaRepository;
     private EmprestimoService emprestimoService;
+    private PlannerSugestaoRepository plannerSugestaoRepository;
     private CurrentPessoaResolver resolver;
     private NotificacaoService service;
     private final Jwt jwt = mock(Jwt.class);
@@ -42,9 +45,10 @@ class NotificacaoServiceTest {
         pessoaRepository = mock(PessoaRepository.class);
         pessoaDemandaRepository = mock(PessoaDemandaRepository.class);
         emprestimoService = mock(EmprestimoService.class);
+        plannerSugestaoRepository = mock(PlannerSugestaoRepository.class);
         resolver = mock(CurrentPessoaResolver.class);
         service = new NotificacaoService(resolver, pessoaRepository, pessoaDemandaRepository, emprestimoService,
-                Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC));
+                plannerSugestaoRepository, Clock.fixed(Instant.parse("2026-10-18T12:00:00Z"), ZoneOffset.UTC));
         area = mock(Area.class);
         when(pessoaRepository.findByAprovadoEmIsNullAndStatus(StatusPessoa.ATIVO)).thenReturn(List.of());
         when(emprestimoService.contar()).thenReturn(new ResumoEmprestimosResponse(0, 0, 0));
@@ -77,6 +81,30 @@ class NotificacaoServiceTest {
 
     private static <T> T eq(T valor) {
         return org.mockito.ArgumentMatchers.eq(valor);
+    }
+
+    @Test
+    void quemFoiMarcadoNoPlannerVeAsSugestoesPendentes() {
+        Pessoa ana = mock(Pessoa.class);
+        when(ana.getId()).thenReturn(java.util.UUID.randomUUID());
+        when(ana.getPerfil()).thenReturn(PerfilPessoa.PROFISSIONAL);
+        when(plannerSugestaoRepository.countByPessoaIdAndStatus(ana.getId(), PlannerSugestao.Status.PENDENTE)).thenReturn(2L);
+
+        var resposta = service.listar(ana);
+
+        var item = resposta.itens().stream().filter(i -> i.tipo() == NotificacaoResponse.Tipo.SUGESTOES_PLANNER).findFirst().orElseThrow();
+        assertEquals(2, item.quantidade());
+        assertEquals("/planner", item.link());
+        assertFalse(item.lida());
+    }
+
+    @Test
+    void semSugestaoDoPlannerNaoHaAviso() {
+        Pessoa ana = mock(Pessoa.class);
+        when(ana.getId()).thenReturn(java.util.UUID.randomUUID());
+        when(ana.getPerfil()).thenReturn(PerfilPessoa.PROFISSIONAL);
+
+        assertTrue(service.listar(ana).itens().stream().noneMatch(i -> i.tipo() == NotificacaoResponse.Tipo.SUGESTOES_PLANNER));
     }
 
     @Test

@@ -9,7 +9,9 @@ import dev.denetodev.sgd_api.entity.Pessoa;
 import dev.denetodev.sgd_api.entity.PessoaDemanda;
 import dev.denetodev.sgd_api.entity.StatusPessoa;
 import dev.denetodev.sgd_api.repository.PessoaDemandaRepository;
+import dev.denetodev.sgd_api.entity.PlannerSugestao;
 import dev.denetodev.sgd_api.repository.PessoaRepository;
+import dev.denetodev.sgd_api.repository.PlannerSugestaoRepository;
 import dev.denetodev.sgd_api.security.CurrentPessoaResolver;
 import dev.denetodev.sgd_api.service.support.EquipamentoPermissao;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -37,15 +39,17 @@ public class NotificacaoService {
     private final PessoaRepository pessoaRepository;
     private final PessoaDemandaRepository pessoaDemandaRepository;
     private final EmprestimoService emprestimoService;
+    private final PlannerSugestaoRepository plannerSugestaoRepository;
     private final Clock clock;
 
     public NotificacaoService(CurrentPessoaResolver currentPessoaResolver, PessoaRepository pessoaRepository,
                               PessoaDemandaRepository pessoaDemandaRepository, EmprestimoService emprestimoService,
-                              Clock clock) {
+                              PlannerSugestaoRepository plannerSugestaoRepository, Clock clock) {
         this.currentPessoaResolver = currentPessoaResolver;
         this.pessoaRepository = pessoaRepository;
         this.pessoaDemandaRepository = pessoaDemandaRepository;
         this.emprestimoService = emprestimoService;
+        this.plannerSugestaoRepository = plannerSugestaoRepository;
         this.clock = clock;
     }
 
@@ -64,6 +68,13 @@ public class NotificacaoService {
                         plural(pendentes, "cadastro aguarda", "cadastros aguardam") + " a sua decisão.",
                         "/pessoas", pendentes, false, null));
             }
+        }
+
+        long sugestoes = plannerSugestaoRepository.countByPessoaIdAndStatus(usuario.getId(), PlannerSugestao.Status.PENDENTE);
+        if (sugestoes > 0) {
+            itens.add(new Item("planner-sugestoes", Tipo.SUGESTOES_PLANNER, "Tarefas do Planner para você",
+                    plural(sugestoes, "tarefa te marcou", "tarefas te marcaram") + " no Planner. Aceite para entrar no sistema.",
+                    "/planner", sugestoes, false, null));
         }
 
         if (EquipamentoPermissao.opera(usuario)) {

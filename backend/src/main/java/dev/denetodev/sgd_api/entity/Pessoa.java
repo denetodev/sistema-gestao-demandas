@@ -20,6 +20,10 @@ public class Pessoa {
     @Column(name = "nome_exibicao", length = 80)
     private String nomeExibicao;
 
+    /** Texto exato da etiqueta da pessoa no plano do Planner (ex.: "CRIATIVO - Thais"); liga a tarefa à pessoa. */
+    @Column(name = "etiqueta_planner", length = 80)
+    private String etiquetaPlanner;
+
     /** Chave C (matrícula): C ou F + 7 dígitos, maiúscula, única. */
     @Column(name = "chave_c", length = 8)
     private String chaveC;
@@ -102,6 +106,8 @@ public class Pessoa {
         return nomeExibicao != null && !nomeExibicao.isBlank() ? nomeExibicao.trim() : nome;
     }
     public void setNomeExibicao(String nomeExibicao) { this.nomeExibicao = nomeExibicao; }
+    public String getEtiquetaPlanner() { return etiquetaPlanner; }
+    public void setEtiquetaPlanner(String etiquetaPlanner) { this.etiquetaPlanner = etiquetaPlanner; }
 
     public String getChaveC() { return chaveC; }
     public void setChaveC(String chaveC) { this.chaveC = chaveC; }
