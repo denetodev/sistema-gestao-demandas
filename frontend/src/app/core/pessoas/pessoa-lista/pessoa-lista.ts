@@ -22,6 +22,7 @@ import { candidatosAVinculo } from '../candidatos-vinculo';
 import type { Pessoa, StatusPessoa, VinculoSugerido } from '../../../core/pessoas/pessoa.model';
 import type { Perfil } from '../../../core/auth/auth.model';
 import { EquipamentoService } from '../../equipamentos/equipamento.service';
+import { PlannerService } from '../../planner/planner.service';
 import { ROTULO_PAPEL } from '../../equipamentos/equipamento-apresentacao';
 import type { PapelEquipamentos } from '../../equipamentos/equipamento.model';
 import { CampoBusca } from '../../ui/campo-busca/campo-busca';
@@ -47,6 +48,7 @@ export class PessoaLista {
   #messageService = inject(MessageService);
   #cargoService = inject(CargoService);
   #equipamentoService = inject(EquipamentoService);
+  #planner = inject(PlannerService);
 
   opcoesPapel = (Object.keys(ROTULO_PAPEL) as PapelEquipamentos[]).map((p) => ({ label: ROTULO_PAPEL[p], value: p }));
 
@@ -283,6 +285,7 @@ export class PessoaLista {
         perfil: pessoa.perfil,
         referenciaAreaId: pessoa.referenciaAreaId,
         papelEquipamentos: pessoa.papelEquipamentos ?? null,
+        etiquetaPlanner: pessoa.etiquetaPlanner ?? '',
       });
       this.dialogEdicao.set(true);
     }
@@ -307,6 +310,9 @@ export class PessoaLista {
       }));
       if ((v.papelEquipamentos ?? null) !== (pessoa.papelEquipamentos ?? null)) {
         await firstValueFrom(this.#equipamentoService.definirPapel(pessoa.id, v.papelEquipamentos));
+      }
+      if (v.etiquetaPlanner.trim() !== (pessoa.etiquetaPlanner ?? '')) {
+        await firstValueFrom(this.#planner.definirEtiqueta(pessoa.id, v.etiquetaPlanner));
       }
       this.dialogEdicao.set(false);
       this.pessoas.reload();
@@ -393,6 +399,7 @@ export class PessoaLista {
     perfil: this.#fb.control<Perfil | null>(null),
     referenciaAreaId: this.#fb.control<string | null>(null),
     papelEquipamentos: this.#fb.control<PapelEquipamentos | null>(null),
+    etiquetaPlanner: ['', Validators.maxLength(80)],
   });
 
   mascararChaveC() {

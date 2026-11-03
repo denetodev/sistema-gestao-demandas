@@ -1,0 +1,66 @@
+<app-barra-pagina titulo="Planner" subtitulo="Tarefas do Planner em que você foi marcado(a). Aceite para elas entrarem no sistema, sem digitar nada.">
+  <ng-container fim>
+    @if (ehGestao()) {
+      <p-button icon="pi pi-sync" label="Buscar agora" severity="secondary" [outlined]="true" [loading]="buscando()"
+        (onClick)="buscarAgora()" />
+    }
+  </ng-container>
+</app-barra-pagina>
+
+<div class="pagina-corpo">
+  @if (resultado(); as r) {
+    <section class="cartao resultado" role="status">
+      <strong>Busca feita no Planner.</strong>
+      {{ r.tarefasLidas }} tarefas lidas, {{ r.tarefasNaJanela }} abertas e recentes, {{ r.sugestoesNovas }}
+      {{ r.sugestoesNovas === 1 ? 'sugestão nova' : 'sugestões novas' }}.
+      @if (r.etiquetasSemCadastro.length) {
+        <p class="resultado__aviso">
+          Etiquetas sem pessoa no sistema: <strong>{{ r.etiquetasSemCadastro.join(', ') }}</strong>.
+          Preencha a etiqueta na tela de Pessoas para elas passarem a gerar sugestões.
+        </p>
+      }
+    </section>
+  }
+
+  @if (sugestoes.isLoading() && !sugestoes.value()) {
+    <p class="carregando">Carregando...</p>
+  } @else {
+    <div class="lista">
+      @for (s of sugestoes.value() ?? []; track s.id) {
+        @let t = apresentar(s);
+        <article class="sugestao">
+          <div class="sugestao__corpo">
+            <div class="sugestao__topo">
+              @if (t.codigo) { <span class="codigo-chip">{{ t.codigo }}</span> }
+              <strong class="sugestao__titulo">{{ t.titulo }}</strong>
+            </div>
+            <div class="sugestao__meta">
+              <p-tag [value]="s.etiqueta" severity="secondary" />
+              @if (s.bucket) { <span><i class="pi pi-th-large"></i> {{ s.bucket }}</span> }
+              @if (s.criadaNoPlanner) { <span><i class="pi pi-calendar"></i> criada em {{ s.criadaNoPlanner | date: 'dd/MM/yyyy' }}</span> }
+            </div>
+            <p class="sugestao__efeito">
+              @if (s.demandaExistenteId) {
+                <i class="pi pi-link"></i> Essa demanda já está no sistema. Aceitar coloca você no time dela.
+              } @else {
+                <i class="pi pi-plus-circle"></i> Aceitar cria a demanda no sistema e coloca você nela como responsável.
+              }
+            </p>
+          </div>
+          <div class="sugestao__acoes">
+            <p-button label="Aceitar" icon="pi pi-check" [loading]="ocupada() === s.id" [disabled]="ocupada() !== null && ocupada() !== s.id"
+              (onClick)="aceitar(s)" />
+            <p-button label="Não é minha" icon="pi pi-times" severity="secondary" [outlined]="true" [disabled]="ocupada() !== null"
+              (onClick)="confirmarRecusa(s)" />
+          </div>
+        </article>
+      } @empty {
+        <section class="cartao vazio">
+          <i class="pi pi-check-circle" aria-hidden="true"></i>
+          <strong>Nada esperando você</strong>
+          Quando a sua etiqueta for colocada numa tarefa do Planner, ela aparece aqui e no sininho.
+        </section>
+      }
+    </div>
+  }
+</div>

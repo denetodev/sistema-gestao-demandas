@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 import { Popover } from 'primeng/popover';
 import { environment } from '../../../../environments/environment';
 
-export type TipoNotificacao = 'CADASTROS_PENDENTES' | 'EMPRESTIMOS_AGUARDANDO' | 'EMPRESTIMOS_ATRASADOS' | 'ADICIONADO_EM_DEMANDA';
+export type TipoNotificacao = 'CADASTROS_PENDENTES' | 'EMPRESTIMOS_AGUARDANDO' | 'EMPRESTIMOS_ATRASADOS' | 'ADICIONADO_EM_DEMANDA' | 'SUGESTOES_PLANNER';
 
 export interface Notificacao {
   id: string;
@@ -29,6 +29,7 @@ const ICONE: Record<TipoNotificacao, string> = {
   EMPRESTIMOS_AGUARDANDO: 'pi-inbox',
   EMPRESTIMOS_ATRASADOS: 'pi-exclamation-triangle',
   ADICIONADO_EM_DEMANDA: 'pi-briefcase',
+  SUGESTOES_PLANNER: 'pi-sync',
 };
 
 /** De quanto em quanto tempo o sininho pergunta se há aviso novo (e também ao voltar para a aba). */

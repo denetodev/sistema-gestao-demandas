@@ -85,5 +85,6 @@ describe('Sino (avisos do topo)', () => {
     expect(sino.icone('EMPRESTIMOS_AGUARDANDO')).toBe('pi-inbox');
     expect(sino.icone('EMPRESTIMOS_ATRASADOS')).toBe('pi-exclamation-triangle');
     expect(sino.icone('ADICIONADO_EM_DEMANDA')).toBe('pi-briefcase');
+    expect(sino.icone('SUGESTOES_PLANNER')).toBe('pi-sync');
   });
 });

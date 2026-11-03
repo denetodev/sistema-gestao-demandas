@@ -35,6 +35,12 @@
         <i class="pi pi-briefcase"></i><span class="app-nav__rotulo">Demandas</span>
       </a>
       @if (auth.podeEditar()) {
+      <a routerLink="/planner" routerLinkActive="ativo" class="app-nav__item" title="Planner">
+        <i class="pi pi-sync"></i><span class="app-nav__rotulo">Planner</span>
+        @if (plannerPendentes() > 0) {
+        <span class="app-nav__selo" [attr.aria-label]="plannerPendentes() + ' tarefa(s) do Planner esperando você'">{{ plannerPendentes() }}</span>
+        }
+      </a>
       <a routerLink="/relatorio" routerLinkActive="ativo" class="app-nav__item" title="Relatório mensal">
         <i class="pi pi-file-edit"></i><span class="app-nav__rotulo">Relatório mensal</span>
       </a>

@@ -7,6 +7,8 @@ export interface Pessoa {
   id: string;
   nome: string;
   nomeExibicao: string | null;
+  /** Texto exato da etiqueta da pessoa no plano do Planner (ex.: "CRIATIVO - Thais"). */
+  etiquetaPlanner?: string | null;
   /** Como a pessoa quer ser chamada (ou o nome completo, se não escolheu): é o que aparece para os outros. */
   nomeExibido: string;
   /** Chave C (matrícula), ex.: C1349864. */
