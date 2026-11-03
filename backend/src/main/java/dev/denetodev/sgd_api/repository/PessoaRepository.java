@@ -23,4 +23,9 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
     boolean existsByCargoIdAndStatus(UUID cargoId, StatusPessoa status);
 
     List<Pessoa> findByAprovadoEmIsNullAndStatus(StatusPessoa status);
+
+    /** Quem tem etiqueta no Planner: é com essas pessoas que as etiquetas das tarefas são comparadas. */
+    List<Pessoa> findByEtiquetaPlannerIsNotNull();
+
+    boolean existsByEtiquetaPlannerIgnoreCaseAndIdNot(String etiquetaPlanner, UUID id);
 }

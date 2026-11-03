@@ -3,6 +3,7 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { AuthService } from '../../auth/auth.service';
 import { ThemeService } from '../../theme/theme.service';
 import { PendenciasEquipamentos } from '../../equipamentos/pendencias-equipamentos';
+import { PlannerService } from '../../planner/planner.service';
 import { Menu } from 'primeng/menu';
 import { Sino } from '../../notificacoes/sino/sino';
 import { ContaPendente } from '../../../features/acesso/conta-pendente/conta-pendente';
@@ -29,6 +30,9 @@ export class AppShell {
   auth = inject(AuthService);
   tema = inject(ThemeService);
   pendencias = inject(PendenciasEquipamentos);
+  #planner = inject(PlannerService);
+  /** Quantas tarefas do Planner esperam a decisão da pessoa (o selo do menu). */
+  plannerPendentes = computed(() => this.#planner.sugestoes.value()?.length ?? 0);
   #router = inject(Router);
 
   /** No computador o menu recolhe para só os ícones; a escolha fica guardada neste navegador. */

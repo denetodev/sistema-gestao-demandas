@@ -354,6 +354,23 @@ public class PessoaService {
         return paraResponse(alvo);
     }
 
+    /**
+     * Define (ou limpa, se vier vazio) o texto da etiqueta da pessoa no plano do Planner. Só Gestor e Admin, pela
+     * barreira do SecurityConfig. Duas pessoas não podem ter a mesma etiqueta.
+     */
+    public PessoaResponse definirEtiquetaPlanner(UUID id, String etiqueta) {
+        Pessoa pessoa = buscarEntidade(id);
+        String limpa = etiqueta == null ? "" : etiqueta.trim().replaceAll("\s+", " ");
+        if (limpa.length() > 80) {
+            throw new EstadoInvalidoException("A etiqueta deve ter no máximo 80 caracteres");
+        }
+        if (!limpa.isEmpty() && pessoaRepository.existsByEtiquetaPlannerIgnoreCaseAndIdNot(limpa, id)) {
+            throw new EstadoInvalidoException("Outra pessoa já usa essa etiqueta do Planner");
+        }
+        pessoa.setEtiquetaPlanner(limpa.isEmpty() ? null : limpa);
+        return paraResponse(pessoa);
+    }
+
     public PessoaResponse atualizarPerfilProprio(Jwt jwt, AtualizarPerfilRequest request) {
         Pessoa pessoa = currentPessoaResolver.resolver(jwt);
         // o nome completo é do cadastro da empresa: quem muda é Gestor/Admin. A própria pessoa escolhe como ser chamada.
@@ -453,7 +470,7 @@ public class PessoaService {
         Pessoa aprovadoPor = pessoa.getAprovadoPor();
         Area referenciaArea = pessoa.getReferenciaArea();
         return new PessoaResponse(
-                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), pessoa.getNomeExibido(), pessoa.getChaveC(), pessoa.getEmail(), pessoa.getFotoUrl(),
+                pessoa.getId(), pessoa.getNome(), pessoa.getNomeExibicao(), pessoa.getNomeExibido(), pessoa.getEtiquetaPlanner(), pessoa.getChaveC(), pessoa.getEmail(), pessoa.getFotoUrl(),
                 pessoa.getArea().getDiretoria().getId(), pessoa.getArea().getDiretoria().getNome(),
                 pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getId() : null,
                 pessoa.getArea().getNucleo() != null ? pessoa.getArea().getNucleo().getNome() : null,

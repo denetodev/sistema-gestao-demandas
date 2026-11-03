@@ -45,6 +45,19 @@ app:
   supabase:
     url: ${SUPABASE_URL:}
     service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+  # Integração com o Planner da Microsoft (só leitura, pelo Graph). Desligada por padrão: sem as variáveis, nada roda.
+  planner:
+    enabled: ${PLANNER_ENABLED:false}
+    tenant-id: ${PLANNER_TENANT_ID:}
+    client-id: ${PLANNER_CLIENT_ID:}
+    client-secret: ${PLANNER_CLIENT_SECRET:}
+    # ids dos planos, separados por vírgula
+    plan-ids: ${PLANNER_PLAN_IDS:}
+    # diretoria das demandas criadas a partir do Planner
+    diretoria: ${PLANNER_DIRETORIA:COE/CRM}
+    # só tarefas abertas criadas nos últimos N dias geram sugestão (o plano tem centenas de tarefas antigas)
+    janela-dias: ${PLANNER_JANELA_DIAS:30}
+    intervalo-ms: ${PLANNER_INTERVALO_MS:600000}
 
 server:
   error:

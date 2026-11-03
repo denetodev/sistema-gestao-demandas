@@ -53,6 +53,15 @@ npm test -- --watch=false --browsers=ChromeHeadless
 `SUPABASE_SERVICE_ROLE_KEY`, `CORS_ALLOWED_ORIGINS` (veja `.env.example`). O Spring não lê `.env` sozinho:
 exporte na sessão do shell ou configure na IDE.
 
+**Integração com o Planner (opcional, desligada por padrão):** o backend lê o plano pelo Microsoft Graph com a permissão de
+aplicativo `Tasks.Read.All` (só leitura, sem ninguém logado). Cada pessoa tem em `pessoa.etiqueta_planner` o texto exato da
+etiqueta dela no plano (ex.: `CRIATIVO - Thais`, `HTML - Carol`); quando a etiqueta aparece numa tarefa aberta criada nos
+últimos 30 dias, a pessoa recebe uma sugestão (tela **Planner**, aviso no sininho) para aceitar ou recusar. Aceitar cria a
+demanda (origem `planner`, diretoria padrão COE/CRM) ou coloca a pessoa na que já tem o mesmo código. Variáveis:
+`PLANNER_ENABLED`, `PLANNER_TENANT_ID`, `PLANNER_CLIENT_ID`, `PLANNER_CLIENT_SECRET`, `PLANNER_PLAN_IDS` (separados por vírgula),
+`PLANNER_DIRETORIA`, `PLANNER_JANELA_DIAS`, `PLANNER_INTERVALO_MS`. O aplicativo precisa estar registrado no Entra ID do Banco
+com consentimento de administrador. Gestor e Admin têm o botão "Buscar agora" na tela Planner.
+
 ## Banco de dados
 
 Toda mudança de schema precisa de um arquivo `database/migrations/V{n}__descricao.sql`, **aplicado também no Supabase**.
@@ -78,6 +87,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V21 | remove `area.acessa_equipamentos` (acesso agora é por papel da pessoa) |
 | V22 | bucket público `avatares` (fotos de perfil, até 2 MB, JPEG ou PNG) |
 | V23 | `pessoa.notificacoes_vistas_em`, `pessoa_demanda.adicionado_por` e `adicionado_em` (sininho de avisos) |
+| V24 | integração com o Planner: `pessoa.etiqueta_planner` e a tabela `planner_sugestao` (uma sugestão por tarefa e pessoa) |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

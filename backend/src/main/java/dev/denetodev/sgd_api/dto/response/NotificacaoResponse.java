@@ -10,7 +10,7 @@ import java.util.List;
  */
 public record NotificacaoResponse(List<Item> itens, long naoLidas) {
 
-    public enum Tipo { CADASTROS_PENDENTES, EMPRESTIMOS_AGUARDANDO, EMPRESTIMOS_ATRASADOS, ADICIONADO_EM_DEMANDA }
+    public enum Tipo { CADASTROS_PENDENTES, EMPRESTIMOS_AGUARDANDO, EMPRESTIMOS_ATRASADOS, ADICIONADO_EM_DEMANDA, SUGESTOES_PLANNER }
 
     public record Item(String id, Tipo tipo, String titulo, String texto, String link, long quantidade, boolean lida,
                        OffsetDateTime em) {

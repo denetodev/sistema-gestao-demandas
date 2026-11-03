@@ -50,6 +50,11 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.POST, "/pessoas/me/foto").hasAuthority("VINCULADO");
                     auth.requestMatchers(HttpMethod.DELETE, "/pessoas/me/foto").hasAuthority("VINCULADO");
 
+                    // Planner: buscar agora e definir a etiqueta de cada pessoa são da gestão; aceitar e recusar caem na regra
+                    // geral de escrita (Visualizador não) e o serviço só deixa a pessoa decidir as próprias sugestões
+                    auth.requestMatchers(HttpMethod.POST, "/planner/sincronizar").hasAnyRole("ADMIN", "GESTOR");
+                    auth.requestMatchers(HttpMethod.PUT, "/planner/pessoas/*/etiqueta").hasAnyRole("ADMIN", "GESTOR");
+
                     // gestão de pessoas (o serviço ainda barra o Gestor de mexer em ADMIN)
                     auth.requestMatchers(HttpMethod.PATCH, "/pessoas/*/vincular-auth").hasRole("ADMIN");
                     auth.requestMatchers(HttpMethod.POST, "/pessoas").hasAnyRole("ADMIN", "GESTOR");

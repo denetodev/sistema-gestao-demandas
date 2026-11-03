@@ -127,6 +127,10 @@
             optionValue="value" placeholder="Sem papel (sem acesso)" [showClear]="true" />
         <small class="dica">Operador de estúdio registra e entrega; Gestor de equipamentos autoriza e edita o inventário. Sem papel, o Profissional não entra no módulo, nem para consultar. Admin e Gestor veem tudo.</small>
 
+        <label for="ed-etiqueta">Etiqueta no Planner</label>
+        <input pInputText id="ed-etiqueta" formControlName="etiquetaPlanner" maxlength="80" placeholder="Ex.: CRIATIVO - Thais ou HTML - Carol" autocomplete="off" />
+        <small class="dica">O texto exato da etiqueta da pessoa no plano. Quando ela aparece numa tarefa, a pessoa recebe a sugestão para aceitar no sistema.</small>
+
         <label for="ed-status">Situação</label>
         <p-select inputId="ed-status" formControlName="status" [options]="opcoesStatus" />
 

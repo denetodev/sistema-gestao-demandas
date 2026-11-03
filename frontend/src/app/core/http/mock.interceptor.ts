@@ -275,6 +275,9 @@ function responderDemandas(req: HttpRequest<unknown>) {
 // Demais rotas — resposta fixa
 // ==========================================================================
 const dados: Record<string, unknown> = {
+  '/planner/sugestoes': [
+    { id: 'ps1', codigo: 'BC2610FN', titulo: 'BC2610FN_email_SS06_BBFriday', bucket: 'HTML para Aprovação', etiqueta: 'HTML - Neto', criadaNoPlanner: '2026-10-28T15:49:00Z', demandaExistenteId: null, demandaExistenteTitulo: null },
+  ],
   '/notificacoes': {
     naoLidas: 6,
     itens: [

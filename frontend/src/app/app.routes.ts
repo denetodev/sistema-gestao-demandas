@@ -33,6 +33,12 @@ export const routes: Routes = [
           import('./features/relatorio/feature-relatorio/relatorio').then((m) => m.RelatorioMensal),
       },
       {
+        path: 'planner',
+        canActivate: [naoVisualizadorGuard],
+        loadComponent: () =>
+          import('./features/planner/sugestoes-planner').then((m) => m.SugestoesPlanner),
+      },
+      {
         path: 'meu-perfil',
         loadComponent: () => import('./features/meu-perfil/meu-perfil').then((m) => m.MeuPerfil),
       },

@@ -14,4 +14,7 @@ import java.util.UUID;
 public interface DemandaRepository extends JpaRepository<Demanda, UUID>, JpaSpecificationExecutor<Demanda> {
 
     List<Demanda> findByDiretoriaId(UUID diretoriaId);
+
+    /** Demandas com esse código de controle (BC2610FN), sem diferenciar maiúsculas. */
+    List<Demanda> findByCodigoIgnoreCase(String codigo);
 }
