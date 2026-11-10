@@ -20,6 +20,46 @@ export interface ItemPeca {
   valorTotal: number;
 }
 
+export type ModeloRelatorio = 'DESIGNER' | 'HTML' | 'PADRAO';
+
+export type TipoEvidencia =
+  | 'IMAGEM' | 'SCREENSHOT' | 'HTML' | 'PDF' | 'VIDEO' | 'ARQUIVO' | 'LINK' | 'CODIGO'
+  | 'MOCKUP' | 'CAPTURA_SISTEMA' | 'OBSERVACAO' | 'CONFIRMACAO_MANUAL';
+
+export interface ItemEvidencia {
+  id: string;
+  atividadeId: string | null;
+  pecaId: string | null;
+  tipo: TipoEvidencia;
+  descricao: string | null;
+  link: string | null;
+  temArquivo: boolean;
+  arquivoMime: string | null;
+}
+
+export interface ResumoPeca {
+  tipo: string;
+  quantidade: number;
+}
+
+export interface ItemDemanda {
+  id: string;
+  codigo: string | null;
+  titulo: string;
+  descricao: string | null;
+  link: string | null;
+  demandante: string | null;
+  diretoria: string | null;
+  campanha: string | null;
+  data: string | null;
+  atividadeIds: string[];
+  quantidadePecas: number;
+  valor: number;
+  pecas: ResumoPeca[];
+  naturezas: string[];
+  evidencias: ItemEvidencia[];
+}
+
 export interface Relatorio {
   pessoaId: string;
   pessoaNome: string;
@@ -34,6 +74,9 @@ export interface Relatorio {
   atividades: ItemAtividade[];
   pecas: ItemPeca[];
   valorReferencia: number;
+  /** Ausente nos relatórios aprovados antes dos modelos por função. */
+  modelo?: ModeloRelatorio | null;
+  demandas?: ItemDemanda[] | null;
   podeEditar: boolean;
   podeReabrir: boolean;
 }

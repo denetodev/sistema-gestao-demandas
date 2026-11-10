@@ -2,7 +2,12 @@ package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.response.RelatorioResponse;
 import dev.denetodev.sgd_api.dto.response.RelatorioResponse.ItemAtividade;
+import dev.denetodev.sgd_api.dto.response.RelatorioResponse.ItemDemanda;
+import dev.denetodev.sgd_api.dto.response.RelatorioResponse.ItemEvidencia;
+import dev.denetodev.sgd_api.entity.ModeloRelatorio;
 import dev.denetodev.sgd_api.entity.StatusRelatorio;
+import dev.denetodev.sgd_api.entity.TipoEvidencia;
+import dev.denetodev.sgd_api.service.support.SemanasDoMes;
 import org.apache.poi.xwpf.usermodel.*;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +31,7 @@ public class RelatorioDocxService {
 
     private static final Locale PT_BR = Locale.of("pt", "BR");
     private static final DateTimeFormatter DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter DIA_MES = DateTimeFormatter.ofPattern("dd/MM");
     private static final String AVULSAS = "Atividades avulsas (sem demanda)";
     private static final String FONTE = "Calibri";
 
@@ -38,15 +44,24 @@ public class RelatorioDocxService {
                 paragrafo(doc, "Rascunho: este relatório ainda não foi aprovado.", ParagraphAlignment.CENTER, false, true, 9, 12);
             }
 
-            identificacao(doc, relatorio);
-            atividades(doc, relatorio);
-            pecas(doc, relatorio);
+            List<ItemAtividade> incluidas = relatorio.atividades().stream().filter(ItemAtividade::incluida).toList();
+            List<ItemDemanda> demandas = RelatorioMensalService.soIncluidas(relatorio.demandas(), incluidas);
+            if (demandas.isEmpty()) {
+                // sem demandas no mês (ou relatório aprovado antes dos modelos): a lista simples de atividades e peças
+                identificacao(doc, relatorio);
+                atividades(doc, relatorio);
+                pecas(doc, relatorio);
+            } else {
+                identificacaoNorma(doc, relatorio);
+                porModelo(doc, relatorio, demandas, incluidas);
+            }
 
             subtitulo(doc, "Observações gerais");
             String obs = relatorio.observacoes();
             paragrafo(doc, obs == null || obs.isBlank() ? "Sem observações." : obs,
                     ParagraphAlignment.LEFT, false, false, 10, 4);
 
+            declaracao(doc);
             assinatura(doc, relatorio);
 
             doc.write(saida);
@@ -54,6 +69,164 @@ public class RelatorioDocxService {
         } catch (IOException e) {
             throw new UncheckedIOException("Falha ao gerar o DOCX do relatório", e);
         }
+    }
+
+    // ---- modelos por função ----
+
+    private void identificacaoNorma(XWPFDocument doc, RelatorioResponse r) {
+        XWPFParagraph p = doc.createParagraph();
+        p.setSpacingAfter(120);
+        run(p, "Nome do Colaborador: ", true, false, 10);
+        run(p, r.pessoaNome(), false, false, 10);
+        p.createRun().addBreak();
+        run(p, "Cargo (conforme CTPS): ", true, false, 10);
+        run(p, orTraco(r.cargo()), false, false, 10);
+        p.createRun().addBreak();
+        run(p, "Mês de Referência: ", true, false, 10);
+        run(p, rotuloMes(r.mes()), false, false, 10);
+        p.createRun().addBreak();
+        run(p, "Data de Envio: ", true, false, 10);
+        run(p, r.aprovadoEm() != null ? r.aprovadoEm().toLocalDate().format(DATA) : "—", false, false, 10);
+    }
+
+    private void porModelo(XWPFDocument doc, RelatorioResponse r, List<ItemDemanda> demandas, List<ItemAtividade> incluidas) {
+        List<SemanasDoMes.Semana> semanas = SemanasDoMes.de(YearMonth.parse(r.mes()));
+        if (r.modelo() == ModeloRelatorio.HTML) {
+            resumoExecutivo(doc, r, semanas, demandas);
+        }
+        for (SemanasDoMes.Semana semana : semanas) {
+            List<ItemDemanda> daSemana = demandas.stream()
+                    .filter(d -> d.data() != null && SemanasDoMes.daData(semanas, d.data()).equals(semana)).toList();
+            List<ItemAtividade> atividadesDaSemana = incluidas.stream()
+                    .filter(a -> SemanasDoMes.daData(semanas, a.data()).equals(semana)).toList();
+            if (daSemana.isEmpty() && atividadesDaSemana.isEmpty()) {
+                continue;
+            }
+            subtitulo(doc, "SEMANA " + semana.numero() + " – de " + semana.de().format(DIA_MES) + " a " + semana.ate().format(DIA_MES));
+            switch (r.modelo()) {
+                case DESIGNER -> semanaDesigner(doc, daSemana);
+                case HTML -> semanaHtml(doc, daSemana);
+                default -> semanaPadrao(doc, daSemana, atividadesDaSemana);
+            }
+        }
+    }
+
+    private void semanaDesigner(XWPFDocument doc, List<ItemDemanda> demandas) {
+        rotulo(doc, "Descrição das Atividades Executadas:");
+        int pecas = demandas.stream().mapToInt(ItemDemanda::quantidadePecas).sum();
+        paragrafo(doc, demandas.size() + " demanda(s) atendida(s) na semana" + (pecas > 0 ? ", com " + pecas + " peça(s) produzida(s)." : "."),
+                ParagraphAlignment.LEFT, false, false, 10, 4);
+        rotulo(doc, "Demandas do Banco / Ordens de Serviço:");
+        int n = 1;
+        for (ItemDemanda d : demandas) {
+            XWPFParagraph p = doc.createParagraph();
+            p.setSpacingBefore(120);
+            p.setKeepNext(true);
+            run(p, String.format("Demanda %02d - %s%s", n++, d.codigo() != null ? d.codigo() + " - " : "", d.titulo()), true, false, 10);
+            if (d.link() != null) linha(doc, "Link: ", d.link());
+            if (d.descricao() != null && !d.descricao().isBlank()) linha(doc, "Descrição: ", d.descricao());
+            if (d.quantidadePecas() > 0) {
+                linha(doc, "Quantidade de peças feitas: ", String.format("%02d", d.quantidadePecas()) + " (" + resumoPecas(d) + ")");
+            }
+            if (d.demandante() != null) linha(doc, "Gestor demandante: ", d.demandante());
+            if (d.diretoria() != null) linha(doc, "Área: ", d.diretoria());
+            evidencias(doc, d);
+        }
+    }
+
+    private void semanaHtml(XWPFDocument doc, List<ItemDemanda> demandas) {
+        rotulo(doc, "Demandas do Banco / Ordens de Serviço:");
+        List<String[]> linhas = demandas.stream().map(d -> new String[]{
+                orTraco(d.codigo()), d.titulo(), d.data() != null ? d.data().format(DIA_MES) : "—",
+                String.valueOf(d.quantidadePecas()), d.naturezas().isEmpty() ? "—" : String.join(", ", d.naturezas())}).toList();
+        tabela(doc, new String[]{"Código BC", "Descrição da demanda", "Data", "QTD", "Natureza"},
+                new int[]{1300, 4200, 900, 600, 2200}, linhas);
+        rotulo(doc, "Evidências (obrigatório):");
+        for (ItemDemanda d : demandas) {
+            evidencias(doc, d);
+        }
+    }
+
+    private void semanaPadrao(XWPFDocument doc, List<ItemDemanda> demandas, List<ItemAtividade> atividades) {
+        rotulo(doc, "Descrição das Atividades Executadas:");
+        if (atividades.isEmpty()) {
+            paragrafo(doc, "—", ParagraphAlignment.LEFT, false, false, 10, 4);
+        }
+        for (ItemAtividade a : atividades) {
+            marcador(doc, a.data().format(DIA_MES) + " · " + a.tipo()
+                    + (a.demandaTitulo() != null ? " · " + a.demandaTitulo() : "")
+                    + (a.descricao() != null && !a.descricao().isBlank() ? ": " + a.descricao() : ""));
+        }
+        rotulo(doc, "Demandas do Banco / Ordens de Serviço:");
+        for (ItemDemanda d : demandas) {
+            marcador(doc, (d.codigo() != null ? d.codigo() + " - " : "") + d.titulo());
+            String origem = d.demandante() != null ? d.demandante() : d.diretoria();
+            if (origem != null) marcador(doc, "Origem: " + origem + (d.diretoria() != null && d.demandante() != null ? " (" + d.diretoria() + ")" : ""));
+        }
+        rotulo(doc, "Evidências (obrigatório):");
+        for (ItemDemanda d : demandas) {
+            evidencias(doc, d);
+        }
+    }
+
+    private void resumoExecutivo(XWPFDocument doc, RelatorioResponse r, List<SemanasDoMes.Semana> semanas, List<ItemDemanda> demandas) {
+        subtitulo(doc, "Resumo Executivo");
+        int pecas = demandas.stream().mapToInt(ItemDemanda::quantidadePecas).sum();
+        paragrafo(doc, "No mês de " + rotuloMes(r.mes()).toLowerCase(PT_BR) + " foram registradas " + demandas.size()
+                + " demanda(s), totalizando " + pecas + " peça(s), distribuídas ao longo de " + semanas.size() + " semana(s) de trabalho.",
+                ParagraphAlignment.LEFT, false, false, 10, 6);
+        List<String[]> linhas = new ArrayList<>();
+        for (SemanasDoMes.Semana s : semanas) {
+            List<ItemDemanda> daSemana = demandas.stream()
+                    .filter(d -> d.data() != null && SemanasDoMes.daData(semanas, d.data()).equals(s)).toList();
+            linhas.add(new String[]{"Semana " + s.numero(), s.de().format(DIA_MES) + " a " + s.ate().format(DIA_MES),
+                    String.valueOf(daSemana.size()), String.valueOf(daSemana.stream().mapToInt(ItemDemanda::quantidadePecas).sum())});
+        }
+        linhas.add(new String[]{"TOTAL", rotuloMes(r.mes()), String.valueOf(demandas.size()), String.valueOf(pecas)});
+        tabela(doc, new String[]{"Semana", "Período", "Nº de demandas", "QTD de peças"}, new int[]{1800, 3000, 2200, 2200}, linhas);
+    }
+
+    private void evidencias(XWPFDocument doc, ItemDemanda d) {
+        for (ItemEvidencia e : d.evidencias()) {
+            String rotulo = e.tipo() == TipoEvidencia.LINK ? "Link da arte: " : "Arquivo: ";
+            String valor = e.tipo() == TipoEvidencia.LINK && e.link() != null ? e.link()
+                    : (e.descricao() != null && !e.descricao().isBlank() ? e.descricao() : "arquivo anexado no sistema")
+                    + " (" + e.tipo().name().toLowerCase(PT_BR) + ", anexado no SGP)";
+            marcador(doc, (d.codigo() != null ? d.codigo() + " · " : "") + rotulo + valor);
+        }
+    }
+
+    private static String resumoPecas(ItemDemanda d) {
+        return d.pecas().stream().map(p -> p.quantidade() + " " + p.tipo()).collect(java.util.stream.Collectors.joining(" e "));
+    }
+
+    private void declaracao(XWPFDocument doc) {
+        subtitulo(doc, "DECLARAÇÃO");
+        paragrafo(doc, "Declaro que as informações acima refletem fielmente as atividades por mim executadas no período informado "
+                + "e que os materiais anexados correspondem às demandas recebidas e entregas realizadas.",
+                ParagraphAlignment.BOTH, false, false, 10, 6);
+    }
+
+    private void rotulo(XWPFDocument doc, String texto) {
+        XWPFParagraph p = doc.createParagraph();
+        p.setSpacingBefore(120);
+        p.setSpacingAfter(40);
+        p.setKeepNext(true);
+        run(p, texto, true, false, 10);
+    }
+
+    private void linha(XWPFDocument doc, String rotulo, String valor) {
+        XWPFParagraph p = doc.createParagraph();
+        p.setSpacingAfter(20);
+        run(p, rotulo, true, false, 10);
+        run(p, valor, false, false, 10);
+    }
+
+    private void marcador(XWPFDocument doc, String texto) {
+        XWPFParagraph p = doc.createParagraph();
+        p.setIndentationLeft(360);
+        p.setSpacingAfter(20);
+        run(p, "•  " + texto, false, false, 10);
     }
 
     // ---- blocos ----
