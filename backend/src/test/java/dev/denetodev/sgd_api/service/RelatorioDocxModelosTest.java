@@ -11,6 +11,11 @@ import dev.denetodev.sgd_api.entity.TipoEvidencia;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.Optional;
+
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,5 +92,51 @@ class RelatorioDocxModelosTest {
         assertTrue(t.contains("Demandas do Banco / Ordens de Serviço:"));
         assertTrue(t.contains("Evidências (obrigatório):"));
         assertTrue(t.contains("Origem: Flavia dos Santos"));
+    }
+
+    @Test
+    void imagemDaEvidenciaVaiEmbutidaEInteira() throws Exception {
+        BufferedImage grande = new BufferedImage(1200, 1800, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream png = new ByteArrayOutputStream();
+        ImageIO.write(grande, "png", png);
+        RelatorioDocxService comArquivos = new RelatorioDocxService(id -> Optional.of(png.toByteArray()));
+
+        RelatorioResponse base = relatorio(ModeloRelatorio.DESIGNER);
+        ItemDemanda d = base.demandas().get(0);
+        ItemEvidencia imagem = new ItemEvidencia(UUID.randomUUID(), d.atividadeIds().get(0), null, TipoEvidencia.IMAGEM,
+                "Arte aprovada", null, true, "image/png");
+        ItemDemanda comImagem = new ItemDemanda(d.id(), d.codigo(), d.titulo(), d.descricao(), d.link(), d.demandante(),
+                d.diretoria(), d.campanha(), d.data(), d.atividadeIds(), d.quantidadePecas(), d.valor(), d.pecas(),
+                d.naturezas(), List.of(imagem));
+        RelatorioResponse r = new RelatorioResponse(base.pessoaId(), base.pessoaNome(), base.diretoria(), base.area(),
+                base.cargo(), base.mes(), base.status(), base.aprovadoEm(), null, base.atividades(), List.of(),
+                BigDecimal.ZERO, ModeloRelatorio.DESIGNER, List.of(comImagem), false, false);
+
+        byte[] docx = comArquivos.gerar(r);
+
+        try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(docx))) {
+            assertEquals(1, doc.getAllPictures().size(), "a imagem tem que estar dentro do arquivo");
+        }
+        String t = texto(docx);
+        assertTrue(t.contains("Arte aprovada"), "a legenda acompanha a imagem");
+        assertFalse(t.contains("anexado no SGP"), "imagem embutida não vira link");
+    }
+
+    @Test
+    void semAcessoAoArquivoAEvidenciaSaiDescritaEmTexto() throws Exception {
+        RelatorioResponse base = relatorio(ModeloRelatorio.DESIGNER);
+        ItemDemanda d = base.demandas().get(0);
+        ItemEvidencia imagem = new ItemEvidencia(UUID.randomUUID(), d.atividadeIds().get(0), null, TipoEvidencia.IMAGEM,
+                "Arte aprovada", null, true, "image/png");
+        ItemDemanda comImagem = new ItemDemanda(d.id(), d.codigo(), d.titulo(), d.descricao(), d.link(), d.demandante(),
+                d.diretoria(), d.campanha(), d.data(), d.atividadeIds(), d.quantidadePecas(), d.valor(), d.pecas(),
+                d.naturezas(), List.of(imagem));
+        RelatorioResponse r = new RelatorioResponse(base.pessoaId(), base.pessoaNome(), base.diretoria(), base.area(),
+                base.cargo(), base.mes(), base.status(), base.aprovadoEm(), null, base.atividades(), List.of(),
+                BigDecimal.ZERO, ModeloRelatorio.DESIGNER, List.of(comImagem), false, false);
+
+        String t = texto(service.gerar(r));
+
+        assertTrue(t.contains("Arte aprovada (imagem, anexado no SGP)"));
     }
 }

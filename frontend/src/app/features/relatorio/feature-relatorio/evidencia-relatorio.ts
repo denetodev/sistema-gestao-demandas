@@ -56,19 +56,22 @@ import type { ItemEvidencia } from '../data-access/relatorio.model';
       span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     }
     a.ev:hover, button.ev:hover { border-color: var(--sgd-laranja); background: #fff1e6; cursor: pointer; }
+    /* a imagem aparece inteira, na proporção dela, sem cortar nem rolar dentro de uma janelinha */
     .ev--imagem {
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      gap: 0.3rem;
+      align-items: flex-start;
+      gap: 0.35rem;
+      width: auto;
+      max-width: 100%;
       margin: 0;
-      padding: 0.35rem;
+      padding: 0.4rem;
       border-radius: 0.7rem;
-      width: 9.5rem;
-      img { display: block; width: 100%; height: 7rem; object-fit: cover; border-radius: 0.5rem; background: #fff; }
-      figcaption { font-size: 0.72rem; color: #5b6478; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      break-inside: avoid;
+      img { display: block; width: auto; max-width: 100%; height: auto; border-radius: 0.4rem; background: #fff; }
+      figcaption { font-size: 0.75rem; color: #5b6478; line-height: 1.3; }
     }
-    .ev__vazio { display: grid; place-items: center; height: 7rem; border-radius: 0.5rem; background: #fff; color: #5b6478; font-size: 0.78rem; gap: 0.3rem; }
+    .ev__vazio { display: grid; place-items: center; min-height: 5rem; min-width: 12rem; border-radius: 0.5rem; background: #fff; color: #5b6478; font-size: 0.78rem; gap: 0.3rem; }
   `,
 })
 export class EvidenciaRelatorio {
