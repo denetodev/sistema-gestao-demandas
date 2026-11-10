@@ -146,5 +146,29 @@ function ao_vivo(dono: any, mes: string, g: Guardado | undefined, ctx: ContextoM
     cargo: dono.cargoNome ?? null, mes, status: 'ABERTO', aprovadoEm: null,
     observacoes: g?.observacoes ?? null, atividades, pecas,
     valorReferencia: pecas.reduce((t, p) => t + p.valorTotal, 0),
+    modelo: /design/i.test(dono.cargoNome ?? dono.areaNome ?? '') ? 'DESIGNER' : /html/i.test(dono.cargoNome ?? dono.areaNome ?? '') ? 'HTML' : 'PADRAO',
+    demandas: demandasDoMes(atividades, pecas, ctx, e),
   };
+}
+
+/** Agrupa atividades e peças do mês por demanda, como o backend, com uma evidência de exemplo. */
+function demandasDoMes(atividades: any[], pecas: any[], ctx: ContextoMock, e: EstadoMock): any[] {
+  const ids = new Set<string>([...atividades.map((a) => a.demandaId), ...pecas.map((p) => p.demandaId ?? null)].filter(Boolean));
+  return [...ids].map((id) => {
+    const d = ctx.demandas.find((x) => x.id === id) ?? {};
+    const atv = atividades.filter((a) => a.demandaId === id);
+    const pcs = e.pecas.filter((p) => p.demandaId === id);
+    const porTipo = new Map<string, number>();
+    pcs.forEach((p) => porTipo.set(p.tipoPecaNome, (porTipo.get(p.tipoPecaNome) ?? 0) + p.quantidade));
+    return {
+      id, codigo: d.codigo ?? null, titulo: d.titulo ?? 'Demanda', descricao: d.descricao ?? null, link: d.linkExterno ?? null,
+      demandante: d.demandanteNome ?? null, diretoria: d.diretoriaNome ?? null, campanha: d.campanhaNome ?? null,
+      data: atv[0]?.data ?? pcs[0]?.dataEntrega ?? null, atividadeIds: atv.map((a) => a.id),
+      quantidadePecas: pcs.reduce((t, p) => t + p.quantidade, 0), valor: pcs.reduce((t, p) => t + p.valorTotal, 0),
+      pecas: [...porTipo].map(([tipo, quantidade]) => ({ tipo, quantidade })),
+      naturezas: [...new Set(atv.map((a) => a.tipo))],
+      evidencias: [{ id: id + '-ev', atividadeId: atv[0]?.id ?? null, pecaId: null, tipo: 'LINK', descricao: 'Arte aprovada',
+        link: 'https://exemplo.sharepoint.com/arte.png', temArquivo: false, arquivoMime: null }],
+    };
+  }).sort((x, y) => (x.data ?? '').localeCompare(y.data ?? ''));
 }

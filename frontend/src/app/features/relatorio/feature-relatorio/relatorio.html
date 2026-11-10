@@ -1,53 +1,91 @@
-<app-barra-pagina titulo="Relatório mensal">
+<app-barra-pagina titulo="Relatório mensal" subtitulo="Norma Interna nº 32/2026: montado a partir do que você registrou nas demandas.">
   <ng-container fim>
     @if (ehGestorOuAdmin()) {
       <p-select [options]="opcoesPessoa()" optionLabel="nome" optionValue="id" [ngModel]="filtro().pessoaId"
-                (ngModelChange)="mudarPessoa($event)" [filter]="true" [style]="{ minWidth: '16rem' }" />
+                (ngModelChange)="mudarPessoa($event)" [filter]="true" [style]="{ minWidth: '16rem' }"
+                ariaLabel="Profissional do relatório" />
     }
     <p-select [options]="opcoesMes" optionLabel="rotulo" optionValue="valor" [ngModel]="filtro().mes"
-              (ngModelChange)="mudarMes($event)" [style]="{ minWidth: '12rem' }" />
+              (ngModelChange)="mudarMes($event)" [style]="{ minWidth: '12rem' }" ariaLabel="Mês do relatório" />
   </ng-container>
 </app-barra-pagina>
 
 <div class="pagina-corpo painel">
   <app-ajuda chave="relatorio" />
+  <app-carregando class="nao-imprimir" [ativo]="relatorio.isLoading()" rotulo="Carregando o relatório" />
+
   @if (relatorio.error()) {
     <p-message severity="error">Não foi possível carregar o relatório deste mês.</p-message>
   } @else if (relatorio.value(); as r) {
-    <div class="nao-imprimir faixa">
-      <span>
-        Situação:
-        @if (aprovado()) {
-          <p-tag severity="success" [value]="'Aprovado em ' + (r.aprovadoEm | date: 'dd/MM/yyyy')" />
-        } @else {
-          <p-tag severity="warn" value="Em preparação" />
-        }
-        @if (r.pessoaId !== auth.pessoa()?.id) {
-          <span class="faixa__quem">relatório de {{ r.pessoaNome }}, somente leitura</span>
-        }
-      </span>
-      <span class="faixa__acoes">
-        @if (editavel()) {
-          <p-button label="Salvar seleção" icon="pi pi-save" severity="secondary" [outlined]="true"
-                    [disabled]="!alterado()" [loading]="salvando()" (onClick)="salvar()" />
-          <p-button label="Aprovar relatório" icon="pi pi-check" [loading]="salvando()"
-                    (onClick)="confirmarAprovacao()" />
-        }
-        @if (aprovado() && r.podeReabrir) {
-          <p-button label="Reabrir" icon="pi pi-lock-open" severity="secondary" [outlined]="true"
-                    [loading]="salvando()" (onClick)="confirmarReabertura()" />
-        }
-        <p-button label="Baixar DOCX" icon="pi pi-download" severity="secondary" [outlined]="true"
-                  [loading]="baixando()" (onClick)="baixarDocx()" />
-        <p-button label="Imprimir / Salvar PDF" icon="pi pi-print" (onClick)="imprimir()" />
-      </span>
-    </div>
+    <!-- Topo: de quem é, qual modelo, em que pé está e o que fazer -->
+    <section class="resumo nao-imprimir" [class.resumo--aprovado]="aprovado()">
+      <div class="resumo__topo">
+        <div class="resumo__quem">
+          <span class="resumo__icone"><i class="pi" [class.pi-file-check]="aprovado()" [class.pi-file-edit]="!aprovado()"></i></span>
+          <div>
+            <span class="resumo__mes">{{ nomeMes() }}</span>
+            <h2>{{ r.pessoaNome }}</h2>
+            <p>
+              {{ r.cargo ?? 'Cargo não informado' }}@if (r.area) { · {{ r.area }} }
+            </p>
+            <div class="resumo__tags">
+              <p-tag [value]="'Modelo ' + rotuloModelo()" severity="info" icon="pi pi-clone" />
+              @if (aprovado()) {
+                <p-tag severity="success" [value]="'Aprovado em ' + (r.aprovadoEm | date: 'dd/MM/yyyy')" icon="pi pi-lock" />
+              } @else {
+                <p-tag severity="warn" value="Em preparação" icon="pi pi-pencil" />
+              }
+              @if (r.pessoaId !== auth.pessoa()?.id) {
+                <span class="resumo__leitura">relatório de {{ r.pessoaNome }}, somente leitura</span>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="resumo__acoes">
+          @if (editavel()) {
+            <p-button label="Salvar seleção" icon="pi pi-save" severity="secondary" [outlined]="true"
+                      [disabled]="!alterado()" [loading]="salvando()" (onClick)="salvar()" />
+            <p-button label="Aprovar relatório" icon="pi pi-check" [loading]="salvando()" (onClick)="confirmarAprovacao()" />
+          }
+          @if (aprovado() && r.podeReabrir) {
+            <p-button label="Reabrir" icon="pi pi-lock-open" severity="secondary" [outlined]="true"
+                      [loading]="salvando()" (onClick)="confirmarReabertura()" />
+          }
+          <p-button label="Baixar DOCX" icon="pi pi-download" severity="secondary" [outlined]="true"
+                    [loading]="baixando()" (onClick)="baixarDocx()" />
+          <p-button label="Imprimir / PDF" icon="pi pi-print" severity="secondary" [outlined]="true" (onClick)="imprimir()" />
+        </div>
+      </div>
+
+      <div class="indicadores">
+        <div class="indicador indicador--azul"><i class="pi pi-briefcase"></i><div><span>Demandas</span><strong>{{ kpis().demandas }}</strong></div></div>
+        <div class="indicador indicador--laranja"><i class="pi pi-box"></i><div><span>Peças</span><strong>{{ kpis().pecas }}</strong></div></div>
+        <div class="indicador indicador--roxo"><i class="pi pi-list-check"></i><div><span>Atividades</span><strong>{{ kpis().atividades }}</strong></div></div>
+        <div class="indicador indicador--verde"><i class="pi pi-images"></i><div><span>Evidências</span><strong>{{ kpis().evidencias }}</strong></div></div>
+      </div>
+
+      <ol class="passos" aria-label="Etapas do relatório">
+        <li class="passo" [class.passo--feito]="aprovado()" [class.passo--atual]="!aprovado()">
+          <span class="passo__n">@if (aprovado()) { <i class="pi pi-check"></i> } @else { 1 }</span>
+          <div><strong>Revisar</strong><small>Marque o que entra no relatório</small></div>
+        </li>
+        <li class="passo" [class.passo--feito]="aprovado()">
+          <span class="passo__n">@if (aprovado()) { <i class="pi pi-check"></i> } @else { 2 }</span>
+          <div><strong>Aprovar</strong><small>O conteúdo fica congelado</small></div>
+        </li>
+        <li class="passo" [class.passo--atual]="aprovado()">
+          <span class="passo__n">3</span>
+          <div><strong>Assinar e enviar</strong><small>Baixe, assine e envie até o 1º dia útil do mês seguinte</small></div>
+        </li>
+      </ol>
+    </section>
 
     @if (editavel()) {
       <section class="caixa nao-imprimir">
-        <h2>Atividades de {{ nomeMes() }} ({{ r.atividades.length }})</h2>
+        <h2><i class="pi pi-list-check"></i> Atividades de {{ nomeMes() }} ({{ r.atividades.length }})</h2>
         <p class="dica">
-          Pré-carregadas do que você registrou nas demandas. Desmarque o que não deve entrar no relatório.
+          Pré-carregadas do que você registrou nas demandas. Desmarque o que não deve entrar no relatório: a demanda e as evidências
+          dela só aparecem enquanto houver atividade marcada ou peça produzida.
         </p>
         <p-table [value]="r.atividades" dataKey="id" [stripedRows]="true">
           <ng-template pTemplate="header">
@@ -57,7 +95,7 @@
             <tr>
               <td>
                 <p-checkbox [binary]="true" [ngModel]="!excluidas().has(a.id)"
-                            (ngModelChange)="alternar(a.id, $event)" />
+                            (ngModelChange)="alternar(a.id, $event)" [ariaLabel]="'Incluir ' + a.tipo + ' no relatório'" />
               </td>
               <td>{{ a.data | date: 'dd/MM/yyyy' }}</td>
               <td>{{ a.demandaTitulo ?? 'avulsa' }}</td>
@@ -73,78 +111,188 @@
         <h3>Observações gerais</h3>
         <textarea pTextarea rows="3" class="obs" [ngModel]="observacoes()"
                   (ngModelChange)="editarObservacoes($event)"
-                  placeholder="Contexto do mês, férias, bloqueios…"></textarea>
+                  placeholder="Contexto do mês, férias, bloqueios, pendências…"></textarea>
       </section>
     }
 
-    <article class="doc">
-      <h1>RELATÓRIO MENSAL DE ATIVIDADES</h1>
-      <p class="doc__mes">{{ nomeMes() }}</p>
+    <p class="previa-titulo nao-imprimir"><i class="pi pi-eye"></i> Prévia do documento · modelo {{ rotuloModelo() }}</p>
 
-      <p class="doc__ident">
-        <b>Profissional:</b> {{ r.pessoaNome }}<br />
-        <b>Diretoria:</b> {{ r.diretoria ?? '—' }} &nbsp; <b>Área:</b> {{ r.area ?? '—' }} &nbsp;
-        <b>Cargo:</b> {{ r.cargo ?? '—' }}
-      </p>
+    <!-- O documento: sempre claro, com cara de papel, para sair igual na tela e no PDF -->
+    <article class="doc" [attr.data-modelo]="modelo()">
+      <header class="doc__cabeca">
+        <h1>RELATÓRIO MENSAL DE ATIVIDADES</h1>
+        <p class="doc__norma">Norma Interna nº 32/2026 · Aristocrata Tecnologia e Apoio Administrativo</p>
+      </header>
 
-      @for (g of grupos(); track g.titulo) {
-        <h3>{{ g.titulo }}</h3>
-        <table>
-          <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr></thead>
-          <tbody>
-            @for (a of g.itens; track a.id) {
-              <tr>
-                <td class="nowrap">{{ a.data | date: 'dd/MM/yyyy' }}</td>
-                <td>{{ a.tipo }}</td>
-                <td>{{ a.descricao ?? '—' }}</td>
-              </tr>
+      <dl class="doc__ident">
+        <div><dt>Nome do Colaborador</dt><dd>{{ r.pessoaNome }}</dd></div>
+        <div><dt>Cargo (conforme CTPS)</dt><dd>{{ r.cargo ?? '—' }}</dd></div>
+        <div><dt>Mês de Referência</dt><dd class="doc__mes">{{ nomeMes() }}</dd></div>
+        <div><dt>Data de Envio</dt><dd>{{ r.aprovadoEm ? (r.aprovadoEm | date: 'dd/MM/yyyy') : '—' }}</dd></div>
+      </dl>
+
+      @if (demandasDoc().length) {
+        @if (modelo() === 'HTML') {
+          <h2 class="doc__titulo">Resumo Executivo</h2>
+          <p>
+            Em {{ nomeMes() }} foram registradas <b>{{ kpis().demandas }}</b> demanda(s), totalizando
+            <b>{{ kpis().pecas }}</b> peça(s), distribuídas em {{ semanas().length }} semana(s) de trabalho.
+          </p>
+          <table class="doc__resumo">
+            <thead><tr><th>Semana</th><th>Período</th><th>Nº de demandas</th><th>QTD de peças</th></tr></thead>
+            <tbody>
+              @for (l of resumoSemanas(); track l.semana.numero) {
+                <tr>
+                  <td>Semana {{ l.semana.numero }}</td>
+                  <td>{{ diaMes(l.semana.de) }} a {{ diaMes(l.semana.ate) }}</td>
+                  <td>{{ l.demandas }}</td>
+                  <td>{{ l.pecas }}</td>
+                </tr>
+              }
+              <tr class="total"><td>TOTAL</td><td>{{ nomeMes() }}</td><td>{{ kpis().demandas }}</td><td>{{ kpis().pecas }}</td></tr>
+            </tbody>
+          </table>
+        }
+
+        @for (s of porSemana(); track s.semana.numero) {
+          <section class="doc__semana">
+            <h2 class="doc__titulo">
+              SEMANA {{ s.semana.numero }} <span>de {{ diaMes(s.semana.de) }} a {{ diaMes(s.semana.ate) }}</span>
+            </h2>
+
+            @switch (modelo()) {
+              @case ('DESIGNER') {
+                <h4>Descrição das Atividades Executadas</h4>
+                <p>{{ s.demandas.length }} demanda(s) atendida(s) na semana@if (s.demandas.length) {, com {{ totalPecas(s.demandas) }} peça(s) produzida(s)}.</p>
+                <h4>Demandas do Banco / Ordens de Serviço</h4>
+                @for (d of s.demandas; track d.id; let i = $index) {
+                  <div class="demanda">
+                    <div class="demanda__titulo">
+                      Demanda {{ doisDigitos(i + 1) }} · @if (d.codigo) { <span class="codigo-chip">{{ d.codigo }}</span> } {{ d.titulo }}
+                    </div>
+                    @if (d.link) { <p><b>Link:</b> <a [href]="d.link" target="_blank" rel="noopener noreferrer">{{ d.link }}</a></p> }
+                    @if (d.descricao) { <p><b>Descrição:</b> {{ d.descricao }}</p> }
+                    @if (d.quantidadePecas) { <p><b>Quantidade de peças feitas:</b> {{ doisDigitos(d.quantidadePecas) }} ({{ resumoPecas(d) }})</p> }
+                    @if (d.demandante) { <p><b>Gestor demandante:</b> {{ d.demandante }}</p> }
+                    @if (d.diretoria) { <p><b>Área:</b> {{ d.diretoria }}</p> }
+                    <ng-container *ngTemplateOutlet="evidencias; context: { $implicit: d }" />
+                  </div>
+                }
+              }
+              @case ('HTML') {
+                <h4>Demandas do Banco / Ordens de Serviço</h4>
+                <table>
+                  <thead><tr><th>Código BC</th><th>Descrição da demanda</th><th>Data</th><th>QTD</th><th>Natureza</th></tr></thead>
+                  <tbody>
+                    @for (d of s.demandas; track d.id) {
+                      <tr>
+                        <td class="nowrap">{{ d.codigo ?? '—' }}</td>
+                        <td>{{ d.titulo }}</td>
+                        <td class="nowrap">{{ d.data ? diaMes(d.data) : '—' }}</td>
+                        <td>{{ d.quantidadePecas }}</td>
+                        <td>{{ naturezaDe(d) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+                <h4>Evidências (obrigatório)</h4>
+                @for (d of s.demandas; track d.id) {
+                  @if (d.evidencias.length) {
+                    <div class="demanda demanda--simples">
+                      <div class="demanda__titulo">Evidência · {{ d.codigo }} {{ d.titulo }}</div>
+                      <ng-container *ngTemplateOutlet="evidencias; context: { $implicit: d, semTitulo: true }" />
+                    </div>
+                  }
+                } @empty {
+                  <p class="vazio-doc">Sem demandas nesta semana.</p>
+                }
+              }
+              @default {
+                <h4>Descrição das Atividades Executadas</h4>
+                @for (a of s.atividades; track a.id) {
+                  <p class="item"><span class="nowrap">{{ a.data | date: 'dd/MM' }}</span> · {{ a.tipo }}@if (a.demandaTitulo) { · {{ a.demandaTitulo }} }@if (a.descricao) { : {{ a.descricao }} }</p>
+                } @empty {
+                  <p class="vazio-doc">—</p>
+                }
+                <h4>Demandas do Banco / Ordens de Serviço</h4>
+                @for (d of s.demandas; track d.id) {
+                  <p class="item"><b>{{ d.codigo }}</b> {{ d.titulo }}@if (d.demandante || d.diretoria) { <br /><small>Origem: {{ d.demandante ?? d.diretoria }}@if (d.demandante && d.diretoria) { ({{ d.diretoria }}) }</small> }</p>
+                }
+                <h4>Evidências (obrigatório)</h4>
+                @for (d of s.demandas; track d.id) {
+                  <ng-container *ngTemplateOutlet="evidencias; context: { $implicit: d }" />
+                }
+              }
             }
-          </tbody>
-        </table>
-      } @empty {
-        <p><i>Nenhuma atividade selecionada.</i></p>
-      }
-      <p class="doc__total"><b>Total:</b> {{ incluidas().length }} atividade(s)</p>
-
-      <h3>Peças produzidas no mês</h3>
-      @if (r.pecas.length) {
-        <table>
-          <thead><tr><th>Demanda</th><th>Peça</th><th>Tipo</th><th>Qtd</th><th>Valor</th></tr></thead>
-          <tbody>
-            @for (p of r.pecas; track p.id) {
-              <tr>
-                <td>{{ p.demandaTitulo }}</td>
-                <td>{{ p.nome }}</td>
-                <td>{{ p.tipo }}</td>
-                <td>{{ p.quantidade }}</td>
-                <td class="nowrap">{{ p.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-        <p class="doc__total">
-          <b>Valor de referência gerado:</b>
-          {{ r.valorReferencia | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
-        </p>
+          </section>
+        }
       } @else {
-        <p><i>Nenhuma peça registrada no mês.</i></p>
+        <!-- sem demandas no mês (ou relatório aprovado antes dos modelos): lista simples -->
+        @for (g of grupos(); track g.titulo) {
+          <h3>{{ g.titulo }}</h3>
+          <table>
+            <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th></tr></thead>
+            <tbody>
+              @for (a of g.itens; track a.id) {
+                <tr>
+                  <td class="nowrap">{{ a.data | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ a.tipo }}</td>
+                  <td>{{ a.descricao ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @empty {
+          <p class="vazio-doc">Nenhuma atividade selecionada.</p>
+        }
+        <p class="doc__total"><b>Total:</b> {{ incluidas().length }} atividade(s)</p>
+
+        <h3>Peças produzidas no mês</h3>
+        @if (r.pecas.length) {
+          <table>
+            <thead><tr><th>Demanda</th><th>Peça</th><th>Tipo</th><th>Qtd</th><th>Valor</th></tr></thead>
+            <tbody>
+              @for (p of r.pecas; track p.id) {
+                <tr>
+                  <td>{{ p.demandaTitulo }}</td>
+                  <td>{{ p.nome }}</td>
+                  <td>{{ p.tipo }}</td>
+                  <td>{{ p.quantidade }}</td>
+                  <td class="nowrap">{{ p.valorTotal | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="doc__total">
+            <b>Valor de referência gerado:</b>
+            {{ r.valorReferencia | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}
+          </p>
+        } @else {
+          <p class="vazio-doc">Nenhuma peça registrada no mês.</p>
+        }
       }
 
-      <h3>Observações gerais</h3>
+      <h2 class="doc__titulo">Observações{{ modelo() === 'HTML' ? ' e Pendências' : ' gerais' }}</h2>
       <p class="doc__obs">{{ (aprovado() ? r.observacoes : observacoes()) || 'Sem observações.' }}</p>
+
+      <h2 class="doc__titulo">DECLARAÇÃO</h2>
+      <p>
+        Declaro que as informações acima refletem fielmente as atividades por mim executadas no período informado e que os
+        materiais anexados correspondem às demandas recebidas e entregas realizadas.
+      </p>
 
       <div class="doc__assinatura">
         <div class="linha"></div>
-        <div>{{ r.pessoaNome }}</div>
+        <div>Assinatura do Colaborador: {{ r.pessoaNome }}</div>
         @if (aprovado()) {
-          <small>aprovado em {{ r.aprovadoEm | date: 'dd/MM/yyyy' }}</small>
+          <small>Data: {{ r.aprovadoEm | date: 'dd/MM/yyyy' }}</small>
         }
       </div>
     </article>
 
     @if (ehGestorOuAdmin() && resumo.value()?.length) {
       <section class="caixa nao-imprimir">
-        <h2>Relatórios de {{ nomeMes() }}</h2>
+        <h2><i class="pi pi-users"></i> Relatórios de {{ nomeMes() }}</h2>
         <div class="filtros">
           <div class="filtros__linha">
             <app-campo-busca class="filtros__busca" [(valor)]="buscaResumo" placeholder="Buscar pessoa ou equipe" />
@@ -175,3 +323,19 @@
     }
   }
 </div>
+
+<!-- Evidências de uma demanda: links, imagens e arquivos que a pessoa guardou nela -->
+<ng-template #evidencias let-d let-semTitulo="semTitulo">
+  @if (d.evidencias.length) {
+    <div class="evidencias">
+      @if (!semTitulo) { <span class="evidencias__rotulo">Evidências</span> }
+      <div class="evidencias__lista">
+        @for (e of d.evidencias; track e.id) {
+          <app-evidencia-relatorio [item]="e" />
+        }
+      </div>
+    </div>
+  } @else if (!semTitulo) {
+    <p class="evidencias__falta nao-imprimir"><i class="pi pi-exclamation-triangle"></i> Nenhuma evidência guardada nesta demanda. A norma exige evidência: anexe na demanda.</p>
+  }
+</ng-template>

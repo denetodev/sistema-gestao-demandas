@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { Button } from 'primeng/button';
@@ -13,7 +13,10 @@ import { ConfirmationService } from 'primeng/api';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BarraPagina } from '../../../core/layout/barra-pagina/barra-pagina';
 import { RelatorioService, mesAtual } from '../data-access/relatorio.service';
-import type { ItemAtividade, RelatorioResumo } from '../data-access/relatorio.model';
+import type { ItemAtividade, ItemDemanda, ModeloRelatorio, RelatorioResumo } from '../data-access/relatorio.model';
+import { semanaDaData, semanasDoMes } from '../data-access/semanas';
+import { EvidenciaRelatorio } from './evidencia-relatorio';
+import { Carregando } from '../../../core/ui/carregando/carregando';
 
 import { Ajuda } from '../../../core/ajuda/ajuda/ajuda';
 import { CampoBusca } from '../../../core/ui/campo-busca/campo-busca';
@@ -23,7 +26,7 @@ const AVULSAS = 'Atividades avulsas (sem demanda)';
 
 @Component({
   selector: 'app-relatorio',
-  imports: [Ajuda, CampoBusca, 
+  imports: [Ajuda, CampoBusca, EvidenciaRelatorio, NgTemplateOutlet, Carregando, 
     CurrencyPipe, DatePipe, FormsModule, Button, Select, Checkbox, Textarea, TableModule, Tag, Message,
     BarraPagina,
   ],
@@ -81,6 +84,81 @@ export class RelatorioMensal {
       .sort(([a], [b]) => Number(a === AVULSAS) - Number(b === AVULSAS) || a.localeCompare(b, 'pt-BR'))
       .map(([titulo, itens]) => ({ titulo, itens }));
   });
+
+  modelo = computed<ModeloRelatorio>(() => this.relatorio.value()?.modelo ?? 'PADRAO');
+  rotuloModelo = computed(() => ({ DESIGNER: 'Designer', HTML: 'HTML', PADRAO: 'Padrão Aristocrata' })[this.modelo()]);
+
+  /** As demandas do documento: o aprovado vem congelado; o aberto respeita a seleção local. */
+  demandasDoc = computed<ItemDemanda[]>(() => {
+    const r = this.relatorio.value();
+    if (!r?.demandas) return [];
+    if (r.status === 'APROVADO') return r.demandas;
+    const fora = this.excluidas();
+    return r.demandas
+      .map((d) => {
+        const atividadeIds = d.atividadeIds.filter((id) => !fora.has(id));
+        return {
+          ...d,
+          atividadeIds,
+          evidencias: d.evidencias.filter((e) => !e.atividadeId || !fora.has(e.atividadeId)),
+        };
+      })
+      .filter((d) => d.atividadeIds.length > 0 || d.quantidadePecas > 0);
+  });
+
+  semanas = computed(() => semanasDoMes(this.filtro().mes));
+
+  porSemana = computed(() => {
+    const semanas = this.semanas();
+    const demandas = this.demandasDoc();
+    const atividades = this.incluidas();
+    return semanas
+      .map((semana) => ({
+        semana,
+        demandas: demandas.filter((d) => d.data && semanaDaData(semanas, d.data) === semana),
+        atividades: atividades.filter((a) => semanaDaData(semanas, a.data) === semana),
+      }))
+      .filter((s) => s.demandas.length > 0 || s.atividades.length > 0);
+  });
+
+  resumoSemanas = computed(() =>
+    this.semanas().map((semana) => {
+      const ds = this.demandasDoc().filter((d) => d.data && semanaDaData(this.semanas(), d.data) === semana);
+      return { semana, demandas: ds.length, pecas: ds.reduce((t, d) => t + d.quantidadePecas, 0) };
+    }),
+  );
+
+  kpis = computed(() => {
+    const ds = this.demandasDoc();
+    return {
+      demandas: ds.length,
+      pecas: ds.reduce((t, d) => t + d.quantidadePecas, 0),
+      atividades: this.incluidas().length,
+      evidencias: ds.reduce((t, d) => t + d.evidencias.length, 0),
+    };
+  });
+
+  resumoPecas(d: ItemDemanda): string {
+    return d.pecas.map((p) => `${p.quantidade} ${p.tipo}`).join(' e ');
+  }
+
+  totalPecas(ds: ItemDemanda[]): number {
+    return ds.reduce((t, d) => t + d.quantidadePecas, 0);
+  }
+
+  doisDigitos(n: number): string {
+    return String(n).padStart(2, '0');
+  }
+
+  /** "2026-10-04" vira "04/10". */
+  diaMes(iso: string): string {
+    const [, m, d] = iso.split('-');
+    return `${d}/${m}`;
+  }
+
+  naturezaDe(d: ItemDemanda): string {
+    return d.naturezas.length ? d.naturezas.join(', ') : '—';
+  }
 
   buscaResumo = signal('');
   resumoFiltrado = computed(() =>

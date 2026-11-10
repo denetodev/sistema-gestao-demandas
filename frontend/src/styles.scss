@@ -605,3 +605,37 @@ button,
 .tooltip-time .p-tooltip-text {
   white-space: pre-line;
 }
+
+/* Botão de voltar: parece botão (borda, fundo, sombra e foco), não um texto solto na barra */
+.botao-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--sgd-borda);
+  border-radius: 999px;
+  background: var(--sgd-cartao);
+  box-shadow: var(--sgd-sombra-leve);
+  color: var(--sgd-texto);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    border-color: var(--sgd-laranja);
+    background: var(--sgd-laranja-suave);
+    color: var(--sgd-laranja-forte);
+    transform: translateX(-2px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--sgd-laranja);
+    outline-offset: 2px;
+  }
+
+  i {
+    font-size: 0.8rem;
+  }
+}
