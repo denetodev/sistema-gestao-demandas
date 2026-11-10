@@ -29,6 +29,8 @@ public record DemandaRequest(
 
         Prioridade prioridade,
 
+        LocalDate dataInicio,
+
         LocalDate dataPrazo,
 
         String observacoes,

@@ -1,6 +1,6 @@
-<section class="secao">
+<section class="secao secao--verde">
   <header class="secao__cab">
-    <h2>Evidências ({{ itens().length }})</h2>
+    <h2><i class="pi pi-images"></i> Evidências ({{ itens().length }})</h2>
     @if (editavel() && alvos().length) {
       <p-button icon="pi pi-plus" label="Adicionar" size="small" [text]="true" (onClick)="abrir()" />
     }

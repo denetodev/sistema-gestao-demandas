@@ -1,72 +1,128 @@
 <p-dialog
   [(visible)]="visivel"
-  [header]="edicao() ? 'Editar demanda' : 'Nova demanda'"
   [modal]="true"
-  [style]="{ width: '480px' }"
+  [draggable]="false"
+  [style]="{ width: '760px' }"
+  [breakpoints]="{ '800px': '94vw' }"
+  styleClass="demanda-dialogo"
 >
-  <form [formGroup]="form" (ngSubmit)="salvar()" class="demanda-form">
-    <label for="titulo">Título</label>
-    <small class="dica">Um nome que outra pessoa entenda sem abrir a demanda: o que é e, se couber, para quem.</small>
-    <input pInputText id="titulo" formControlName="titulo" />
+  <ng-template pTemplate="header">
+    <div class="dialogo-titulo">
+      <span class="dialogo-titulo__icone"><i class="pi" [class.pi-pencil]="edicao()" [class.pi-plus]="!edicao()"></i></span>
+      <div>
+        <h2>{{ edicao() ? 'Editar demanda' : 'Nova demanda' }}</h2>
+        <p>{{ edicao() ? 'Ajuste o que mudou. O resto fica como está.' : 'Preencha o essencial agora, o resto dá para completar depois.' }}</p>
+      </div>
+    </div>
+  </ng-template>
 
-    <label for="codigo">Código (opcional)</label>
-    <small class="dica">Um código de controle seu, como BC2609AX. Aparece como etiqueta na lista.</small>
-    <input pInputText id="codigo" formControlName="codigo" maxlength="40" />
+  <app-carregando [ativo]="carregandoDemanda()" />
 
-    <label for="descricao">Descrição</label>
-    <small class="dica">O que foi pedido, em poucas linhas.</small>
-    <textarea pTextarea id="descricao" formControlName="descricao" rows="2"></textarea>
+  <form [formGroup]="form" (ngSubmit)="salvar()" class="demanda-form" id="demanda-form">
+    <section class="bloco bloco--laranja">
+      <h3 class="bloco__titulo"><i class="pi pi-file-edit"></i> Sobre a demanda</h3>
+      <div class="grade">
+        <div class="campo campo--1-3">
+          <label for="codigo">Código</label>
+          <input pInputText id="codigo" formControlName="codigo" maxlength="40" placeholder="BC2609AX" class="codigo" />
+          <small class="dica">Código de controle seu. Aparece como etiqueta.</small>
+        </div>
+        <div class="campo campo--2-3">
+          <label for="titulo">Título <span class="obrig" aria-hidden="true">*</span></label>
+          <input pInputText id="titulo" formControlName="titulo" required placeholder="O que é e, se couber, para quem" />
+          <small class="dica">Um nome que outra pessoa entenda sem abrir a demanda.</small>
+        </div>
+        <div class="campo campo--cheio">
+          <label for="descricao">Descrição</label>
+          <textarea pTextarea id="descricao" formControlName="descricao" rows="2" placeholder="O que foi pedido, em poucas linhas"></textarea>
+        </div>
+      </div>
+    </section>
 
-    <label for="diretoria">Diretoria</label>
-    <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
-              optionLabel="nome" optionValue="id" placeholder="Selecione" />
-    @if (autor()?.nucleoNome || autor()?.areaNome) {
-      <small class="dica">
-        Você entra como responsável: núcleo {{ autor()?.nucleoNome ?? '—' }}, equipe {{ autor()?.areaNome ?? '—' }}.
-      </small>
-    }
+    <section class="bloco bloco--azul">
+      <h3 class="bloco__titulo"><i class="pi pi-users"></i> Quem pediu e quando</h3>
+      <div class="grade">
+        <div class="campo campo--1-2">
+          <label for="diretoria">Diretoria <span class="obrig" aria-hidden="true">*</span></label>
+          <p-select inputId="diretoria" formControlName="diretoriaId" [options]="diretorias.value() ?? []"
+                    optionLabel="nome" optionValue="id" placeholder="Selecione" appendTo="body" />
+          @if (!edicao() && (autor()?.nucleoNome || autor()?.areaNome)) {
+            <small class="dica">Você entra como responsável: {{ autor()?.nucleoNome ?? '—' }} · {{ autor()?.areaNome ?? '—' }}.</small>
+          }
+        </div>
+        <div class="campo campo--1-2">
+          <label for="demandante">Demandante</label>
+          <p-select inputId="demandante" formControlName="demandanteId" [options]="opcoesDemandante()"
+                    optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Selecione" appendTo="body" />
+          <small class="dica">Quem pediu o trabalho.</small>
+        </div>
+        <div class="campo campo--1-3">
+          <label for="prioridade">Prioridade <span class="obrig" aria-hidden="true">*</span></label>
+          <p-select inputId="prioridade" formControlName="prioridade" [options]="opcoesPrioridade" appendTo="body" />
+        </div>
+        <div class="campo campo--1-3">
+          <label for="inicio">Data de início</label>
+          <p-datepicker inputId="inicio" formControlName="dataInicio" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />
+        </div>
+        <div class="campo campo--1-3">
+          <label for="prazo">Prazo de entrega</label>
+          <p-datepicker inputId="prazo" formControlName="dataPrazo" dateFormat="dd/mm/yy" [showIcon]="true" appendTo="body" />
+        </div>
+        <small class="dica campo--cheio dica--linha">Urgente é o que precisa sair antes de todo o resto. Sem prazo de entrega, a demanda nunca aparece como atrasada.</small>
+      </div>
+    </section>
 
-    <label for="demandante">Demandante</label>
-    <small class="dica">Quem pediu o trabalho.</small>
-    <p-select inputId="demandante" formControlName="demandanteId" [options]="opcoesDemandante()"
-              optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Selecione" />
+    <section class="bloco bloco--verde">
+      <h3 class="bloco__titulo"><i class="pi pi-megaphone"></i> Onde ela se encaixa</h3>
+      <div class="grade">
+        <div class="campo campo--1-2">
+          <label for="campanha">Campanha</label>
+          <p-select inputId="campanha" formControlName="campanhaId" [options]="opcoesCampanha()"
+                    optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Nenhuma" appendTo="body" />
+          <small class="dica">A ação que reúne esta e outras demandas.</small>
+        </div>
+        <div class="campo campo--1-2">
+          <label for="projeto">Projeto</label>
+          <p-select inputId="projeto" formControlName="projetoId" [options]="opcoesProjeto()"
+                    optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Nenhum" appendTo="body" />
+          <small class="dica">O objetivo maior a que ela pertence.</small>
+        </div>
+      </div>
+    </section>
 
-    <label for="projeto">Projeto</label>
-    <small class="dica">Opcional. O objetivo maior ao qual esta demanda pertence.</small>
-    <p-select inputId="projeto" formControlName="projetoId" [options]="opcoesProjeto()"
-              optionLabel="nome" optionValue="id" [showClear]="true" placeholder="Nenhum" />
-
-    <label for="campanha">Campanha</label>
-    <small class="dica">Opcional. A ação que reúne esta e outras demandas, para ver o conjunto depois.</small>
-    <p-select inputId="campanha" formControlName="campanhaId" [options]="opcoesCampanha()"
-              optionLabel="nome" optionValue="id" [showClear]="true"
-              placeholder="Nenhuma" />
-
-    <label for="prioridade">Prioridade</label>
-    <small class="dica">Urgente é o que precisa sair antes de todo o resto.</small>
-    <p-select inputId="prioridade" formControlName="prioridade" [options]="opcoesPrioridade" />
-
-    <label for="prazo">Prazo</label>
-    <small class="dica">Data combinada de entrega. Sem prazo, a demanda nunca aparece como atrasada.</small>
-    <p-datepicker inputId="prazo" formControlName="dataPrazo" dateFormat="dd/mm/yy" [showIcon]="true" />
-
-    <label for="linkExterno">Link externo (opcional)</label>
-    <small class="dica">Onde está o acompanhamento ou o material (Planner, ClickUp, pasta).</small>
-    <input pInputText id="linkExterno" formControlName="linkExterno" placeholder="URL do Planner ou ClickUp" />
-    @if (form.controls.linkExterno.invalid) {
-      <small class="erro-campo">Informe uma URL começando com http:// ou https://</small>
-    }
-
-    <label for="observacoes">Observações</label>
-    <small class="dica">Combinados, restrições ou qualquer detalhe que não coube nos outros campos.</small>
-    <textarea pTextarea id="observacoes" formControlName="observacoes" rows="3"></textarea>
+    <section class="bloco bloco--roxo">
+      <h3 class="bloco__titulo"><i class="pi pi-paperclip"></i> Complementos</h3>
+      <div class="grade">
+        <div class="campo campo--cheio">
+          <label for="linkExterno">Link externo (opcional)</label>
+          <input pInputText id="linkExterno" formControlName="linkExterno" placeholder="https://... do Planner, ClickUp ou pasta" />
+          @if (form.controls.linkExterno.invalid) {
+            <small class="erro-campo">Informe uma URL começando com http:// ou https://</small>
+          } @else {
+            <small class="dica">Onde está o acompanhamento ou o material.</small>
+          }
+        </div>
+        <div class="campo campo--cheio">
+          <label for="observacoes">Observações</label>
+          <textarea pTextarea id="observacoes" formControlName="observacoes" rows="3"
+                    placeholder="Combinados, restrições ou qualquer detalhe que não coube acima"></textarea>
+        </div>
+      </div>
+    </section>
 
     @if (erro()) {
       <p-message severity="error">{{ erro() }}</p-message>
     }
-
-    <p-button type="submit" [loading]="carregando()" [disabled]="form.invalid || carregandoDemanda()">
-      {{ edicao() ? 'Salvar' : 'Criar demanda' }}
-    </p-button>
   </form>
+
+  <ng-template pTemplate="footer">
+    <div class="rodape">
+      <span class="rodape__legenda"><span class="obrig">*</span> Campo obrigatório</span>
+      <div class="rodape__acoes">
+        <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="visivel.set(false)" />
+        <p-button [label]="edicao() ? 'Salvar alterações' : 'Criar demanda'" icon="pi pi-check" [loading]="carregando()"
+                  [disabled]="form.invalid || carregandoDemanda()" (onClick)="salvar()" />
+      </div>
+    </div>
+  </ng-template>
 </p-dialog>

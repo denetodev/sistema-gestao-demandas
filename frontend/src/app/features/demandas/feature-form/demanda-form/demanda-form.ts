@@ -8,6 +8,8 @@ import { DatePicker } from 'primeng/datepicker';
 import { Textarea } from 'primeng/textarea';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
+import { SharedModule } from 'primeng/api';
+import { Carregando } from '../../../../core/ui/carregando/carregando';
 import { DemandaService } from '../../data-access/demanda.service';
 import type { Prioridade } from '../../data-access/demanda.model';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -22,7 +24,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-demanda-form',
-  imports: [ReactiveFormsModule, Dialog, InputText, Select, DatePicker, Textarea, Button, Message],
+  imports: [Carregando, SharedModule, ReactiveFormsModule, Dialog, InputText, Select, DatePicker, Textarea, Button, Message],
   templateUrl: './demanda-form.html',
   styleUrl: './demanda-form.scss',
 })
@@ -61,6 +63,7 @@ export class DemandaForm {
     projetoId: this.#fb.control<string | null>(null),
     campanhaId: this.#fb.control<string | null>(null),
     prioridade: ['NORMAL' as Prioridade, Validators.required],
+    dataInicio: this.#fb.control<Date | null>(null),
     dataPrazo: this.#fb.control<Date | null>(null),
     observacoes: [''],
     linkExterno: ['', Validators.pattern(/^\s*$|^https?:\/\/\S+$/i)],
@@ -132,6 +135,7 @@ export class DemandaForm {
         projetoId: d.projetoId,
         campanhaId: d.campanhaId,
         prioridade: d.prioridade,
+        dataInicio: paraData(d.dataInicio),
         dataPrazo: paraData(d.dataPrazo),
         observacoes: d.observacoes ?? '',
         linkExterno: d.linkExterno ?? '',
@@ -158,6 +162,7 @@ export class DemandaForm {
       projetoId: v.projetoId,
       campanhaId: v.campanhaId,
       prioridade: v.prioridade,
+      dataInicio: formatarData(v.dataInicio),
       dataPrazo: formatarData(v.dataPrazo),
       observacoes: v.observacoes || null,
       linkExterno: v.linkExterno.trim() || null,

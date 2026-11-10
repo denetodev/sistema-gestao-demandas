@@ -25,6 +25,7 @@ public record DemandaResponse(
         Prioridade prioridade,
         StatusDemanda status,
         LocalDate dataCriacao,
+        LocalDate dataInicio,
         LocalDate dataPrazo,
         LocalDate dataEntregaReal,
         BigDecimal valor,

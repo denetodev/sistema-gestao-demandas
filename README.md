@@ -100,6 +100,7 @@ O Hibernate roda com `ddl-auto: validate` — se a entidade e a migration diverg
 | V22 | bucket público `avatares` (fotos de perfil, até 2 MB, JPEG ou PNG) |
 | V23 | `pessoa.notificacoes_vistas_em`, `pessoa_demanda.adicionado_por` e `adicionado_em` (sininho de avisos) |
 | V24 | integração com o Planner: `pessoa.etiqueta_planner` e a tabela `planner_sugestao` (uma sugestão por tarefa e pessoa) |
+| V25 | `demanda.data_inicio` (data de início da demanda; o prazo de entrega segue em `data_prazo`) |
 
 A importação da planilha está em [`database/importacao/`](database/importacao/README.md).
 

@@ -31,6 +31,6 @@ class DemandaCodigoTest {
     }
 
     private DemandaRequest requisicao(String codigo) {
-        return new DemandaRequest("Título", null, codigo, UUID.randomUUID(), null, null, null, null, null, null, null);
+        return new DemandaRequest("Título", null, codigo, UUID.randomUUID(), null, null, null, null, null, null, null, null);
     }
 }

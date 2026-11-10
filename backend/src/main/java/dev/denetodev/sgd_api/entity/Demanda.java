@@ -50,6 +50,9 @@ public class Demanda {
     @Column(name = "data_criacao", nullable = false)
     private LocalDate dataCriacao;
 
+    @Column(name = "data_inicio")
+    private LocalDate dataInicio;
+
     @Column(name = "data_prazo")
     private LocalDate dataPrazo;
 
@@ -177,6 +180,14 @@ public class Demanda {
 
     public LocalDate getDataCriacao() {
         return dataCriacao;
+    }
+
+    public LocalDate getDataInicio() {
+        return dataInicio;
+    }
+
+    public void setDataInicio(LocalDate dataInicio) {
+        this.dataInicio = dataInicio;
     }
 
     public LocalDate getDataPrazo() {

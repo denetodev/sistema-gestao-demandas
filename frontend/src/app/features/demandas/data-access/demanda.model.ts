@@ -35,6 +35,7 @@ export interface Demanda {
   prioridade: Prioridade;
   status: StatusDemanda;
   dataCriacao: string;
+  dataInicio: string | null;
   dataPrazo: string | null;
   dataEntregaReal: string | null;
   valor: number | null;
@@ -58,6 +59,7 @@ export interface CriarDemandaPayload {
   projetoId: string | null;
   campanhaId: string | null;
   prioridade: Prioridade;
+  dataInicio: string | null;
   dataPrazo: string | null;
   observacoes: string | null;
   linkExterno: string | null;

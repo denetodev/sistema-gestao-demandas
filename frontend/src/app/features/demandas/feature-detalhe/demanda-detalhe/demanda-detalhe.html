@@ -30,44 +30,60 @@
       </p-message>
     }
 
-    <section class="secao">
-      <div class="titulo-linha">
-        <h1>{{ d.titulo }}</h1>
-        <div class="status">
+    <section class="resumo" [class.resumo--atrasada]="atrasada()" [class.resumo--cancelada]="cancelada()">
+      <div class="resumo__topo">
+        <div class="resumo__titulo">
+          <div class="resumo__etiquetas">
+            @if (d.codigo) { <span class="codigo-chip">{{ d.codigo }}</span> }
+            <p-tag [value]="rotuloPrioridade[d.prioridade]" [severity]="severityPrioridade(d.prioridade)" />
+            @if (atrasada()) { <p-tag value="Atrasada" severity="danger" icon="pi pi-exclamation-triangle" /> }
+          </div>
+          <h1>{{ d.titulo }}</h1>
+        </div>
+        <div class="resumo__status">
+          <span class="resumo__rotulo">Situação</span>
           @if (editavel()) {
             <p-select [ngModel]="d.status" (ngModelChange)="mudarStatus($event)" [options]="opcoesStatus"
-                      optionLabel="label" optionValue="value" />
+                      optionLabel="label" optionValue="value" ariaLabel="Situação da demanda" />
           } @else {
             <p-tag [value]="rotuloStatus[d.status]" />
           }
         </div>
       </div>
+
       @if (d.descricao) {
-        <p class="descricao">{{ d.descricao }}</p>
+        <p class="resumo__descricao">{{ d.descricao }}</p>
       }
+
+      <div class="indicadores">
+        <div class="indicador indicador--azul">
+          <i class="pi pi-play"></i>
+          <div><span>Início</span><strong>{{ d.dataInicio ? (d.dataInicio | date: 'dd/MM/yyyy') : '—' }}</strong></div>
+        </div>
+        <div class="indicador indicador--laranja" [class.indicador--perigo]="atrasada()">
+          <i class="pi pi-calendar"></i>
+          <div><span>Prazo de entrega</span><strong>{{ d.dataPrazo ? (d.dataPrazo | date: 'dd/MM/yyyy') : '—' }}</strong></div>
+        </div>
+        <div class="indicador indicador--verde">
+          <i class="pi pi-wallet"></i>
+          <div><span>Valor de referência</span><strong>{{ d.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong></div>
+        </div>
+        <div class="indicador indicador--roxo">
+          <i class="pi pi-users"></i>
+          <div><span>No time</span><strong>{{ participantes.value()?.length ?? 0 }}</strong></div>
+        </div>
+      </div>
+
       <dl class="dados">
-        <div><dt>Demandante</dt><dd>{{ d.demandanteNome ?? '—' }}</dd></div>
-        <div><dt>Diretoria</dt><dd>{{ d.diretoriaNome }}</dd></div>
+        <div><dt><i class="pi pi-user"></i> Demandante</dt><dd>{{ d.demandanteNome ?? '—' }}</dd></div>
+        <div><dt><i class="pi pi-building"></i> Diretoria</dt><dd>{{ d.diretoriaNome }}</dd></div>
         @if (nucleosEnvolvidos()) {
-          <div><dt>Núcleos envolvidos</dt><dd>{{ nucleosEnvolvidos() }}</dd></div>
+          <div><dt><i class="pi pi-sitemap"></i> Núcleos envolvidos</dt><dd>{{ nucleosEnvolvidos() }}</dd></div>
         }
-        <div><dt>Projeto</dt><dd>{{ d.projetoNome ?? '—' }}</dd></div>
-        <div><dt>Campanha</dt><dd>{{ d.campanhaNome ?? '—' }}</dd></div>
-        <div><dt>Prioridade</dt><dd><p-tag [value]="d.prioridade" [severity]="severityPrioridade(d.prioridade)" /></dd></div>
+        <div><dt><i class="pi pi-megaphone"></i> Campanha</dt><dd>{{ d.campanhaNome ?? '—' }}</dd></div>
+        <div><dt><i class="pi pi-folder"></i> Projeto</dt><dd>{{ d.projetoNome ?? '—' }}</dd></div>
         <div>
-          <dt>Prazo</dt>
-          <dd>
-            {{ d.dataPrazo ? (d.dataPrazo | date: 'dd/MM/yyyy') : '—' }}
-            @if (atrasada()) { <p-tag value="atrasada" severity="danger" /> }
-          </dd>
-        </div>
-        <div>
-          <dt>Valor de referência</dt>
-          <dd><b>{{ d.valorCalculado | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</b></dd>
-        </div>
-        <div><dt>Código</dt><dd>{{ d.codigo ?? '—' }}</dd></div>
-        <div>
-          <dt>Link externo</dt>
+          <dt><i class="pi pi-link"></i> Link externo</dt>
           <dd>
             @if (d.linkExterno) {
               <a class="link-externo" [href]="d.linkExterno" [title]="d.linkExterno" target="_blank" rel="noopener noreferrer">{{ d.linkExterno }}</a>
@@ -77,8 +93,12 @@
           </dd>
         </div>
       </dl>
+
       @if (d.observacoes) {
-        <p class="descricao"><b>Observações:</b> {{ d.observacoes }}</p>
+        <div class="observacoes">
+          <span class="observacoes__rotulo"><i class="pi pi-comment"></i> Observações</span>
+          <p>{{ d.observacoes }}</p>
+        </div>
       }
     </section>
 
@@ -96,8 +116,8 @@
                           [pecas]="pecas.value() ?? []" [editavel]="editavel()"
                           (alterado)="evidencias.reload()" />
 
-    <section class="secao">
-      <header class="secao__cab"><h2>Histórico de status ({{ historico.value()?.length ?? 0 }})</h2></header>
+    <section class="secao secao--cinza">
+      <header class="secao__cab"><h2><i class="pi pi-history"></i> Histórico de status ({{ historico.value()?.length ?? 0 }})</h2></header>
       <p-table [value]="historico.value() ?? []" [stripedRows]="true">
         <ng-template pTemplate="header">
           <tr><th>Quando</th><th>De</th><th>Para</th><th>Quem</th><th>Motivo</th></tr>

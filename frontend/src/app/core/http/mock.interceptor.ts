@@ -192,6 +192,7 @@ function gerarDemandas(qtd: number) {
       prioridade: PRIORIDADES[(i * 5) % PRIORIDADES.length],
       status,
       dataCriacao: data(criacao),
+      dataInicio: data(criacao),
       dataPrazo: i % 4 === 0 ? null : data(criacao - 12),
       dataEntregaReal: concluida ? data(criacao - 10) : null,
       valor,

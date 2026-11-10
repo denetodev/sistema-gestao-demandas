@@ -141,6 +141,7 @@ function aplicarPayloadDemanda(ctx: MockCtx, d: any, b: any) {
     campanhaId: b.campanhaId ?? null,
     campanhaNome: nomeDe(ctx.dados['/campanhas'], b.campanhaId),
     prioridade: b.prioridade ?? 'NORMAL',
+    dataInicio: b.dataInicio ?? null,
     dataPrazo: b.dataPrazo ?? null,
     observacoes: b.observacoes ?? null,
     linkExterno: b.linkExterno ?? null,

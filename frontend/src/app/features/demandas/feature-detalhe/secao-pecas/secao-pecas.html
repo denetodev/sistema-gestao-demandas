@@ -1,6 +1,6 @@
-<section class="secao">
+<section class="secao secao--laranja">
   <header class="secao__cab">
-    <h2>Peças ({{ itens().length }})</h2>
+    <h2><i class="pi pi-box"></i> Peças ({{ itens().length }})</h2>
     @if (editavel()) {
       <p-button icon="pi pi-plus" label="Adicionar" size="small" [text]="true" (onClick)="abrir()" />
     }
