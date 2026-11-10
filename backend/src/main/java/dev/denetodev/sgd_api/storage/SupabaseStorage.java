@@ -87,6 +87,20 @@ public class SupabaseStorage implements ArquivoStorage {
     }
 
     @Override
+    public byte[] baixar(String caminho) {
+        exigirConfigurado();
+        try {
+            return http().get()
+                    .uri(baseUrl + "/storage/v1/object/authenticated/" + BUCKET + "/" + caminho)
+                    .headers(this::autenticar)
+                    .retrieve()
+                    .body(byte[].class);
+        } catch (RestClientException | IllegalArgumentException e) {
+            throw new ArmazenamentoIndisponivelException("Não foi possível ler o arquivo no Storage", causaSegura(e));
+        }
+    }
+
+    @Override
     public void remover(String caminho) {
         if (!configurado()) {
             return;

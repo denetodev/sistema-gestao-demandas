@@ -9,6 +9,11 @@ public interface ArquivoStorage {
     /** URL temporária de leitura; o bucket é privado. */
     String urlAssinada(String caminho, int validadeSegundos);
 
+    /** Lê o conteúdo de um arquivo de evidência (para embutir imagens no DOCX do relatório). */
+    default byte[] baixar(String caminho) {
+        throw new UnsupportedOperationException("Esta implementação de storage não lê arquivos");
+    }
+
     /** Remove o arquivo; falha de limpeza não deve derrubar quem chamou. */
     void remover(String caminho);
 
