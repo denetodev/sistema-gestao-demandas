@@ -31,7 +31,8 @@
       </div>
     </div>
     <div class="tabela-rolagem">
-      <p-table [value]="filtrados()" [loading]="pessoas.isLoading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pessoas" dataKey="id" sortMode="single">
+      <app-carregando [ativo]="pessoas.isLoading()" />
+      <p-table [value]="filtrados()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pessoas" dataKey="id" sortMode="single">
             <ng-template pTemplate="header">
                 <tr>
                     <th pSortableColumn="nomeExibido">Chamado(a) <p-sortIcon field="nomeExibido" /></th>

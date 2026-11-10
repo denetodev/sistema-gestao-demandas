@@ -35,8 +35,9 @@
       </div>
     </div>
 
+    <app-carregando [ativo]="carregando()" />
     @if (carregando() && visiveis().length === 0) {
-      <p class="vazio">Carregando...</p>
+      <!-- a barra acima já avisa que está carregando -->
     } @else if (semDiretoriasComNucleo() && filtro() === 'com' && !busca()) {
       <div class="vazio">
         <strong>Nenhum núcleo cadastrado ainda</strong>

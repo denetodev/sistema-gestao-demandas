@@ -41,7 +41,8 @@
       </div>
     </div>
     <div class="tabela-rolagem">
-      <p-table [value]="filtrados()" [loading]="emprestimos.isLoading()" dataKey="id"
+      <app-carregando [ativo]="emprestimos.isLoading()" />
+      <p-table [value]="filtrados()" dataKey="id"
         [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50]" [showCurrentPageReport]="true"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} empréstimos">
         <ng-template pTemplate="header">

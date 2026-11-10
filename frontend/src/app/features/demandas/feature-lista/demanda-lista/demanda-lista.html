@@ -50,6 +50,7 @@
     </div>
 
     @if (visao() === 'quadro') {
+      <app-carregando [ativo]="demandas.isLoading()" />
       <app-demanda-quadro [demandas]="demandas.value()?.content ?? []" [agruparPor]="agrupar()" [carregando]="demandas.isLoading()"
         (abrir)="abrirDemanda($event)" />
       <p-paginator [rows]="filtro().size" [first]="filtro().page * filtro().size" [totalRecords]="demandas.value()?.totalElements ?? 0"
@@ -57,9 +58,9 @@
         [alwaysShow]="false" (onPageChange)="aoMudarPaginaQuadro($event)" />
     } @else {
     <div class="tabela-rolagem">
+      <app-carregando [ativo]="demandas.isLoading()" />
       <p-table
         [value]="demandas.value()?.content ?? []"
-        [loading]="demandas.isLoading()"
         [lazy]="true"
         (onLazyLoad)="aoCarregar($event)"
         [paginator]="true"

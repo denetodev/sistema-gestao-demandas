@@ -9,6 +9,7 @@ import { Sino } from '../../notificacoes/sino/sino';
 import { ContaPendente } from '../../../features/acesso/conta-pendente/conta-pendente';
 import { CompletarCadastro } from '../../../features/acesso/completar-cadastro/completar-cadastro';
 import type { MenuItem } from 'primeng/api';
+import { Carregando } from '../../ui/carregando/carregando';
 
 const CHAVE_SIDEBAR = 'sgd-sidebar-recolhida';
 const LARGURA_CELULAR = 900;
@@ -22,7 +23,7 @@ const ROTULO_PERFIL: Record<string, string> = {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Menu, ContaPendente, CompletarCadastro, Sino],
+  imports: [Carregando, RouterOutlet, RouterLink, RouterLinkActive, Menu, ContaPendente, CompletarCadastro, Sino],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.scss',
 })

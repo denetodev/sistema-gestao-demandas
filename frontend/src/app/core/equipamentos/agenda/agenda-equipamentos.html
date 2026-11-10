@@ -36,9 +36,8 @@
       <li><i class="pi pi-external-link" aria-hidden="true"></i>Externo (sai do prédio)</li>
     </ul>
 
-    @if (agenda.isLoading() && !agenda.value()) {
-      <p class="carregando">Carregando agenda...</p>
-    } @else {
+    <app-carregando [ativo]="agenda.isLoading()" rotulo="Carregando agenda" />
+    @if (agenda.value() || !agenda.isLoading()) {
       <div class="rolagem">
         <div class="gantt" [style.--dias]="quantidadeDias()">
           <div class="gantt__cabecalho">

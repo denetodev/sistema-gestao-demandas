@@ -25,9 +25,9 @@
       </div>
     </div>
     <div class="tabela-rolagem">
+      <app-carregando [ativo]="projetos.isLoading()" />
       <p-table
         [value]="filtrados()"
-        [loading]="projetos.isLoading()"
         [paginator]="true"
         [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} projetos"
         dataKey="id"

@@ -18,10 +18,11 @@ import { Ajuda } from '../../ajuda/ajuda/ajuda';
 import { contemTexto } from '../../util/listas';
 import { EquipamentoService } from '../equipamento.service';
 import type { ControleEquipamento, Equipamento } from '../equipamento.model';
+import { Carregando } from '../../ui/carregando/carregando';
 
 @Component({
   selector: 'app-inventario',
-  imports: [
+  imports: [Carregando, 
     DatePipe, FormsModule, ReactiveFormsModule, RouterLink, TableModule, Dialog, InputText, InputNumber, Textarea,
     Select, Button, Tag, BarraPagina, CampoBusca, Ajuda,
   ],

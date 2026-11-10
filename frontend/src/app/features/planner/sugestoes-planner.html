@@ -36,22 +36,19 @@
     </section>
   }
 
-  @if (sugestoes.isLoading() && !sugestoes.value()) {
-    <p class="carregando">Carregando...</p>
-  } @else {
+  <app-carregando [ativo]="sugestoes.isLoading()" />
+  @if (sugestoes.value() || !sugestoes.isLoading()) {
     <div class="lista">
       @for (s of sugestoes.value() ?? []; track s.id) {
         @let t = apresentar(s);
         <article class="sugestao">
           <div class="sugestao__corpo">
-            <div class="sugestao__topo">
-              @if (t.codigo) { <span class="codigo-chip">{{ t.codigo }}</span> }
-              <strong class="sugestao__titulo">{{ t.titulo }}</strong>
-            </div>
+            @if (s.bucket) { <span class="sugestao__bucket"><i class="pi pi-th-large"></i> {{ s.bucket }}</span> }
+            @if (t.codigo) { <span class="codigo-chip">{{ t.codigo }}</span> }
+            <strong class="sugestao__titulo">{{ t.titulo }}</strong>
             <div class="sugestao__meta">
               <p-tag [value]="s.etiqueta" severity="secondary" />
-              @if (s.bucket) { <span><i class="pi pi-th-large"></i> {{ s.bucket }}</span> }
-              @if (s.criadaNoPlanner) { <span><i class="pi pi-calendar"></i> criada em {{ s.criadaNoPlanner | date: 'dd/MM/yyyy' }}</span> }
+              @if (s.criadaNoPlanner) { <span><i class="pi pi-calendar"></i> {{ s.criadaNoPlanner | date: 'dd/MM/yyyy' }}</span> }
             </div>
             <p class="sugestao__efeito">
               @if (s.demandaExistenteId) {

@@ -53,6 +53,8 @@
       </div>
     </section>
   } @empty {
-    <p class="quadro__vazio">Nenhuma demanda para mostrar.</p>
+    @if (!carregando()) {
+      <p class="quadro__vazio">Nenhuma demanda para mostrar.</p>
+    }
   }
 </div>
