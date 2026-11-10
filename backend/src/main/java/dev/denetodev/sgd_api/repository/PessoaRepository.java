@@ -2,6 +2,7 @@ package dev.denetodev.sgd_api.repository;
 
 import dev.denetodev.sgd_api.entity.Pessoa;
 import dev.denetodev.sgd_api.entity.StatusPessoa;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -27,7 +28,8 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
     /** Quem tem etiqueta no Planner: é com essas pessoas que as etiquetas das tarefas são comparadas. */
     List<Pessoa> findByEtiquetaPlannerIsNotNull();
 
-    /** Quem está nesse status: é entre as pessoas ativas que o Planner procura nomes. */
+    /** Quem está nesse status: é entre as pessoas ativas que o Planner procura nomes. Traz equipe e diretoria junto (a sessão já está fechada quando o serviço lê). */
+    @EntityGraph(attributePaths = {"area", "area.diretoria"})
     List<Pessoa> findByStatus(StatusPessoa status);
 
     boolean existsByEtiquetaPlannerIgnoreCaseAndIdNot(String etiquetaPlanner, UUID id);
