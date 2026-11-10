@@ -115,6 +115,7 @@ public class DemandaService {
         Demanda demanda = new Demanda(request.titulo(), diretoria);
         demanda.setDescricao(request.descricao());
         demanda.setCodigo(normalizarCodigo(request.codigo()));
+        demanda.setDataInicio(request.dataInicio());
         demanda.setDataPrazo(request.dataPrazo());
         demanda.setObservacoes(request.observacoes());
         demanda.setLinkExterno(normalizarLink(request.linkExterno()));
@@ -169,6 +170,7 @@ public class DemandaService {
         demanda.setDescricao(request.descricao());
         demanda.setCodigo(normalizarCodigo(request.codigo()));
         demanda.setDiretoria(diretoria);
+        demanda.setDataInicio(request.dataInicio());
         demanda.setDataPrazo(request.dataPrazo());
         demanda.setObservacoes(request.observacoes());
         demanda.setLinkExterno(normalizarLink(request.linkExterno()));
@@ -299,6 +301,7 @@ public class DemandaService {
                 demanda.getPrioridade(),
                 demanda.getStatus(),
                 demanda.getDataCriacao(),
+                demanda.getDataInicio(),
                 demanda.getDataPrazo(),
                 demanda.getDataEntregaReal(),
                 demanda.getValor(),

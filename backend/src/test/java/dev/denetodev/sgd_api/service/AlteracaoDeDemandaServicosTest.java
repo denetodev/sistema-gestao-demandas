@@ -94,7 +94,7 @@ class AlteracaoDeDemandaServicosTest {
     }
 
     private DemandaRequest edicao() {
-        return new DemandaRequest("Novo título", null, null, UUID.randomUUID(), null, null, null, null, null, null, null);
+        return new DemandaRequest("Novo título", null, null, UUID.randomUUID(), null, null, null, null, null, null, null, null);
     }
 
     @Test
