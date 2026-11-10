@@ -14,6 +14,7 @@ import { environment } from '../../../../../environments/environment';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { BarraPagina } from '../../../../core/layout/barra-pagina/barra-pagina';
 import { DemandaService } from '../../data-access/demanda.service';
+import { ROTULO_PRIORIDADE } from "../../data-access/demanda.model";
 import type { Demanda, StatusDemanda, Prioridade } from '../../data-access/demanda.model';
 import { DemandaItensService } from '../../data-access/demanda-itens.service';
 import { ROTULO_STATUS } from '../../data-access/demanda-itens.model';
@@ -88,6 +89,7 @@ export class DemandaDetalhe {
     label: ROTULO_STATUS[v],
   }));
   rotuloStatus: Record<string, string> = ROTULO_STATUS;
+  rotuloPrioridade: Record<string, string> = ROTULO_PRIORIDADE;
 
   atrasada = computed(() => {
     const d = this.demanda.value();
