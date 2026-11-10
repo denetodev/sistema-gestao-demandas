@@ -17,6 +17,9 @@ public interface PecaRepository extends JpaRepository<Peca, UUID> {
     long countByPessoa_Id(UUID pessoaId);
     List<Peca> findByDemandaId(UUID demandaId);
 
+    /** As peças de várias demandas de uma vez (a listagem não pode fazer uma consulta por demanda). */
+    List<Peca> findByDemandaIdIn(Collection<UUID> demandaIds);
+
     /**
      * Peças produzidas pelas pessoas no período, fora de demandas canceladas.
      * Sem data de entrega, vale a data de criação do lançamento.
