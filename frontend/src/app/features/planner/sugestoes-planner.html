@@ -1,22 +1,36 @@
-<app-barra-pagina titulo="Planner" subtitulo="Tarefas do Planner em que você foi marcado(a). Aceite para elas entrarem no sistema, sem digitar nada.">
+<app-barra-pagina titulo="Planner" subtitulo="Tarefas do Planner em que você foi marcado(a) ou atribuído(a). Aceite para elas entrarem no sistema, sem digitar nada.">
   <ng-container fim>
-    @if (ehGestao()) {
-      <p-button icon="pi pi-sync" label="Buscar agora" severity="secondary" [outlined]="true" [loading]="buscando()"
-        (onClick)="buscarAgora()" />
+    @if (podeAtualizar()) {
+      <input #arquivo type="file" class="arquivo-oculto" accept=".xlsx" aria-label="Arquivo exportado do Planner"
+        (change)="atualizarPeloPlanner($event)" />
+      <p-button icon="pi pi-upload" label="Atualizar pelo Planner" [loading]="enviando()" (onClick)="arquivo.click()" />
     }
   </ng-container>
 </app-barra-pagina>
 
 <div class="pagina-corpo">
+  @if (podeAtualizar()) {
+    <p class="como-atualizar">
+      No Planner, abra o plano, clique nos três pontinhos e em <strong>Exportar plano para o Excel</strong>. Depois use
+      <strong>Atualizar pelo Planner</strong> e escolha o arquivo baixado.
+    </p>
+  }
+
   @if (resultado(); as r) {
     <section class="cartao resultado" role="status">
-      <strong>Busca feita no Planner.</strong>
-      {{ r.tarefasLidas }} tarefas lidas, {{ r.tarefasNaJanela }} abertas e recentes, {{ r.sugestoesNovas }}
+      <strong>Planner atualizado.</strong>
+      {{ r.tarefasLidas }} tarefas no arquivo, {{ r.tarefasNaJanela }} abertas e recentes, {{ r.sugestoesNovas }}
       {{ r.sugestoesNovas === 1 ? 'sugestão nova' : 'sugestões novas' }}.
+      @if (r.nomesAmbiguos.length) {
+        <p class="resultado__aviso">
+          Nomes que batem com mais de uma pessoa e ficaram de fora: <strong>{{ r.nomesAmbiguos.join(', ') }}</strong>.
+          Cada pessoa precisa de um "como quer ser chamado" diferente, ou da etiqueta do Planner preenchida na tela de Pessoas.
+        </p>
+      }
       @if (r.etiquetasSemCadastro.length) {
         <p class="resultado__aviso">
-          Etiquetas sem pessoa no sistema: <strong>{{ r.etiquetasSemCadastro.join(', ') }}</strong>.
-          Preencha a etiqueta na tela de Pessoas para elas passarem a gerar sugestões.
+          Etiquetas que não são de ninguém da equipe: <strong>{{ r.etiquetasSemCadastro.join(', ') }}</strong>.
+          Se alguma for de alguém da equipe, ajuste o "como quer ser chamado" da pessoa ou preencha a etiqueta na tela de Pessoas.
         </p>
       }
     </section>
@@ -58,7 +72,7 @@
         <section class="cartao vazio">
           <i class="pi pi-check-circle" aria-hidden="true"></i>
           <strong>Nada esperando você</strong>
-          Quando a sua etiqueta for colocada numa tarefa do Planner, ela aparece aqui e no sininho.
+          Quando a sua etiqueta ou o seu nome estiver numa tarefa nova do Planner, ela aparece aqui e no sininho.
         </section>
       }
     </div>

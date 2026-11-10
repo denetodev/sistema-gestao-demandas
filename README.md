@@ -60,7 +60,19 @@ etiqueta dela no plano (ex.: `CRIATIVO - Thais`, `HTML - Carol`); quando a etiqu
 demanda (origem `planner`, diretoria padrão COE/CRM) ou coloca a pessoa na que já tem o mesmo código. Variáveis:
 `PLANNER_ENABLED`, `PLANNER_TENANT_ID`, `PLANNER_CLIENT_ID`, `PLANNER_CLIENT_SECRET`, `PLANNER_PLAN_IDS` (separados por vírgula),
 `PLANNER_DIRETORIA`, `PLANNER_JANELA_DIAS`, `PLANNER_INTERVALO_MS`. O aplicativo precisa estar registrado no Entra ID do Banco
-com consentimento de administrador. Gestor e Admin têm o botão "Buscar agora" na tela Planner.
+com consentimento de administrador (hoje o Banco não libera, então esse caminho fica desligado).
+
+**Atualizar pelo Planner (planilha exportada, sem Graph e sem licença):** na tela **Planner**, quem é Admin, Gestor ou
+Referência de equipe usa o botão "Atualizar pelo Planner" e envia o `.xlsx` do Planner (três pontinhos do plano, "Exportar
+plano para o Excel"; `POST /planner/importar`). O backend lê a aba "Dados Consolidados" com o Apache POI e não guarda o arquivo,
+só as sugestões. A pessoa recebe uma sugestão por tarefa quando (1) uma etiqueta `CRIATIVO - Nome` ou `HTML - Nome` bate com o
+"como quer ser chamado" dela, ou (2) o nome completo dela está em "Atribuído a" (sem diferença de acento ou maiúscula).
+Só entram pelo nome as pessoas ativas da diretoria `PLANNER_DIRETORIA` (padrão COE/CRM), porque o plano tem gente de todo o CRM;
+a `pessoa.etiqueta_planner` preenchida à mão continua valendo para qualquer pessoa e tem prioridade. Nome que bate com duas
+pessoas da equipe fica de fora e aparece no resumo como ambíguo. Valem as tarefas criadas nos últimos `PLANNER_JANELA_DIAS` (30)
+dias fora dos buckets de `PLANNER_BUCKETS_IGNORADOS` (padrão `Implementado Martech`); o status "Concluída" do arquivo não
+conta, porque "HTML para Aprovação" aparece assim mesmo com a peça ainda em andamento. Enviar o mesmo arquivo de novo é seguro:
+quem já tem sugestão (aceita, recusada ou pendente) não recebe outra.
 
 ## Banco de dados
 

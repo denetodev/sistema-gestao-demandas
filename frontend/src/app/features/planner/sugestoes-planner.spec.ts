@@ -57,25 +57,56 @@ describe('SugestoesPlanner', () => {
     expect(ir).toHaveBeenCalledWith(['/demandas', 'd1']);
   });
 
-  it('só a gestão vê o botão Buscar agora', async () => {
+  it('profissional comum não vê o botão Atualizar pelo Planner', async () => {
     await criar([], 'PROFISSIONAL');
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Buscar agora');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Atualizar pelo Planner');
   });
 
-  it('a gestão busca agora e vê as etiquetas sem pessoa', async () => {
-    await criar([], 'GESTOR');
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Buscar agora');
+  it('a Referência de equipe vê o botão, como a gestão', async () => {
+    await TestBed.configureTestingModule({
+      imports: [SugestoesPlanner],
+      providers: provideTesteApp({ perfil: 'PROFISSIONAL', referenciaAreaId: 'a1' }),
+    }).compileComponents();
+    fixture = TestBed.createComponent(SugestoesPlanner);
+    fixture.detectChanges();
+    TestBed.inject(HttpTestingController).expectOne((r) => r.url.endsWith('/planner/sugestoes')).flush([]);
+    await new Promise((r) => setTimeout(r, 0));
+    fixture.detectChanges();
 
-    const promessa = component.buscarAgora();
-    http.expectOne((r) => r.url.endsWith('/planner/sincronizar')).flush({
-      tarefasLidas: 40, tarefasNaJanela: 5, sugestoesNovas: 2, etiquetasSemCadastro: ['CRIATIVO - Fulano'],
-    });
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Atualizar pelo Planner');
+  });
+
+  it('a gestão envia o arquivo e vê as etiquetas sem pessoa e os nomes ambíguos', async () => {
+    await criar([], 'GESTOR');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Atualizar pelo Planner');
+
+    const arquivo = new File([new Uint8Array([1, 2, 3])], 'Construção HOUSE.xlsx');
+    const campo = el.querySelector('input[type=file]') as HTMLInputElement;
+    const promessa = component.atualizarPeloPlanner({ target: campo } as unknown as Event);
+    // sem o arquivo escolhido no campo, nada é enviado
     await promessa;
+    http.expectNone((r) => r.url.endsWith('/planner/importar'));
+
+    const transferencia = new DataTransfer();
+    transferencia.items.add(arquivo);
+    campo.files = transferencia.files;
+    const envio = component.atualizarPeloPlanner({ target: campo } as unknown as Event);
+    const req = http.expectOne((r) => r.url.endsWith('/planner/importar'));
+    expect(req.request.body instanceof FormData).toBeTrue();
+    expect((req.request.body as FormData).get('arquivo')).toBeTruthy();
+    req.flush({
+      tarefasLidas: 911, tarefasNaJanela: 43, sugestoesNovas: 6,
+      etiquetasSemCadastro: ['CRIATIVO - Fulano'], nomesAmbiguos: ['HTML - Lucas'],
+    });
+    await envio;
     fixture.detectChanges();
     await new Promise((r) => setTimeout(r, 0));
-    http.match((r) => r.url.endsWith('/planner/sugestoes')).forEach((req) => req.flush([]));
+    http.match((r) => r.url.endsWith('/planner/sugestoes')).forEach((rq) => rq.flush([]));
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('CRIATIVO - Fulano');
+    expect(el.textContent).toContain('CRIATIVO - Fulano');
+    expect(el.textContent).toContain('HTML - Lucas');
+    expect(el.textContent).toContain('6 sugestões novas');
   });
 });

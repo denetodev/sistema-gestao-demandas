@@ -55,6 +55,8 @@ app:
     plan-ids: ${PLANNER_PLAN_IDS:}
     # diretoria das demandas criadas a partir do Planner
     diretoria: ${PLANNER_DIRETORIA:COE/CRM}
+    # buckets (separados por vírgula) cujas tarefas não geram sugestão, por já estarem encerradas
+    buckets-ignorados: ${PLANNER_BUCKETS_IGNORADOS:Implementado Martech}
     # só tarefas abertas criadas nos últimos N dias geram sugestão (o plano tem centenas de tarefas antigas)
     janela-dias: ${PLANNER_JANELA_DIAS:30}
     intervalo-ms: ${PLANNER_INTERVALO_MS:600000}
