@@ -60,7 +60,7 @@ class RelatorioMensalServiceTest {
 
         service = new RelatorioMensalService(
                 mock(CurrentPessoaResolver.class), pessoaRepository, atividadeRepository, pecaRepository,
-                relatorioRepository, JsonMapper.builder().build());
+                mock(dev.denetodev.sgd_api.repository.EvidenciaRepository.class), relatorioRepository, JsonMapper.builder().build());
 
         Diretoria diretoria = mock(Diretoria.class);
         when(diretoria.getNome()).thenReturn("COE/CRM");
