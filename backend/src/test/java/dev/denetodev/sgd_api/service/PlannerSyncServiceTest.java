@@ -1,7 +1,9 @@
 package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.response.PlannerSincronizacaoResponse;
+import dev.denetodev.sgd_api.entity.Area;
 import dev.denetodev.sgd_api.entity.Demanda;
+import dev.denetodev.sgd_api.entity.Diretoria;
 import dev.denetodev.sgd_api.entity.Pessoa;
 import dev.denetodev.sgd_api.entity.PessoaDemanda;
 import dev.denetodev.sgd_api.entity.PlannerSugestao;
@@ -55,7 +57,8 @@ class PlannerSyncServiceTest {
         pessoaDemandaRepository = mock(PessoaDemandaRepository.class);
         sugestaoRepository = mock(PlannerSugestaoRepository.class);
         service = new PlannerSyncService(fonte, pessoaRepository, demandaRepository, pessoaDemandaRepository,
-                sugestaoRepository, Clock.fixed(Instant.parse("2026-11-03T12:00:00Z"), ZoneOffset.UTC), true, 30);
+                sugestaoRepository, Clock.fixed(Instant.parse("2026-11-03T12:00:00Z"), ZoneOffset.UTC), true, 30, "COE/CRM", "Implementado Martech");
+        when(pessoaRepository.findByStatus(any())).thenReturn(List.of());
 
         carol = pessoa("HTML - Carol");
         thais = pessoa("CRIATIVO - Thaís");
@@ -180,6 +183,111 @@ class PlannerSyncServiceTest {
         assertEquals(PlannerSyncService.normalizar("CRIATIVO - Cícero"), PlannerSyncService.normalizar("criativo – cicero"));
         assertEquals(PlannerSyncService.normalizar("HTML - Neto"), PlannerSyncService.normalizar("  html-Neto "));
         assertNotEquals(PlannerSyncService.normalizar("HTML - Neto"), PlannerSyncService.normalizar("CRIATIVO - Neto"));
+    }
+
+    // ---- planilha exportada: o nome da etiqueta bate com o "como quer ser chamado" e a atribuição com o nome completo ----
+
+    private Pessoa membro(String nomeCompleto, String nomeExibido, String diretoria) {
+        Pessoa p = mock(Pessoa.class);
+        when(p.getId()).thenReturn(UUID.randomUUID());
+        when(p.getNome()).thenReturn(nomeCompleto);
+        when(p.getNomeExibido()).thenReturn(nomeExibido);
+        when(p.getAprovadoEm()).thenReturn(AGORA.minusDays(100));
+        Area area = mock(Area.class);
+        Diretoria d = mock(Diretoria.class);
+        when(d.getNome()).thenReturn(diretoria);
+        when(area.getDiretoria()).thenReturn(d);
+        when(p.getArea()).thenReturn(area);
+        return p;
+    }
+
+    private PlanoPlanner planilha(TarefaPlanner... tarefas) {
+        return new PlanoPlanner("planilha",
+                Map.of("HTML - Lucas", "HTML - Lucas", "CRIATIVO - Lucas", "CRIATIVO - Lucas", "ENTRADA", "ENTRADA",
+                        "CRIATIVO - Anderson", "CRIATIVO - Anderson"),
+                Map.of("HTML para Aprovação", "HTML para Aprovação", "Implementado Martech", "Implementado Martech"),
+                List.of(tarefas));
+    }
+
+    private TarefaPlanner linha(String id, String bucket, OffsetDateTime criada, List<String> etiquetas, List<String> responsaveis) {
+        return new TarefaPlanner(id, "BC2611AA - titulo", bucket, criada, 0, etiquetas, responsaveis);
+    }
+
+    @Test
+    void etiquetaPeloNomeEAtribuicaoDaMesmaPessoaViramUmaSugestaoSoComAEtiqueta() {
+        Pessoa lucas = membro("Lucas Corsino da Conceição", "Lucas", "COE/CRM");
+        when(pessoaRepository.findByStatus(any())).thenReturn(List.of(lucas));
+
+        PlannerSincronizacaoResponse r = service.importar(planilha(linha("t1", "HTML para Aprovação", AGORA.minusDays(3),
+                List.of("CRIATIVO - Lucas", "ENTRADA"), List.of("Lucas Corsino da Conceicao", "Fulano de Outra Equipe"))));
+
+        List<PlannerSugestao> salvas = salvas();
+        assertEquals(1, salvas.size());
+        assertEquals("CRIATIVO - Lucas", salvas.get(0).getEtiqueta());
+        assertEquals(1, r.sugestoesNovas());
+        assertEquals(List.of(), r.etiquetasSemCadastro());
+    }
+
+    @Test
+    void soAtribuicaoTambemGeraSugestaoComAcentoDiferente() {
+        Pessoa lucas = membro("Lucas Corsino da Conceição", "Lucas", "COE/CRM");
+        when(pessoaRepository.findByStatus(any())).thenReturn(List.of(lucas));
+
+        service.importar(planilha(linha("t1", "HTML para Aprovação", AGORA.minusDays(3), List.of(),
+                List.of("LUCAS CORSINO DA CONCEICAO"))));
+
+        List<PlannerSugestao> salvas = salvas();
+        assertEquals(1, salvas.size());
+        assertEquals(PlannerSyncService.ETIQUETA_DA_ATRIBUICAO, salvas.get(0).getEtiqueta());
+    }
+
+    @Test
+    void gentePorTodoOCrmForaDaDiretoriaNaoRecebeSugestao() {
+        Pessoa deOutraDiretoria = membro("Lucas Corsino da Conceição", "Lucas", "UGR");
+        when(pessoaRepository.findByStatus(any())).thenReturn(List.of(deOutraDiretoria));
+
+        PlannerSincronizacaoResponse r = service.importar(planilha(linha("t1", "HTML para Aprovação", AGORA.minusDays(3),
+                List.of("CRIATIVO - Lucas"), List.of("Lucas Corsino da Conceicao"))));
+
+        assertEquals(0, r.sugestoesNovas());
+        assertEquals(List.of("CRIATIVO - Lucas"), r.etiquetasSemCadastro());
+    }
+
+    @Test
+    void doisLucasNaEquipeFicamDeForaEApareceComoAmbiguo() {
+        Pessoa a = membro("Lucas Corsino da Conceição", "Lucas", "COE/CRM");
+        Pessoa b = membro("Lucas Almeida", "Lucas", "COE/CRM");
+        when(pessoaRepository.findByStatus(any())).thenReturn(List.of(a, b));
+
+        PlannerSincronizacaoResponse r = service.importar(planilha(linha("t1", "HTML para Aprovação", AGORA.minusDays(3),
+                List.of("CRIATIVO - Lucas"), List.of())));
+
+        assertEquals(0, r.sugestoesNovas());
+        assertEquals(List.of("CRIATIVO - Lucas"), r.nomesAmbiguos());
+    }
+
+    @Test
+    void bucketImplementadoMartechENaoGeraSugestaoMesmoRecente() {
+        Pessoa lucas = membro("Lucas Corsino da Conceição", "Lucas", "COE/CRM");
+        when(pessoaRepository.findByStatus(any())).thenReturn(List.of(lucas));
+
+        PlannerSincronizacaoResponse r = service.importar(planilha(linha("t1", "Implementado Martech", AGORA.minusDays(3),
+                List.of("CRIATIVO - Lucas"), List.of("Lucas Corsino da Conceicao"))));
+
+        assertEquals(0, r.tarefasNaJanela());
+        assertEquals(0, r.sugestoesNovas());
+    }
+
+    @Test
+    void etiquetaManualNaPessoaTemPrioridadeSobreONome() {
+        Pessoa carolManual = pessoa("HTML - Carol");
+        when(pessoaRepository.findByEtiquetaPlannerIsNotNull()).thenReturn(List.of(carolManual));
+
+        PlannerSincronizacaoResponse r = service.importar(new PlanoPlanner("planilha",
+                Map.of("HTML - Carol", "HTML - Carol"), Map.of("HTML para Aprovação", "HTML para Aprovação"),
+                List.of(linha("t1", "HTML para Aprovação", AGORA.minusDays(1), List.of("HTML - Carol"), List.of()))));
+
+        assertEquals(1, r.sugestoesNovas());
     }
 
     @Test

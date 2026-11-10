@@ -5,8 +5,10 @@ import dev.denetodev.sgd_api.dto.response.PessoaResponse;
 import dev.denetodev.sgd_api.dto.response.PlannerSincronizacaoResponse;
 import dev.denetodev.sgd_api.dto.response.PlannerSugestaoResponse;
 import dev.denetodev.sgd_api.service.PessoaService;
+import dev.denetodev.sgd_api.service.PlannerImportacaoService;
 import dev.denetodev.sgd_api.service.PlannerSugestaoService;
 import dev.denetodev.sgd_api.service.PlannerSyncService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,7 +18,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.UUID;
@@ -29,11 +33,14 @@ public class PlannerController {
     private final PlannerSugestaoService sugestaoService;
     private final PlannerSyncService syncService;
     private final PessoaService pessoaService;
+    private final PlannerImportacaoService importacaoService;
 
-    public PlannerController(PlannerSugestaoService sugestaoService, PlannerSyncService syncService, PessoaService pessoaService) {
+    public PlannerController(PlannerSugestaoService sugestaoService, PlannerSyncService syncService, PessoaService pessoaService,
+                             PlannerImportacaoService importacaoService) {
         this.sugestaoService = sugestaoService;
         this.syncService = syncService;
         this.pessoaService = pessoaService;
+        this.importacaoService = importacaoService;
     }
 
     @GetMapping("/sugestoes")
@@ -56,6 +63,15 @@ public class PlannerController {
     @PostMapping("/sincronizar")
     public PlannerSincronizacaoResponse sincronizar() {
         return syncService.sincronizar();
+    }
+
+    /**
+     * "Atualizar pelo Planner": recebe o .xlsx do "Exportar plano para o Excel". Admin, Gestor e Referência de equipe
+     * (o serviço confere; a barreira só deixa passar quem escreve, ou seja, nunca o Visualizador).
+     */
+    @PostMapping(value = "/importar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public PlannerSincronizacaoResponse importar(@AuthenticationPrincipal Jwt jwt, @RequestParam("arquivo") MultipartFile arquivo) {
+        return importacaoService.importar(jwt, arquivo);
     }
 
     /** Gestor e Admin: a etiqueta que a pessoa usa no plano. */

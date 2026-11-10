@@ -84,6 +84,7 @@ class MatrizDePermissoesTest {
     @MockitoBean NotificacaoService notificacaoService;
     @MockitoBean PlannerSugestaoService plannerSugestaoService;
     @MockitoBean PlannerSyncService plannerSyncService;
+    @MockitoBean PlannerImportacaoService plannerImportacaoService;
     @MockitoBean PessoaFotoService pessoaFotoService;
     @MockitoBean EvidenciaService evidenciaService;
     @MockitoBean ParticipanteService participanteService;
@@ -193,6 +194,8 @@ class MatrizDePermissoesTest {
         c.add(new Caso(P, "/planner/sugestoes/" + ID + "/aceitar", QUEM_ESCREVE));
         c.add(new Caso(P, "/planner/sugestoes/" + ID + "/recusar", QUEM_ESCREVE));
         c.add(new Caso(P, "/planner/sincronizar", GESTAO));
+        // enviar a planilha do Planner: a barreira deixa passar quem escreve; o serviço restringe a Admin, Gestor e Referência
+        c.add(new Caso(P, "/planner/importar", QUEM_ESCREVE));
         c.add(new Caso(U, "/planner/pessoas/" + ID + "/etiqueta", GESTAO));
         // a própria foto de perfil: todo vinculado, inclusive Visualizador (como o PUT /pessoas/me)
         c.add(new Caso(P, "/pessoas/me/foto", TODOS_VINCULADOS));

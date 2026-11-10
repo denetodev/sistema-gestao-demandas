@@ -27,5 +27,8 @@ public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
     /** Quem tem etiqueta no Planner: é com essas pessoas que as etiquetas das tarefas são comparadas. */
     List<Pessoa> findByEtiquetaPlannerIsNotNull();
 
+    /** Quem está nesse status: é entre as pessoas ativas que o Planner procura nomes. */
+    List<Pessoa> findByStatus(StatusPessoa status);
+
     boolean existsByEtiquetaPlannerIgnoreCaseAndIdNot(String etiquetaPlanner, UUID id);
 }
