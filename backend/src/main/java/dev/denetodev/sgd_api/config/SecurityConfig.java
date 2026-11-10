@@ -51,7 +51,9 @@ public class SecurityConfig {
                     auth.requestMatchers(HttpMethod.DELETE, "/pessoas/me/foto").hasAuthority("VINCULADO");
 
                     // Planner: buscar agora e definir a etiqueta de cada pessoa são da gestão; aceitar e recusar caem na regra
-                    // geral de escrita (Visualizador não) e o serviço só deixa a pessoa decidir as próprias sugestões
+                    // geral de escrita (Visualizador não) e o serviço só deixa a pessoa decidir as próprias sugestões.
+                    // Enviar a planilha (POST /planner/importar) também cai na regra geral de escrita; o serviço libera só
+                    // Admin, Gestor e Referência de equipe
                     auth.requestMatchers(HttpMethod.POST, "/planner/sincronizar").hasAnyRole("ADMIN", "GESTOR");
                     auth.requestMatchers(HttpMethod.PUT, "/planner/pessoas/*/etiqueta").hasAnyRole("ADMIN", "GESTOR");
 

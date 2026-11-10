@@ -20,8 +20,10 @@ export interface ResultadoSincronizacao {
   tarefasLidas: number;
   tarefasNaJanela: number;
   sugestoesNovas: number;
-  /** Etiquetas de gente ("CRIATIVO - Fulano") que ninguém no sistema usa ainda. */
+  /** Etiquetas de gente ("CRIATIVO - Fulano") que ninguém da equipe usa (podem ser de outras equipes do CRM). */
   etiquetasSemCadastro: string[];
+  /** Etiquetas ou nomes que batem com mais de uma pessoa: ficaram de fora até alguém diferenciar. */
+  nomesAmbiguos: string[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -39,9 +41,11 @@ export class PlannerService {
     return this.#http.post<void>(`${this.#base}/sugestoes/${id}/recusar`, {});
   }
 
-  /** Gestor e Admin: busca no Planner agora. */
-  sincronizar() {
-    return this.#http.post<ResultadoSincronizacao>(`${this.#base}/sincronizar`, {});
+  /** Admin, Gestor e Referência de equipe: envia o .xlsx do "Exportar plano para o Excel" do Planner. */
+  importar(arquivo: File) {
+    const corpo = new FormData();
+    corpo.append('arquivo', arquivo);
+    return this.#http.post<ResultadoSincronizacao>(`${this.#base}/importar`, corpo);
   }
 
   /** Gestor e Admin: define (ou limpa, se vazio) a etiqueta que a pessoa usa no plano. */

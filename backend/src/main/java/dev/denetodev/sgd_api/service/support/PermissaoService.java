@@ -138,6 +138,13 @@ public class PermissaoService {
         }
     }
 
+    /** Atualizar o Planner (enviar a planilha exportada): Admin, Gestor e a Referência de equipe, como em projetos e campanhas. */
+    public void exigirAtualizarPlanner(Pessoa usuario) {
+        if (!podeGerenciarProjetosECampanhas(usuario)) {
+            throw new AccessDeniedException("Só Gestor, Admin ou Referência de equipe atualizam o Planner");
+        }
+    }
+
     private boolean ehAdminOuGestor(Pessoa usuario) {
         return usuario.getPerfil() == PerfilPessoa.ADMIN || usuario.getPerfil() == PerfilPessoa.GESTOR;
     }

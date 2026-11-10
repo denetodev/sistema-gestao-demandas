@@ -29,10 +29,11 @@ export class SugestoesPlanner {
   auth = inject(AuthService);
   sugestoes = this.#service.sugestoes;
 
-  ehGestao = computed(() => this.auth.temPerfil('ADMIN', 'GESTOR'));
+  /** Admin, Gestor e Referência de equipe enviam a planilha (mesma regra de projetos e campanhas; o backend confere). */
+  podeAtualizar = computed(() => this.auth.podeGerenciarProjetosECampanhas());
   /** Id da sugestão em andamento, para travar só os botões dela. */
   ocupada = signal<string | null>(null);
-  buscando = signal(false);
+  enviando = signal(false);
   resultado = signal<ResultadoSincronizacao | null>(null);
 
   apresentar(s: SugestaoPlanner) {
@@ -80,15 +81,21 @@ export class SugestoesPlanner {
     }
   }
 
-  async buscarAgora() {
-    this.buscando.set(true);
+  /** Lê o arquivo escolhido (o .xlsx do Exportar plano para o Excel) e mostra o que o sistema achou nele. */
+  async atualizarPeloPlanner(evento: Event) {
+    const campo = evento.target as HTMLInputElement;
+    const arquivo = campo.files?.[0];
+    campo.value = ''; // permite escolher o mesmo arquivo de novo depois
+    if (!arquivo) return;
+    this.enviando.set(true);
     try {
-      this.resultado.set(await firstValueFrom(this.#service.sincronizar()));
+      this.resultado.set(await firstValueFrom(this.#service.importar(arquivo)));
       this.sugestoes.reload();
     } catch {
+      // o aviso do interceptor já explicou o motivo (arquivo errado, sem permissão...)
       this.resultado.set(null);
     } finally {
-      this.buscando.set(false);
+      this.enviando.set(false);
     }
   }
 }

@@ -26,9 +26,16 @@ public interface PlannerFonte {
     }
 
     /**
-     * @param etiquetasAplicadas as chaves das etiquetas ligadas na tarefa (category1, category5...)
+     * @param etiquetasAplicadas as chaves das etiquetas ligadas na tarefa (category1, category5...). Na planilha
+     *                           exportada são os próprios textos das etiquetas.
+     * @param responsaveis       nomes das pessoas atribuídas à tarefa (vazio quando a fonte não os traz, como o Graph)
      */
     record TarefaPlanner(String id, String titulo, String bucketId, OffsetDateTime criadaEm, int percentualConcluido,
-                         List<String> etiquetasAplicadas) {
+                         List<String> etiquetasAplicadas, List<String> responsaveis) {
+
+        public TarefaPlanner(String id, String titulo, String bucketId, OffsetDateTime criadaEm, int percentualConcluido,
+                             List<String> etiquetasAplicadas) {
+            this(id, titulo, bucketId, criadaEm, percentualConcluido, etiquetasAplicadas, List.of());
+        }
     }
 }
