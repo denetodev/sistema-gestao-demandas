@@ -34,7 +34,8 @@
       <p-table [value]="filtrados()" [loading]="pessoas.isLoading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pessoas" dataKey="id" sortMode="single">
             <ng-template pTemplate="header">
                 <tr>
-                    <th pSortableColumn="nome">Nome <p-sortIcon field="nome" /></th>
+                    <th pSortableColumn="nomeExibido">Chamado(a) <p-sortIcon field="nomeExibido" /></th>
+                    <th pSortableColumn="nome">Nome completo <p-sortIcon field="nome" /></th>
                     <th>E-mail</th>
                     <th>Equipe</th>
                     <th>Cargo</th>
@@ -45,7 +46,8 @@
             </ng-template>
             <ng-template pTemplate="body" let-pessoa>
                 <tr>
-                    <td>{{ pessoa.nomeExibido }}@if (pessoa.nomeExibido !== pessoa.nome) { <span class="sub">{{ pessoa.nome }}</span> }</td>
+                    <td><strong>{{ pessoa.nomeExibido }}</strong></td>
+                    <td>{{ pessoa.nome }}</td>
                     <td>{{ pessoa.email ?? '—' }}</td>
                     <td>{{ pessoa.areaNome ?? '—' }}
                     @if (pessoa.diretoriaNome) { <span class="sub">{{ pessoa.diretoriaNome }}</span> }
@@ -70,7 +72,7 @@
             </ng-template>
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="7">
+                    <td colspan="8">
               <div class="vazio">
                 @if (filtrosAtivos()) {
                   <strong>Nenhuma pessoa com esses filtros</strong>
