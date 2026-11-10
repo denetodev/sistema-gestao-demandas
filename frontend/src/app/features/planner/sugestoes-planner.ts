@@ -9,6 +9,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { BarraPagina } from '../../core/layout/barra-pagina/barra-pagina';
 import { PlannerService, ResultadoSincronizacao, SugestaoPlanner } from '../../core/planner/planner.service';
 import { separarCodigo } from '../demandas/data-access/demanda-apresentacao';
+import { Carregando } from '../../core/ui/carregando/carregando';
 
 /**
  * As tarefas do Planner que marcaram a etiqueta da pessoa. Aceitar faz a tarefa virar demanda do sistema (ou coloca a
@@ -16,7 +17,7 @@ import { separarCodigo } from '../demandas/data-access/demanda-apresentacao';
  */
 @Component({
   selector: 'app-sugestoes-planner',
-  imports: [DatePipe, Button, Tag, BarraPagina],
+  imports: [Carregando, DatePipe, Button, Tag, BarraPagina],
   templateUrl: './sugestoes-planner.html',
   styleUrl: './sugestoes-planner.scss',
 })

@@ -34,12 +34,13 @@ import { OpcaoPilula, Pilulas } from '../../../../core/ui/pilulas/pilulas';
 import { DemandaQuadro } from '../demanda-quadro/demanda-quadro';
 import { AgruparPor } from '../demanda-quadro/agrupar-quadro';
 import { DemandaForm } from '../../feature-form/demanda-form/demanda-form';
+import { Carregando } from '../../../../core/ui/carregando/carregando';
 
 const STATUS_VALIDOS = Object.keys(ROTULO_STATUS) as StatusDemanda[];
 
 @Component({
   selector: 'app-demanda-lista',
-  imports: [
+  imports: [Carregando, 
     Ajuda, FormsModule, TableModule, Tag, Select, Tooltip, Avatar, AvatarGroup, DatePipe, CurrencyPipe, Button, BarraPagina,
     DemandaForm, RouterLink, Pilulas, CampoBusca, DemandaQuadro, Paginator,
   ],

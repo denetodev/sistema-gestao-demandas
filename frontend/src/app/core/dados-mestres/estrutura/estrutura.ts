@@ -15,6 +15,7 @@ import { contemTexto } from '../../util/listas';
 import { AreaService, type Area } from '../area/area.service';
 import { DiretoriaService, type Diretoria } from '../diretoria/diretoria.service';
 import { NucleoService, type Nucleo } from '../nucleo/nucleo.service';
+import { Carregando } from '../../ui/carregando/carregando';
 
 export interface NoNucleo {
   nucleo: Nucleo;
@@ -35,7 +36,7 @@ type Janela = 'diretoria' | 'nucleo' | 'equipe';
  */
 @Component({
   selector: 'app-estrutura',
-  imports: [
+  imports: [Carregando, 
     FormsModule, ReactiveFormsModule, Dialog, InputText, Select, Button, Message, BarraPagina, Ajuda, CampoBusca, Pilulas,
   ],
   templateUrl: './estrutura.html',

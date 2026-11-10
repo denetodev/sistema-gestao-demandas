@@ -91,9 +91,13 @@ public class DemandaService {
         Map<UUID, List<PessoaDemanda>> times = pagina.isEmpty() ? Map.of()
                 : pessoaDemandaRepository.findByDemandaIdIn(pagina.getContent().stream().map(Demanda::getId).toList())
                         .stream().collect(Collectors.groupingBy(v -> v.getDemanda().getId()));
+        Map<UUID, List<Peca>> pecas = pagina.isEmpty() ? Map.of()
+                : pecaRepository.findByDemandaIdIn(pagina.getContent().stream().map(Demanda::getId).toList())
+                        .stream().collect(Collectors.groupingBy(p -> p.getDemanda().getId()));
         return pagina.map(d -> paraResponse(d,
                 permissaoService.podeAlterarDemanda(usuario, times.getOrDefault(d.getId(), List.of())),
-                times.getOrDefault(d.getId(), List.of())));
+                times.getOrDefault(d.getId(), List.of()),
+                pecas.getOrDefault(d.getId(), List.of())));
     }
 
     @Transactional(readOnly = true)
@@ -265,11 +269,14 @@ public class DemandaService {
     }
 
     private DemandaResponse paraResponse(Demanda demanda, boolean podeAlterar, List<PessoaDemanda> time) {
+        return paraResponse(demanda, podeAlterar, time, pecaRepository.findByDemandaId(demanda.getId()));
+    }
+
+    private DemandaResponse paraResponse(Demanda demanda, boolean podeAlterar, List<PessoaDemanda> time, List<Peca> pecas) {
         Demandante demandante = demanda.getDemandante();
         Projeto projeto = demanda.getProjeto();
         Campanha campanha = demanda.getCampanha();
 
-        List<Peca> pecas = pecaRepository.findByDemandaId(demanda.getId());
         // Valor vem das peças. O campo manual só vale para linhas importadas da planilha
         // (source_system preenchido) ainda sem peças; a API não grava mais esse campo.
         BigDecimal valorCalculado = !pecas.isEmpty()

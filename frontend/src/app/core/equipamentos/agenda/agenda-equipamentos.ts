@@ -17,6 +17,7 @@ import { AuthService } from '../../auth/auth.service';
 import { classeBloco, rotuloBloco } from '../equipamento-apresentacao';
 import { dias, inicioDoDia, posicaoAgora, posicionar, somarDias } from '../agenda-layout';
 import type { Agenda, BlocoAgenda, LinhaAgenda } from '../equipamento.model';
+import { Carregando } from '../../ui/carregando/carregando';
 
 interface UsoPessoa {
   /** Empréstimo; a quantidade é a soma de tudo o que ele leva. */
@@ -30,7 +31,7 @@ interface UsoPessoa {
  */
 @Component({
   selector: 'app-agenda-equipamentos',
-  imports: [DatePipe, FormsModule, RouterLink, Dialog, Select, Button, Tag, BarraPagina, Pilulas, CampoBusca, Ajuda],
+  imports: [Carregando, DatePipe, FormsModule, RouterLink, Dialog, Select, Button, Tag, BarraPagina, Pilulas, CampoBusca, Ajuda],
   templateUrl: './agenda-equipamentos.html',
   styleUrl: './agenda-equipamentos.scss',
 })

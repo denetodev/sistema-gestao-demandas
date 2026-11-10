@@ -16,7 +16,8 @@
     </div>
 
     <div class="tabela-rolagem">
-      <p-table [value]="filtradas()" [loading]="cargos.isLoading()" dataKey="cargo.id">
+      <app-carregando [ativo]="cargos.isLoading()" />
+      <p-table [value]="filtradas()" dataKey="cargo.id">
         <ng-template pTemplate="header">
           <tr>
             <th>Cargo</th>

@@ -13,11 +13,12 @@ import { Ajuda } from '../../../ajuda/ajuda/ajuda';
 import { ROTULO_STATUS } from '../../../../features/demandas/data-access/demanda-itens.model';
 import type { StatusDemanda } from '../../../../features/demandas/data-access/demanda.model';
 import type { CampanhaDetalhe } from '../campanha-resumo.model';
+import { Carregando } from '../../../ui/carregando/carregando';
 
 /** Uma campanha vista como um todo: quantas pessoas, demandas e quanto valor ela reuniu. */
 @Component({
   selector: 'app-campanha-detalhe',
-  imports: [Ajuda, RouterLink, CurrencyPipe, DatePipe, TableModule, Tag, Message, BarraPagina],
+  imports: [Carregando, Ajuda, RouterLink, CurrencyPipe, DatePipe, TableModule, Tag, Message, BarraPagina],
   templateUrl: './campanha-detalhe.html',
   styleUrl: './campanha-detalhe.scss',
 })

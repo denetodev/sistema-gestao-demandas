@@ -30,10 +30,11 @@ import {
 import { PendenciasEquipamentos } from '../pendencias-equipamentos';
 import type { Emprestimo, Equipamento, FotoEmprestimo, GrupoEmprestimos, MomentoFoto } from '../equipamento.model';
 import type { Demanda } from '../../../features/demandas/data-access/demanda.model';
+import { Carregando } from '../../ui/carregando/carregando';
 
 @Component({
   selector: 'app-emprestimo-lista',
-  imports: [
+  imports: [Carregando, 
     DatePipe, FormsModule, ReactiveFormsModule, RouterLink, TableModule, Dialog, InputText, InputNumber, Textarea,
     DatePicker, MultiSelect, Checkbox, AutoComplete, Select, Button, Tag, BarraPagina, Pilulas, CampoBusca, Ajuda,
   ],

@@ -22,7 +22,8 @@
       </div>
     </div>
     <div class="tabela-rolagem">
-      <p-table [value]="filtrados()" [loading]="tipos.isLoading()" [paginator]="true" [rows]="30" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} tipos de peça" dataKey="id" [groupRowsBy]="'areaNome'" rowGroupMode="subheader">
+      <app-carregando [ativo]="tipos.isLoading()" />
+      <p-table [value]="filtrados()" [paginator]="true" [rows]="30" [rowsPerPageOptions]="[10, 30, 50, 100]" [showCurrentPageReport]="true" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} tipos de peça" dataKey="id" [groupRowsBy]="'areaNome'" rowGroupMode="subheader">
         <ng-template pTemplate="header">
           <tr>
             <th>Nome</th>

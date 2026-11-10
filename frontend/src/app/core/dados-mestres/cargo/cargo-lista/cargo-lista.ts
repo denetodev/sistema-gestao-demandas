@@ -14,6 +14,7 @@ import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
 import { PessoaService } from '../../../pessoas/pessoa.service';
 import { contemTexto } from '../../../util/listas';
 import { CargoService, type Cargo } from '../cargo.service';
+import { Carregando } from '../../../ui/carregando/carregando';
 
 export interface LinhaCargo {
   cargo: Cargo;
@@ -23,7 +24,7 @@ export interface LinhaCargo {
 /** Cargos do time (Designer, Operador, Videomaker...): cadastro solto, sem ligação com equipe ou núcleo. */
 @Component({
   selector: 'app-cargo-lista',
-  imports: [ReactiveFormsModule, TableModule, Dialog, InputText, Textarea, Button, Message, BarraPagina, Ajuda, CampoBusca],
+  imports: [Carregando, ReactiveFormsModule, TableModule, Dialog, InputText, Textarea, Button, Message, BarraPagina, Ajuda, CampoBusca],
   templateUrl: './cargo-lista.html',
   styleUrl: './cargo-lista.scss',
 })

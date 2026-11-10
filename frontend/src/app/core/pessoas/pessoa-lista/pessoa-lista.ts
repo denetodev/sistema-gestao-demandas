@@ -30,11 +30,12 @@ import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
 import { contemTexto } from '../../util/listas';
 import { NucleoService } from '../../dados-mestres/nucleo/nucleo.service';
 import { DiretoriaService } from '../../dados-mestres/diretoria/diretoria.service';
+import { Carregando } from '../../ui/carregando/carregando';
 
 
 @Component({
   selector: 'app-pessoa-lista',
-  imports: [CampoBusca, Pilulas, 
+  imports: [Carregando, CampoBusca, Pilulas, 
     Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText,
     Select, Button, Message, Tag, Tooltip, BarraPagina, DatePipe, FormsModule
   ],

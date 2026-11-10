@@ -19,10 +19,11 @@ import { Ajuda } from '../../../ajuda/ajuda/ajuda';
 import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
 import { OpcaoPilula, Pilulas } from '../../../ui/pilulas/pilulas';
 import { contemTexto, maisRecentesPrimeiro } from '../../../util/listas';
+import { Carregando } from '../../../ui/carregando/carregando';
 
 @Component({
   selector: 'app-demandante-lista',
-  imports: [FormsModule, CampoBusca, Ajuda, 
+  imports: [Carregando, FormsModule, CampoBusca, Ajuda, 
     ReactiveFormsModule,
     TableModule,
     Dialog,

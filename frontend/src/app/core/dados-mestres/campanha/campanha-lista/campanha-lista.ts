@@ -22,10 +22,11 @@ import { Ajuda } from '../../../ajuda/ajuda/ajuda';
 import { CampoBusca } from '../../../ui/campo-busca/campo-busca';
 import { OpcaoPilula, Pilulas } from '../../../ui/pilulas/pilulas';
 import { contemTexto, maisRecentesPrimeiro } from '../../../util/listas';
+import { Carregando } from '../../../ui/carregando/carregando';
 
 @Component({
   selector: 'app-campanha-lista',
-  imports: [FormsModule, CampoBusca, Pilulas, Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, CurrencyPipe, RouterLink, BarraPagina],
+  imports: [Carregando, FormsModule, CampoBusca, Pilulas, Ajuda, ReactiveFormsModule, TableModule, Dialog, InputText, DatePicker, Select, Button, Message, DatePipe, CurrencyPipe, RouterLink, BarraPagina],
   templateUrl: './campanha-lista.html',
   styleUrl: './campanha-lista.scss',
 })
