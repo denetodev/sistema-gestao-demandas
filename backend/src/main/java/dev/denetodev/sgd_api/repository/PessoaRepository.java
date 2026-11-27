@@ -11,6 +11,9 @@ import java.util.UUID;
 
 public interface PessoaRepository extends JpaRepository<Pessoa, UUID> {
 
+    /** Quem já é a Referência da equipe (o banco só admite uma por equipe). */
+    java.util.Optional<Pessoa> findByReferenciaAreaId(UUID areaId);
+
     Optional<Pessoa> findByAuthUserId(UUID authUserId);
 
     Optional<Pessoa> findByChaveC(String chaveC);
