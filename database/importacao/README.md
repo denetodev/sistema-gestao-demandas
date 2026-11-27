@@ -73,7 +73,7 @@ A planilha House CRM continua sendo atualizada pela equipe. Reimportar tudo apag
    `02-importar-delta.sql` e `03-ensaio-delta-com-rollback.sql`.
 3. Ordem: cargas, `01-conferir-carga.sql` (tudo `true`), ensaio com rollback, `02-importar-delta.sql`.
 
-Como casa com o que já existe: pelo **código BC** (e por ser cancelada ou não); sem código, pelo título e pela data. Demanda existente só ganha as
+Como casa com o que já existe: pelo **código BC** (e por ser cancelada ou não), **inclusive com a demanda criada no sistema ou pelo Planner** quando é a única com aquele código (assim a importação atualiza essa demanda em vez de criar uma duplicada); sem código, pelo título e pela data. Demanda existente só ganha as
 linhas que faltam (identidade da peça: tipo, descrição, dia e quantidade; da atividade: pessoa, descrição e dia) e tem valor, status e datas atualizados.
 Rodar duas vezes não duplica. As áreas casam por nome **e pela diretoria do CRM**, porque existe "Design" também na UGR. O vínculo de campanhas vale só
 para as demandas afetadas. **Linhas incompletas** (sem status, tag, projeto ou valor, em geral ainda em preenchimento) ficam de fora e aparecem no relatório.
