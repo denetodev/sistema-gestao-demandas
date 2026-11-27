@@ -94,7 +94,7 @@ public class PessoaService {
             pessoa.setStatus(request.status());
         }
         pessoa.setPerfil(perfilAlvo);
-        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId()));
+        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId(), null));
         pessoa.setAprovadoEm(OffsetDateTime.now());
         pessoa.setAprovadoPor(ator);
 
@@ -122,7 +122,7 @@ public class PessoaService {
             pessoa.setStatus(request.status());
         }
         pessoa.setPerfil(perfilAlvo);
-        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId()));
+        pessoa.setReferenciaArea(resolverReferenciaArea(request.referenciaAreaId(), pessoa));
 
         return paraResponse(pessoa);
     }
@@ -317,10 +317,7 @@ public class PessoaService {
             alvo.setCargo(novoCargo);
         }
 
-        Area referenciaArea = request.referenciaAreaId() != null
-                ? areaRepository.findById(request.referenciaAreaId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + request.referenciaAreaId()))
-                : null;
+        Area referenciaArea = resolverReferenciaArea(request.referenciaAreaId(), alvo);
 
         if (alvo.getVinculoSugerido() != null) {
             // aprovada como pessoa nova: a sugestão deixa de valer e fica registrada
@@ -423,12 +420,24 @@ public class PessoaService {
     }
 
     /** Vazio/nulo mantém o chave C atual; informado, precisa ser válido e não pode pertencer a outra pessoa. */
-    private Area resolverReferenciaArea(UUID areaId) {
+    /**
+     * A Referência de uma equipe. Cada equipe tem uma só (índice único no banco): se outra pessoa já é a Referência,
+     * avisa quem é, em vez de deixar o banco devolver um erro genérico de integridade.
+     */
+    private Area resolverReferenciaArea(UUID areaId, Pessoa destino) {
         if (areaId == null) {
             return null;
         }
-        return areaRepository.findById(areaId)
+        Area area = areaRepository.findById(areaId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Area não encontrada: " + areaId));
+        pessoaRepository.findByReferenciaAreaId(areaId)
+                .filter(atual -> destino == null || !atual.getId().equals(destino.getId()))
+                .ifPresent(atual -> {
+                    throw new EstadoInvalidoException("A equipe " + area.getNome() + " já tem uma Referência: "
+                            + atual.getNomeExibido() + ". Cada equipe tem uma só. Tire a Referência de "
+                            + atual.getNomeExibido() + " na tela de Pessoas antes de definir outra.");
+                });
+        return area;
     }
 
     private void aplicarChaveC(Pessoa pessoa, String informado) {
