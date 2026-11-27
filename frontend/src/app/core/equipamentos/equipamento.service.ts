@@ -17,6 +17,7 @@ import {
   GrupoEmprestimos,
   Termo,
 } from './equipamento.model';
+import { alfabetica } from '../util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class EquipamentoService {
@@ -24,8 +25,8 @@ export class EquipamentoService {
   #base = `${environment.apiUrl}`;
 
   // ---- inventário ----
-  equipamentos = httpResource<Equipamento[]>(() => `${this.#base}/equipamentos`);
-  categorias = httpResource<CategoriaEquipamento[]>(() => `${this.#base}/categorias-equipamento`);
+  equipamentos = httpResource<Equipamento[]>(() => `${this.#base}/equipamentos`, { parse: alfabetica<Equipamento>((x) => x.nome) });
+  categorias = httpResource<CategoriaEquipamento[]>(() => `${this.#base}/categorias-equipamento`, { parse: alfabetica<CategoriaEquipamento>((x) => x.nome) });
   termo = httpResource<Termo>(() => `${this.#base}/equipamentos/termo`);
 
   criarEquipamento(payload: EquipamentoPayload) {

@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Demandante, DemandantePayload } from './demandante.model';
+import { alfabetica } from '../../util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class DemandanteService {
   #http = inject(HttpClient);
   #base = `${environment.apiUrl}/demandantes`;
 
-  listar = httpResource<Demandante[]>(() => this.#base);
+  listar = httpResource<Demandante[]>(() => this.#base, { parse: alfabetica<Demandante>((x) => x.nome) });
 
   criar(payload: DemandantePayload) {
     return this.#http.post<Demandante>(this.#base, payload);

@@ -3,13 +3,14 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { Campanha, CampanhaPayload } from './campanha.model';
 import type { CampanhaResumo } from './campanha-resumo.model';
+import { alfabetica } from '../../util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class CampanhaService {
   #http = inject(HttpClient);
   #base = `${environment.apiUrl}/campanhas`;
 
-  listar = httpResource<Campanha[]>(() => this.#base);
+  listar = httpResource<Campanha[]>(() => this.#base, { parse: alfabetica<Campanha>((x) => x.nome) });
 
   /** Quantas demandas, pessoas e quanto valor cada campanha reuniu (só as que têm demanda). */
   resumos = httpResource<CampanhaResumo[]>(() => `${this.#base}/resumo`);

@@ -8,6 +8,7 @@ import { Select } from 'primeng/select';
 import { Button } from 'primeng/button';
 import { Tag } from 'primeng/tag';
 import { environment } from '../../../../environments/environment';
+import { emOrdemAlfabetica } from '../../util/listas';
 import { BarraPagina } from '../../layout/barra-pagina/barra-pagina';
 import { OpcaoPilula, Pilulas } from '../../ui/pilulas/pilulas';
 import { CampoBusca } from '../../ui/campo-busca/campo-busca';
@@ -73,7 +74,7 @@ export class AgendaEquipamentos {
   categorias = computed(() => {
     const mapa = new Map<string, string>();
     for (const l of this.agenda.value()?.equipamentos ?? []) mapa.set(l.categoriaId, l.categoriaNome);
-    return [...mapa].map(([id, nome]) => ({ id, nome }));
+    return emOrdemAlfabetica([...mapa].map(([id, nome]) => ({ id, nome })), (c) => c.nome);
   });
 
   /** Equipamentos filtrados, com as barras já posicionadas, agrupados por categoria. */

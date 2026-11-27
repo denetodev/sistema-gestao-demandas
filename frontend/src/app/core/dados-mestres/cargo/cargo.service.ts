@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { alfabetica } from '../../util/listas';
 
 export interface Cargo {
     id: string;
@@ -14,7 +15,7 @@ export interface Cargo {
 @Injectable({ providedIn: 'root' })
 export class CargoService {
     #http = inject(HttpClient);
-    listar = httpResource<Cargo[]>(() => `${environment.apiUrl}/cargos`);
+    listar = httpResource<Cargo[]>(() => `${environment.apiUrl}/cargos`, { parse: alfabetica<Cargo>((x) => x.nome) });
 
     criar(corpo: { nome: string; descricao: string | null }) {
         return this.#http.post<Cargo>(`${environment.apiUrl}/cargos`, corpo);

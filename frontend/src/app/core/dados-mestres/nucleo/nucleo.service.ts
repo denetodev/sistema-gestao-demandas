@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { alfabetica } from '../../util/listas';
 
 export interface Nucleo {
   id: string;
@@ -18,7 +19,7 @@ export interface NucleoPayload {
 @Injectable({ providedIn: 'root' })
 export class NucleoService {
   #http = inject(HttpClient);
-  listar = httpResource<Nucleo[]>(() => `${environment.apiUrl}/nucleos`);
+  listar = httpResource<Nucleo[]>(() => `${environment.apiUrl}/nucleos`, { parse: alfabetica<Nucleo>((x) => x.nome) });
 
   criar(corpo: NucleoPayload) {
     return this.#http.post<Nucleo>(`${environment.apiUrl}/nucleos`, corpo);

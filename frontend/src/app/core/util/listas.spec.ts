@@ -1,4 +1,4 @@
-import { contemTexto, maisRecentesPrimeiro, normalizar } from './listas';
+import { contemTexto, emOrdemAlfabetica, maisRecentesPrimeiro, normalizar } from './listas';
 
 describe('listas', () => {
   describe('normalizar', () => {
@@ -44,5 +44,18 @@ describe('listas', () => {
       expect(maisRecentesPrimeiro(lista).map((x) => x.id)).toEqual(['c', 'b', 'a']);
       expect(lista.map((x) => x.id)).toEqual(['a', 'c', 'b']);
     });
+  });
+});
+
+describe('emOrdemAlfabetica', () => {
+  it('ordena sem diferenciar acento e caixa, e sem alterar a lista original', () => {
+    const lista = [{ n: 'Zélia' }, { n: 'ana' }, { n: 'Álvaro' }, { n: 'Bruno' }];
+    expect(emOrdemAlfabetica(lista, (x) => x.n).map((x) => x.n)).toEqual(['Álvaro', 'ana', 'Bruno', 'Zélia']);
+    expect(lista[0].n).toBe('Zélia');
+  });
+
+  it('numeros em ordem natural e vazios primeiro', () => {
+    const lista = [{ n: 'Peça 10' }, { n: 'Peça 2' }, { n: null }];
+    expect(emOrdemAlfabetica(lista, (x) => x.n).map((x) => x.n)).toEqual([null, 'Peça 2', 'Peça 10']);
   });
 });

@@ -17,6 +17,7 @@ import {
 } from './demanda-itens.model';
 import type { StatusDemanda } from './demanda.model';
 import type { Pessoa } from '../../../core/pessoas/pessoa.model';
+import { alfabetica } from '../../../core/util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class DemandaItensService {
@@ -39,7 +40,7 @@ export class DemandaItensService {
     return httpResource<HistoricoStatus[]>(() => `${this.#api}/demandas/${demandaId()}/historico`);
   }
   pessoas() {
-    return httpResource<Pessoa[]>(() => `${this.#api}/pessoas`);
+    return httpResource<Pessoa[]>(() => `${this.#api}/pessoas`, { parse: alfabetica<Pessoa>((x) => x.nomeExibido) });
   }
   evidencias() {
     return httpResource<Evidencia[]>(() => `${this.#api}/evidencias`);

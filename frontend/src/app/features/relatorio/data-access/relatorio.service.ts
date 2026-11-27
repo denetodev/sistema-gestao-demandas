@@ -8,6 +8,7 @@ import type {
   RelatorioResumo,
   SalvarRelatorioPayload,
 } from './relatorio.model';
+import { alfabetica } from '../../../core/util/listas';
 
 export function mesAtual(): string {
   const d = new Date();
@@ -36,8 +37,7 @@ export class RelatorioService {
   );
 
   pessoas = httpResource<Pessoa[]>(() =>
-    this.carregarResumo() ? `${environment.apiUrl}/pessoas` : undefined,
-  );
+    this.carregarResumo() ? `${environment.apiUrl}/pessoas` : undefined, { parse: alfabetica<Pessoa>((x) => x.nomeExibido) });
 
   salvar(mes: string, payload: SalvarRelatorioPayload) {
     return this.#http.put<Relatorio>(`${this.#base}/${mes}`, payload);

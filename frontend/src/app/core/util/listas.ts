@@ -17,3 +17,14 @@ export function contemTexto(campos: (string | null | undefined)[], busca: string
 export function maisRecentesPrimeiro<T extends { createdAt: string }>(itens: T[]): T[] {
   return [...itens].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
+
+/** Ordem alfabética em português (ignora acento e caixa; números em ordem natural), sem alterar a lista original. */
+export function emOrdemAlfabetica<T>(itens: readonly T[], rotulo: (item: T) => string | null | undefined): T[] {
+  const colador = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
+  return [...itens].sort((a, b) => colador.compare(rotulo(a) ?? '', rotulo(b) ?? ''));
+}
+
+/** Para `httpResource(..., { parse })`: entrega a lista já em ordem alfabética, e todo seletor que a usa herda a ordem. */
+export function alfabetica<T>(rotulo: (item: T) => string | null | undefined) {
+  return (bruto: unknown): T[] => emOrdemAlfabetica(bruto as T[], rotulo);
+}

@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Pessoa, PessoaPayload, AprovarPayload, RejeitarPayload, VinculoSugerido } from './pessoa.model';
+import { alfabetica } from '../util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class PessoaService {
@@ -11,11 +12,10 @@ export class PessoaService {
     apenasPendentes = signal(false);
 
     listar = httpResource<Pessoa[]>(() =>
-        this.apenasPendentes() ? `${this.#base}?pendente=true` : this.#base,
-    );
+        this.apenasPendentes() ? `${this.#base}?pendente=true` : this.#base, { parse: alfabetica<Pessoa>((x) => x.nomeExibido) });
 
     /** Todas as pessoas (sem filtro de aba): usada para achar o cadastro existente ao vincular uma conta. */
-    todas = httpResource<Pessoa[]>(() => this.#base);
+    todas = httpResource<Pessoa[]>(() => this.#base, { parse: alfabetica<Pessoa>((x) => x.nomeExibido) });
 
     /** Liga a conta pendente {pendenteId} ao cadastro que já existe; o cadastro pendente é removido. */
     vincularAPessoaExistente(pendenteId: string, pessoaExistenteId: string) {
