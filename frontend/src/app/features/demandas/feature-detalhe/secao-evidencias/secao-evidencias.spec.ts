@@ -18,10 +18,12 @@ describe('SecaoEvidencias (upload e link)', () => {
     componente.abrir();
   });
 
-  function escolher(arquivo: File | null) {
-    const evento = { target: { files: arquivo ? [arquivo] : [] } } as unknown as Event;
+  function escolher(...arquivos: File[]) {
+    const evento = { target: { files: arquivos } } as unknown as Event;
     componente.escolherArquivo(evento);
   }
+
+  const png = (nome: string, conteudo = 'x') => new File([conteudo], nome, { type: 'image/png', lastModified: 1 });
 
   it('começa em modo imagem e sem permitir salvar', () => {
     expect(componente.modo()).toBe('IMAGEM');
@@ -29,26 +31,58 @@ describe('SecaoEvidencias (upload e link)', () => {
   });
 
   it('aceita PNG e JPEG pequenos', () => {
-    escolher(new File(['x'], 'a.png', { type: 'image/png' }));
-    expect(componente.erroArquivo()).toBeNull();
+    escolher(png('a.png'));
+    expect(componente.arquivos()[0].erro).toBeNull();
     expect(componente.podeSalvar()).toBe(true);
 
-    escolher(new File(['x'], 'a.jpg', { type: 'image/jpeg' }));
-    expect(componente.podeSalvar()).toBe(true);
+    escolher(new File(['y'], 'b.jpg', { type: 'image/jpeg', lastModified: 2 }));
+    expect(componente.validos().length).toBe(2);
   });
 
-  it('recusa GIF, PDF e imagens acima de 5 MB', () => {
-    escolher(new File(['x'], 'a.gif', { type: 'image/gif' }));
-    expect(componente.erroArquivo()).toContain('JPEG ou PNG');
+  it('escolhe várias imagens de uma vez e mostra no botão quantas serão enviadas', () => {
+    escolher(png('1.png', 'a'), png('2.png', 'bb'), png('3.png', 'ccc'));
+
+    expect(componente.arquivos().length).toBe(3);
+    expect(componente.rotuloAdicionar()).toBe('Adicionar 3 evidências');
+  });
+
+  it('juntar de duas escolhas soma, e a mesma imagem escolhida duas vezes não duplica', () => {
+    escolher(png('1.png'), png('2.png', 'bb'));
+    escolher(png('1.png'), png('3.png', 'ccc'));
+
+    expect(componente.arquivos().map((a) => a.arquivo.name)).toEqual(['1.png', '2.png', '3.png']);
+  });
+
+  it('remover tira da lista', () => {
+    escolher(png('1.png'), png('2.png', 'bb'));
+    componente.removerArquivo(componente.arquivos()[0].id);
+
+    expect(componente.arquivos().map((a) => a.arquivo.name)).toEqual(['2.png']);
+  });
+
+  it('recusa GIF, PDF e imagens acima de 5 MB, mas mantém as boas', () => {
+    escolher(
+      new File(['x'], 'a.gif', { type: 'image/gif', lastModified: 1 }),
+      new File(['x'], 'a.pdf', { type: 'application/pdf', lastModified: 2 }),
+      new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'grande.png', { type: 'image/png', lastModified: 3 }),
+    );
+    const [gif, pdf, grande] = componente.arquivos();
+    expect(gif.erro).toContain('JPEG ou PNG');
+    expect(pdf.erro).toContain('JPEG ou PNG');
+    expect(grande.erro).toContain('5 MB');
     expect(componente.podeSalvar()).toBe(false);
 
-    escolher(new File(['x'], 'a.pdf', { type: 'application/pdf' }));
-    expect(componente.podeSalvar()).toBe(false);
+    escolher(png('boa.png', 'zz'));
+    expect(componente.validos().length).toBe(1);
+    expect(componente.podeSalvar()).toBe(true);
+    expect(componente.rotuloAdicionar()).toBe('Adicionar evidência');
+  });
 
-    const grande = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'grande.png', { type: 'image/png' });
-    escolher(grande);
-    expect(componente.erroArquivo()).toContain('5 MB');
-    expect(componente.podeSalvar()).toBe(false);
+  it('abrir de novo começa sem as imagens da vez anterior', () => {
+    escolher(png('1.png'));
+    componente.abrir();
+
+    expect(componente.arquivos().length).toBe(0);
   });
 
   it('no modo link só libera URL http ou https', () => {

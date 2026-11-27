@@ -37,7 +37,7 @@
   </p-table>
 </section>
 
-<p-dialog [(visible)]="dialogAberto" header="Nova evidência" [modal]="true" [style]="{ width: '480px' }">
+<p-dialog [(visible)]="dialogAberto" header="Nova evidência" [modal]="true" [style]="{ width: '560px' }" [breakpoints]="{ '640px': '94vw' }">
   <form [formGroup]="form" (ngSubmit)="salvar()" class="form-dialog">
     <label for="alvo">Vincular a</label>
     <p-select inputId="alvo" formControlName="alvo" [options]="alvos()" optionLabel="label"
@@ -48,10 +48,33 @@
                     [ngModel]="modo()" (ngModelChange)="modo.set($event)" [ngModelOptions]="{ standalone: true }" />
 
     @if (modo() === 'IMAGEM') {
-      <label for="arquivo">Imagem (JPEG ou PNG, até 5 MB)</label>
-      <input id="arquivo" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" (change)="escolherArquivo($event)" />
-      @if (erroArquivo()) {
-        <p-message severity="error" size="small">{{ erroArquivo() }}</p-message>
+      <label>Imagens</label>
+      <div class="dropzone" [class.dropzone--sobre]="arrastando()" (dragover)="aoArrastar($event)"
+           (dragleave)="arrastando.set(false)" (drop)="aoSoltar($event)">
+        <span class="dropzone__icone"><i class="pi pi-images"></i></span>
+        <p><strong>Arraste as imagens para cá</strong></p>
+        <p class="dropzone__ou">ou</p>
+        <p-button label="Escolher imagens" icon="pi pi-folder-open" size="small" (onClick)="entrada.click()" />
+        <small>JPEG ou PNG, até 5 MB cada. Você pode escolher várias de uma vez.</small>
+        <input #entrada type="file" multiple hidden accept="image/png,image/jpeg,.png,.jpg,.jpeg"
+               aria-label="Escolher imagens" (change)="escolherArquivo($event)" />
+      </div>
+
+      @if (arquivos().length) {
+        <ul class="arquivos" aria-label="Imagens escolhidas">
+          @for (a of arquivos(); track a.id) {
+            <li class="arquivo" [class.arquivo--erro]="a.erro">
+              @if (a.previa) { <img [src]="a.previa" [alt]="a.arquivo.name" /> } @else { <span class="arquivo__sem"><i class="pi pi-ban"></i></span> }
+              <div class="arquivo__info">
+                <span class="arquivo__nome" [title]="a.arquivo.name">{{ a.arquivo.name }}</span>
+                <small>{{ tamanho(a.arquivo.size) }}</small>
+                @if (a.erro) { <small class="erro-campo">{{ a.erro }} Não será enviada.</small> }
+              </div>
+              <p-button icon="pi pi-times" [text]="true" severity="secondary" size="small" ariaLabel="Remover imagem"
+                        (onClick)="removerArquivo(a.id)" />
+            </li>
+          }
+        </ul>
       }
     } @else {
       <label for="link">Link externo</label>
@@ -63,7 +86,10 @@
 
     <label for="descEv">Descrição</label>
     <textarea pTextarea id="descEv" formControlName="descricao" rows="2"></textarea>
-    <p-button type="submit" label="Adicionar evidência" [loading]="salvando()"
+    @if (modo() === 'IMAGEM' && validos().length > 1) {
+      <small class="dica">A descrição vale para todas as imagens.</small>
+    }
+    <p-button type="submit" [label]="rotuloAdicionar()" icon="pi pi-check" [loading]="salvando()"
               [disabled]="form.invalid || !podeSalvar()" />
   </form>
 </p-dialog>

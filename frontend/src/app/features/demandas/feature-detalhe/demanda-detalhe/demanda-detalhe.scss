@@ -246,3 +246,76 @@
 .form-dialog { display: flex; flex-direction: column; gap: 0.75rem; }
 .dica { color: var(--sgd-muted); }
 .erro-campo { color: var(--p-red-500, #ef4444); }
+
+/* ---------- Envio de várias imagens (evidências) ---------- */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 1.1rem 1rem;
+  border: 2px dashed var(--sgd-borda);
+  border-radius: 0.8rem;
+  background: var(--sgd-realce);
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  p { margin: 0; }
+  small { margin-top: 0.4rem; color: var(--sgd-muted); }
+
+  &__icone {
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-bottom: 0.3rem;
+    border-radius: 0.8rem;
+    background: var(--sgd-laranja-suave);
+    color: var(--sgd-laranja);
+    font-size: 1.2rem;
+  }
+
+  &__ou { font-size: 0.8rem; color: var(--sgd-muted); margin: 0.1rem 0 0.35rem !important; }
+
+  &--sobre {
+    border-color: var(--sgd-laranja);
+    background: var(--sgd-laranja-suave);
+  }
+}
+
+.arquivos {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 15rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.arquivo {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--sgd-borda);
+  border-radius: 0.6rem;
+  background: var(--sgd-cartao);
+
+  img, &__sem {
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.45rem;
+    object-fit: cover;
+    background: var(--sgd-realce);
+  }
+
+  &__sem { display: grid; place-items: center; color: #dc2626; }
+
+  &__info { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+  &__nome { overflow: hidden; font-size: 0.85rem; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  small { color: var(--sgd-muted); }
+
+  &--erro { border-color: #dc2626; background: color-mix(in srgb, #dc2626 6%, var(--sgd-cartao)); }
+}
