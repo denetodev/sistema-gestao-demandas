@@ -519,7 +519,7 @@ update pessoa set nome = ${sql(PESSOAS.Deusdete.nome)}, nome_exibicao = ${sql(PE
 insert into pessoa (nome, nome_exibicao, area_id, cargo_id, status, perfil, aprovado_em)
 select i.nome, i.exibicao, a.id, c.id, 'ATIVO', 'PROFISSIONAL', now()
   from imp_hc_pessoa i
-  join area a on a.nome = i.area
+  join area a on a.nome in (i.area, i.area || '-CRM')
   join cargo c on c.nome = i.cargo
  where not exists (select 1 from pessoa p where p.nome = i.nome);
 
@@ -532,7 +532,7 @@ select d.nome, 'PESSOA', (select id from diretoria where nome = d.diretoria), d.
 -- 5. tipos de peça (preço de referência derivado da própria planilha) e tipo de atividade
 insert into tipo_peca (nome, area_id, valor_referencia, ativo)
 select t.nome, a.id, t.preco, t.ativo
-  from imp_hc_tipo t join area a on a.nome = t.area
+  from imp_hc_tipo t join area a on a.nome in (t.area, t.area || '-CRM')
  where not exists (select 1 from tipo_peca x where x.area_id = a.id and x.nome = t.nome);
 
 insert into tipo_atividade (nome, ativo)
@@ -568,7 +568,7 @@ select d.id, tp.id, left(t.nome, 180), left(l.descricao, 500), i.qtd, i.unit,
   join imp_hc_grupo g on g.grp = l.grp
   join demanda d on d.source_system = '${SS}' and d.source_row = g.ref_row
   join imp_hc_tipo t on t.id = i.tipo
-  join area a on a.nome = t.area
+  join area a on a.nome in (t.area, t.area || '-CRM')
   join tipo_peca tp on tp.area_id = a.id and tp.nome = t.nome;
 
 -- 9. atividades: uma "${TIPO_ATIVIDADE}" por responsável de cada linha, no dia da linha
@@ -606,7 +606,7 @@ select distinct d.diretoria from imp_hc_demandante d
 insert into pessoa (nome, nome_exibicao, area_id, cargo_id, status, perfil, aprovado_em)
 select i.nome, i.exibicao, a.id, c.id, 'ATIVO', 'PROFISSIONAL', now()
   from imp_hc_pessoa i
-  join area a on a.nome = i.area and a.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
+  join area a on a.nome in (i.area, i.area || '-CRM') and a.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
   join cargo c on c.nome = i.cargo
  where not exists (select 1 from pessoa p where p.nome = i.nome);
 
@@ -617,13 +617,13 @@ select d.nome, 'PESSOA', (select id from diretoria where nome = d.diretoria), d.
 
 insert into tipo_peca (nome, area_id, valor_referencia, ativo)
 select t.nome, a.id, t.preco, t.ativo
-  from imp_hc_tipo t join area a on a.nome = t.area and a.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
+  from imp_hc_tipo t join area a on a.nome in (t.area, t.area || '-CRM') and a.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
  where not exists (select 1 from tipo_peca x where x.area_id = a.id and x.nome = t.nome);
 
 insert into tipo_atividade (nome, ativo)
 select '${TIPO_ATIVIDADE}', true where not exists (select 1 from tipo_atividade where nome = '${TIPO_ATIVIDADE}');
 
--- as áreas casam por nome E pela diretoria do CRM: existe "Design" também na UGR, com tipos de peça de mesmo nome
+-- as áreas casam por nome E pela diretoria do CRM. Desde a renomeação das equipes a de Design se chama "Design-CRM" (e a da UGR "Design-UGR"), por isso aceita o nome com ou sem o sufixo -CRM
 -- quem é quem: existente (casa por código/título) ou nova (ganha um id agora)
 create temp table imp_hc_alvo on commit drop as
 select g.grp,
@@ -688,7 +688,7 @@ select a.demanda_id, tp.id, left(t.nome, 180), left(l.descricao, 500), i.qtd, i.
   join imp_hc_linha l on l.src_row = i.src_row
   join imp_hc_alvo a on a.grp = l.grp
   join imp_hc_tipo t on t.id = i.tipo
-  join area ar on ar.nome = t.area and ar.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
+  join area ar on ar.nome in (t.area, t.area || '-CRM') and ar.diretoria_id = (select id from diretoria where nome = '${DIRETORIA}')
   join tipo_peca tp on tp.area_id = ar.id and tp.nome = t.nome
  where not exists (select 1 from peca x where x.demanda_id = a.demanda_id and x.tipo_peca_id = tp.id
                       and x.descricao = left(l.descricao, 500) and x.data_entrega = l.dia::date and x.quantidade = i.qtd);
