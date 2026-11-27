@@ -128,7 +128,7 @@ class MatrizDePermissoesTest {
                 A = HttpMethod.PATCH;
 
         // leitura: todo vinculado (inclusive Visualizador)
-        for (String caminho : List.of("/demandas", "/demandas/" + ID, "/atividades", "/pecas", "/evidencias",
+        for (String caminho : List.of("/demandas", "/demandas/por-codigo?codigo=BC2611EG", "/demandas/" + ID, "/atividades", "/pecas", "/evidencias",
                 "/projetos", "/campanhas", "/campanhas/resumo", "/campanhas/" + ID + "/resumo", "/demandantes", "/tipos-peca", "/tipos-atividade", "/diretorias", "/nucleos",
                 "/pessoas", "/dashboard", "/relatorios/2026-10", "/demandas/" + ID + "/participantes")) {
             c.add(new Caso(G, caminho, TODOS_VINCULADOS));

@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { RouterLink } from '@angular/router';
+import { catchError, debounceTime, distinctUntilChanged, firstValueFrom, map, of, switchMap } from 'rxjs';
 import { Dialog } from 'primeng/dialog';
 import { InputText } from 'primeng/inputtext';
 import { Select } from 'primeng/select';
@@ -11,8 +12,9 @@ import { Message } from 'primeng/message';
 import { SharedModule } from 'primeng/api';
 import { Carregando } from '../../../../core/ui/carregando/carregando';
 import { DemandaService } from '../../data-access/demanda.service';
-import type { Prioridade } from '../../data-access/demanda.model';
-import { toSignal } from '@angular/core/rxjs-interop';
+import type { DemandaPorCodigo, Prioridade } from '../../data-access/demanda.model';
+import { ROTULO_STATUS } from '../../data-access/demanda-itens.model';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DemandanteService } from '../../../../core/dados-mestres/demandante/demandante.service';
 import { ProjetoService } from '../../../../core/dados-mestres/projeto/projeto.service';
 import { CampanhaService } from '../../../../core/dados-mestres/campanha/campanha.service';
@@ -24,7 +26,7 @@ import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-demanda-form',
-  imports: [Carregando, SharedModule, ReactiveFormsModule, Dialog, InputText, Select, DatePicker, Textarea, Button, Message],
+  imports: [Carregando, RouterLink, SharedModule, ReactiveFormsModule, Dialog, InputText, Select, DatePicker, Textarea, Button, Message],
   templateUrl: './demanda-form.html',
   styleUrl: './demanda-form.scss',
 })
@@ -46,6 +48,9 @@ export class DemandaForm {
   carregando = signal(false);
   carregandoDemanda = signal(false);
   erro = signal<string | null>(null);
+  /** Outras demandas que já usam o código digitado: avisa antes de criar uma duplicada. */
+  repetidas = signal<DemandaPorCodigo[]>([]);
+  rotuloStatus: Record<string, string> = ROTULO_STATUS;
 
   opcoesPrioridade = [
     { label: 'Baixa', value: 'BAIXA' },
@@ -90,6 +95,19 @@ export class DemandaForm {
   opcoesCampanha = computed(() => filtrarCampanhas(this.#campanhas.value() ?? [], this.#projeto()));
 
   constructor() {
+    this.form.controls.codigo.valueChanges
+      .pipe(
+        map((v) => (v ?? '').trim()),
+        debounceTime(400),
+        distinctUntilChanged(),
+        switchMap((codigo) =>
+          codigo.length < 5
+            ? of<DemandaPorCodigo[]>([])
+            : this.#demandaService.porCodigo(codigo).pipe(catchError(() => of<DemandaPorCodigo[]>([]))),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe((lista) => this.repetidas.set(lista.filter((d) => d.id !== this.demandaId())));
     this.form.controls.diretoriaId.valueChanges.subscribe(() => {
       this.#limparSePerdido('demandanteId', this.opcoesDemandante());
       this.#limparSePerdido('projetoId', this.opcoesProjeto());
@@ -107,6 +125,7 @@ export class DemandaForm {
       const id = this.demandaId();
       untracked(() => {
         this.erro.set(null);
+        this.repetidas.set([]);
         if (id) {
           this.#carregar(id);
         } else {

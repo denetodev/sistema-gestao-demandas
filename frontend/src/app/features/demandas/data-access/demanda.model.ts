@@ -50,6 +50,14 @@ export interface Demanda {
   valorCalculado: number | null;
 }
 
+/** Uma demanda que já usa o código digitado (aviso de código repetido ao criar). */
+export interface DemandaPorCodigo {
+  id: string;
+  codigo: string;
+  titulo: string;
+  status: StatusDemanda;
+}
+
 export interface CriarDemandaPayload {
   titulo: string;
   codigo: string | null;

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
-import { Demanda, CriarDemandaPayload, DemandaFiltro, FILTRO_PADRAO } from './demanda.model';
+import { Demanda, CriarDemandaPayload, DemandaFiltro, DemandaPorCodigo, FILTRO_PADRAO } from './demanda.model';
 import { Pagina } from '../../../core/http/pagina.model';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +31,11 @@ export class DemandaService {
 
   buscarPorId(id: string) {
     return this.#http.get<Demanda>(`${this.#base}/${id}`);
+  }
+
+  /** As demandas que já usam esse código (sem diferenciar maiúsculas). */
+  porCodigo(codigo: string) {
+    return this.#http.get<DemandaPorCodigo[]>(`${this.#base}/por-codigo`, { params: { codigo } });
   }
 
   criar(payload: CriarDemandaPayload) {

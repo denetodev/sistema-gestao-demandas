@@ -27,6 +27,20 @@
           <input pInputText id="codigo" formControlName="codigo" maxlength="40" placeholder="BC2609AX" class="codigo" />
           <small class="dica">Código de controle seu. Aparece como etiqueta.</small>
         </div>
+        @if (repetidas().length) {
+          <div class="aviso-codigo campo--cheio" role="alert">
+            <i class="pi pi-exclamation-triangle"></i>
+            <div>
+              <strong>Esse código já está em uso.</strong>
+              @for (d of repetidas(); track d.id) {
+                <span class="aviso-codigo__item">
+                  <a [routerLink]="['/demandas', d.id]" target="_blank">{{ d.titulo }}</a> ({{ rotuloStatus[d.status] }})
+                </span>
+              }
+              <span>Se for o mesmo trabalho, abra essa demanda em vez de criar outra. Se for outro, siga em frente.</span>
+            </div>
+          </div>
+        }
         <div class="campo campo--2-3">
           <label for="titulo">Título <span class="obrig" aria-hidden="true">*</span></label>
           <input pInputText id="titulo" formControlName="titulo" required placeholder="O que é e, se couber, para quem" />

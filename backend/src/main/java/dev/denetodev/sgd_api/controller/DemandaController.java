@@ -2,6 +2,7 @@ package dev.denetodev.sgd_api.controller;
 
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.request.StatusUpdateRequest;
+import dev.denetodev.sgd_api.dto.response.DemandaPorCodigoResponse;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
 import dev.denetodev.sgd_api.dto.request.FiltroDemanda;
@@ -45,6 +46,12 @@ public class DemandaController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         return demandaService.listarComEscopo(jwt, new FiltroDemanda(escopo, busca, status, diretoriaId, nucleoId, areaId), pageable);
+    }
+
+    /** Demandas que já usam o código (sem diferenciar maiúsculas): serve ao aviso de código repetido ao criar. */
+    @GetMapping("/por-codigo")
+    public List<DemandaPorCodigoResponse> porCodigo(@RequestParam String codigo) {
+        return demandaService.porCodigo(codigo);
     }
 
     @GetMapping("/{id}")
