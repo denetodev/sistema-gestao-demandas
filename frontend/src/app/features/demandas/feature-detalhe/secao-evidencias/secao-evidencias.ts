@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
@@ -9,7 +9,6 @@ import { Select } from 'primeng/select';
 import { SelectButton } from 'primeng/selectbutton';
 import { Textarea } from 'primeng/textarea';
 import { InputText } from 'primeng/inputtext';
-import { Message } from 'primeng/message';
 import { DemandaItensService } from '../../data-access/demanda-itens.service';
 import { Atividade, Evidencia, Peca } from '../../data-access/demanda-itens.model';
 
@@ -19,9 +18,23 @@ const TIPOS_ACEITOS = ['image/png', 'image/jpeg'];
 const TAMANHO_MAXIMO = 5 * 1024 * 1024;
 const REGEX_LINK = /^https?:\/\/\S+$/i;
 
+/** Uma imagem escolhida para enviar: a miniatura é criada na hora e o erro (se houver) fica junto dela. */
+interface ArquivoEscolhido {
+  id: string;
+  arquivo: File;
+  previa: string;
+  erro: string | null;
+}
+
+function erroDoArquivo(arquivo: File): string | null {
+  if (!TIPOS_ACEITOS.includes(arquivo.type)) return 'Só são aceitas imagens JPEG ou PNG.';
+  if (arquivo.size > TAMANHO_MAXIMO) return 'A imagem passa de 5 MB.';
+  return null;
+}
+
 @Component({
   selector: 'app-secao-evidencias',
-  imports: [FormsModule, ReactiveFormsModule, TableModule, Button, Dialog, Select, SelectButton, Textarea, InputText, Message],
+  imports: [FormsModule, ReactiveFormsModule, TableModule, Button, Dialog, Select, SelectButton, Textarea, InputText],
   templateUrl: './secao-evidencias.html',
   styleUrl: '../demanda-detalhe/demanda-detalhe.scss',
 })
@@ -36,11 +49,23 @@ export class SecaoEvidencias {
   #service = inject(DemandaItensService);
   #fb = inject(FormBuilder);
 
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.#limparArquivos());
+  }
+
   dialogAberto = signal(false);
   salvando = signal(false);
   modo = signal<ModoEvidencia>('IMAGEM');
-  arquivo = signal<File | null>(null);
-  erroArquivo = signal<string | null>(null);
+  /** As imagens escolhidas (várias de uma vez). As com erro ficam à vista, mas não são enviadas. */
+  arquivos = signal<ArquivoEscolhido[]>([]);
+  validos = computed(() => this.arquivos().filter((a) => !a.erro));
+  arrastando = signal(false);
+  /** Quantas já foram enviadas neste lote. */
+  enviadas = signal(0);
+  rotuloAdicionar = computed(() => {
+    const n = this.validos().length;
+    return this.modo() === 'IMAGEM' && n > 1 ? `Adicionar ${n} evidências` : 'Adicionar evidência';
+  });
 
   opcoesModo = [
     { label: 'Imagem', value: 'IMAGEM' as ModoEvidencia },
@@ -80,7 +105,7 @@ export class SecaoEvidencias {
   /** Pode salvar quando há destino e (imagem escolhida e válida, ou link http/https). */
   podeSalvar = computed(() => {
     if (this.salvando()) return false;
-    return this.modo() === 'IMAGEM' ? !!this.arquivo() && !this.erroArquivo() : this.#linkValido();
+    return this.modo() === 'IMAGEM' ? this.validos().length > 0 : this.#linkValido();
   });
 
   #linkValido() {
@@ -89,25 +114,56 @@ export class SecaoEvidencias {
 
   abrir() {
     this.form.reset({ alvo: '', link: '', descricao: '' });
-    this.arquivo.set(null);
-    this.erroArquivo.set(null);
+    this.#limparArquivos();
     this.modo.set('IMAGEM');
     this.dialogAberto.set(true);
   }
 
+  #limparArquivos() {
+    this.arquivos().forEach((a) => URL.revokeObjectURL(a.previa));
+    this.arquivos.set([]);
+    this.enviadas.set(0);
+  }
+
+  /** Vindo do seletor de arquivos: acrescenta ao que já foi escolhido, para dar para juntar de pastas diferentes. */
   escolherArquivo(evento: Event) {
     const input = evento.target as HTMLInputElement;
-    const escolhido = input.files?.[0] ?? null;
-    this.arquivo.set(escolhido);
-    if (!escolhido) {
-      this.erroArquivo.set(null);
-    } else if (!TIPOS_ACEITOS.includes(escolhido.type)) {
-      this.erroArquivo.set('Só são aceitas imagens JPEG ou PNG.');
-    } else if (escolhido.size > TAMANHO_MAXIMO) {
-      this.erroArquivo.set('A imagem passa de 5 MB.');
-    } else {
-      this.erroArquivo.set(null);
+    this.adicionarArquivos(Array.from(input.files ?? []));
+    try {
+      input.value = ''; // permite escolher de novo o mesmo arquivo depois de remover
+    } catch {
+      // alguns navegadores não deixam limpar
     }
+  }
+
+  aoArrastar(evento: DragEvent) {
+    evento.preventDefault();
+    this.arrastando.set(true);
+  }
+
+  aoSoltar(evento: DragEvent) {
+    evento.preventDefault();
+    this.arrastando.set(false);
+    this.adicionarArquivos(Array.from(evento.dataTransfer?.files ?? []));
+  }
+
+  adicionarArquivos(novos: File[]) {
+    const chave = (f: File) => `${f.name}|${f.size}|${f.lastModified}`;
+    const jaTem = new Set(this.arquivos().map((a) => chave(a.arquivo)));
+    const acrescentar: ArquivoEscolhido[] = [];
+    for (const f of novos) {
+      if (jaTem.has(chave(f))) continue;
+      jaTem.add(chave(f));
+      const erro = erroDoArquivo(f);
+      acrescentar.push({ id: crypto.randomUUID(), arquivo: f, previa: erro ? '' : URL.createObjectURL(f), erro });
+    }
+    if (acrescentar.length) this.arquivos.update((atual) => [...atual, ...acrescentar]);
+  }
+
+  removerArquivo(id: string) {
+    const alvo = this.arquivos().find((a) => a.id === id);
+    if (alvo?.previa) URL.revokeObjectURL(alvo.previa);
+    this.arquivos.update((atual) => atual.filter((a) => a.id !== id));
   }
 
   async salvar() {
@@ -120,12 +176,24 @@ export class SecaoEvidencias {
       const descricao = v.descricao?.trim() || null;
 
       if (this.modo() === 'IMAGEM') {
-        await firstValueFrom(this.#service.enviarImagem(this.arquivo()!, vinculo, descricao));
-      } else {
-        await firstValueFrom(
-          this.#service.criarEvidencia({ ...vinculo, tipo: 'LINK', conteudo: v.link!.trim(), descricao }),
-        );
+        // uma evidência por imagem, em sequência; se uma falhar, as que já subiram ficam e as outras continuam na lista
+        let subiu = false;
+        try {
+          for (const a of [...this.validos()]) {
+            await firstValueFrom(this.#service.enviarImagem(a.arquivo, vinculo, descricao));
+            subiu = true;
+            this.enviadas.update((n) => n + 1);
+            this.removerArquivo(a.id);
+          }
+        } finally {
+          if (subiu) this.alterado.emit();
+        }
+        if (this.arquivos().length === 0) this.dialogAberto.set(false);
+        return;
       }
+      await firstValueFrom(
+        this.#service.criarEvidencia({ ...vinculo, tipo: 'LINK', conteudo: v.link!.trim(), descricao }),
+      );
       this.dialogAberto.set(false);
       this.alterado.emit();
     } catch {
