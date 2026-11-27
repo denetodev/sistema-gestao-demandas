@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { TipoPeca, TipoPecaPayload } from './tipo-peca.model';
+import { alfabetica } from '../../util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class TipoPecaService {
   #http = inject(HttpClient);
   #base = `${environment.apiUrl}/tipos-peca`;
 
-  listar = httpResource<TipoPeca[]>(() => this.#base);
+  listar = httpResource<TipoPeca[]>(() => this.#base, { parse: alfabetica<TipoPeca>((x) => x.nome) });
 
   criar(payload: TipoPecaPayload) {
     return this.#http.post<TipoPeca>(this.#base, payload);

@@ -3,6 +3,7 @@ import { httpResource } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import type { Pessoa } from '../../../core/pessoas/pessoa.model';
 import type { Dashboard, DashboardFiltro } from './dashboard.model';
+import { alfabetica } from '../../../core/util/listas';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -25,5 +26,5 @@ export class DashboardService {
   });
 
   /** Colegas para o seletor da Referência de Equipe. */
-  pessoas = httpResource<Pessoa[]>(() => `${environment.apiUrl}/pessoas`);
+  pessoas = httpResource<Pessoa[]>(() => `${environment.apiUrl}/pessoas`, { parse: alfabetica<Pessoa>((x) => x.nomeExibido) });
 }
