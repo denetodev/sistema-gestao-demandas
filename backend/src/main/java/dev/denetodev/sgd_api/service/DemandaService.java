@@ -2,6 +2,7 @@ package dev.denetodev.sgd_api.service;
 
 import dev.denetodev.sgd_api.dto.request.DemandaRequest;
 import dev.denetodev.sgd_api.dto.request.FiltroDemanda;
+import dev.denetodev.sgd_api.dto.response.DemandaPorCodigoResponse;
 import dev.denetodev.sgd_api.dto.response.DemandaResponse;
 import dev.denetodev.sgd_api.dto.response.HistoricoStatusResponse;
 import dev.denetodev.sgd_api.dto.response.ParticipanteResumo;
@@ -98,6 +99,17 @@ public class DemandaService {
                 permissaoService.podeAlterarDemanda(usuario, times.getOrDefault(d.getId(), List.of())),
                 times.getOrDefault(d.getId(), List.of()),
                 pecas.getOrDefault(d.getId(), List.of())));
+    }
+
+    @Transactional(readOnly = true)
+    public List<DemandaPorCodigoResponse> porCodigo(String codigo) {
+        String limpo = normalizarCodigo(codigo);
+        if (limpo == null) {
+            return List.of();
+        }
+        return demandaRepository.findByCodigoIgnoreCase(limpo).stream()
+                .map(d -> new DemandaPorCodigoResponse(d.getId(), d.getCodigo(), d.getTitulo(), d.getStatus()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
