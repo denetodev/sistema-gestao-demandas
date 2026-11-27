@@ -624,7 +624,7 @@ insert into tipo_atividade (nome, ativo)
 select '${TIPO_ATIVIDADE}', true where not exists (select 1 from tipo_atividade where nome = '${TIPO_ATIVIDADE}');
 
 -- as áreas casam por nome E pela diretoria do CRM. Desde a renomeação das equipes a de Design se chama "Design-CRM" (e a da UGR "Design-UGR"), por isso aceita o nome com ou sem o sufixo -CRM
--- quem é quem: existente (casa por código/título) ou nova (ganha um id agora)
+-- quem é quem: existente (casa por código, de qualquer origem, ou por título) ou nova (ganha um id agora)
 create temp table imp_hc_alvo on commit drop as
 select g.grp,
        coalesce(x.existente_id, gen_random_uuid()) as demanda_id,
@@ -639,6 +639,11 @@ select g.grp,
         where d.source_system = '${SS}' and g.codigo is not null and g.status <> 'CANCELADA'
           and d.codigo = g.codigo and d.status = 'CANCELADA'
           and not exists (select 1 from demanda o where o.source_system = '${SS}' and o.codigo = g.codigo and o.id <> d.id) limit 1),
+      -- demanda criada no sistema ou pelo Planner com o mesmo código (e só ela): a importação a atualiza em vez de criar uma segunda
+      (select d.id from demanda d
+        where g.codigo is not null and g.status <> 'CANCELADA' and d.codigo = g.codigo and d.status <> 'CANCELADA'
+          and d.source_system is distinct from '${SS}'
+          and (select count(*) from demanda o where o.codigo = g.codigo and o.status <> 'CANCELADA') = 1 limit 1),
       (select d.id from demanda d join imp_hc_linha l0 on l0.src_row = g.ref_row
         where d.source_system = '${SS}' and g.codigo is null and d.codigo is null
           and d.titulo = left(l0.descricao, 220) and d.data_criacao = g.criacao::date limit 1)
